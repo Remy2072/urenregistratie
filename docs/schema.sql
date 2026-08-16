@@ -511,6 +511,37 @@ create policy mutaties_lezen on mutaties
                        and d.persoon_id = huidige_persoon_id()));
 
 
+-- ---------------------------------------------------------------------
+-- Toegang tot de tabellen
+--
+-- Policies en rechten zijn twee verschillende sloten en je moet er allebei
+-- doorheen. Een policy zegt wélke rijen je mag zien; een grant zegt of je
+-- de tabel überhaupt mag aanraken. Zonder deze regels werken de policies
+-- prima en krijgt de app alsnog 'permission denied'.
+--
+-- Ze staan hier expliciet omdat het Supabase-project is aangemaakt met
+-- "automatically expose new tables" uit. Dat is de veilige stand: een
+-- tabel die je later toevoegt is dan niet meteen bereikbaar, maar pas
+-- wanneer je hem hier neerzet.
+--
+-- Wat er NIET staat is net zo belangrijk:
+--   * niets voor `anon` -- niet ingelogd is geen toegang, punt.
+--   * geen delete waar geen delete-policy is (personen, diensten,
+--     mutaties). Dubbel op slot.
+--   * geen insert of update op mutaties. Het logboek wordt alleen door
+--     de trigger geschreven, en die draait als eigenaar.
+-- ---------------------------------------------------------------------
+grant usage on schema public to authenticated;
+
+grant select, insert, update         on personen        to authenticated;
+grant select, insert, update, delete on posten          to authenticated;
+grant select, insert, update, delete on dienstsoorten   to authenticated;
+grant select, insert, update, delete on sjabloon_regels to authenticated;
+grant select, insert, update         on diensten        to authenticated;
+grant select                         on mutaties        to authenticated;
+grant select                         on uren_export     to authenticated;
+
+
 -- =====================================================================
 -- Startdata voor Tjon Express (week 34 als voorbeeld)
 -- =====================================================================
