@@ -111,28 +111,46 @@ aan fase 4 begonnen.
 **Doel:** een fundament waarvan je hebt gecontroleerd dat het klopt, niet
 waarvan je aanneemt dat het klopt.
 
-1. Supabase-project aanmaken, `schema.sql` in één keer draaien.
+1. Supabase-project aanmaken en `schema.sql` in één keer plakken. Het sjabloon
+   zit er onderaan in, dus na deze stap staan er 17 regels: per weekdag 2, 2,
+   2, 2, 3, 3, 3. Dat telt het bestand zelf af als laatste query.
 2. Beheerder toevoegen (die regel staat uitgecommentarieerd onderaan het
-   bestand). Zonder beheerder kan niemand bevestigen.
-3. `sjabloon_regels` vullen met week 34: per weekdag welke persoon op welke
-   post welke dienstsoort draait.
+   bestand). Zonder beheerder kan niemand bevestigen en telt er niets mee in
+   de export.
+3. `schema-test.sql` plakken. Dat probeert negen dingen die niet mogen en geeft
+   een tabel terug waarin elke regel 'goed' hoort te zeggen.
 
-Dan de constraints **expres kapot proberen te maken**. Dit is de enige fase
-waarin dat nog goedkoop is:
+Dat derde punt is de kern van deze fase: de constraints **expres kapot
+proberen te maken**. Dit is de enige fase waarin dat nog gratis is, want er zit
+nog geen data in die je kunt verliezen.
 
 | Probeer | Verwacht |
 |---|---|
 | Dienst met `werkelijk_eind = '21:23'` | Faalt op `dienst_halve_uren` |
 | Twee diensten, zelfde persoon, zelfde dag | Faalt op `diensten_persoon_bezet` |
 | Status `afgemeld` mét werkelijke tijden | Faalt op `dienst_niet_gewerkt_geen_tijden` |
-| Sjabloonregel die een bestaande overlapt | Faalt op `sjabloon_geen_dubbel_slot` |
+| Status `gemeld` zónder werkelijke tijden | Faalt op `dienst_gemeld_heeft_tijden` |
+| Zelfde bus, zelfde dag, zelfde starttijd | Faalt op `diensten_post_bezet` |
+| Vervallen dienst opnieuw inplannen | **Lukt** — daarom is die index partieel |
 | Een dienst updaten | Zet een regel in `mutaties` |
+| Sjabloonregel die een bestaande overlapt | Faalt op `sjabloon_geen_dubbel_slot` |
+| Iemand twee keer op dezelfde weekdag | Faalt op `sjabloon_geen_dubbele_persoon` |
 
-Falen alle vier de eerste en verschijnt die laatste regel, dan staat het
-fundament. Zo niet, dan wil je dat nu weten en niet in fase 5.
+Let op die zesde: daar is slagen het goede antwoord. Als die faalt staat de
+`where`-clausule niet op de index en blokkeert een geannuleerde dienst zijn
+eigen vervanger.
 
-**Klaar als:** die tabel klopt en `select * from uren_export` draait (leeg is
-goed).
+**Wat dit niet test: de rechten.** In de SQL-editor ben je superuser en gelden
+de policies niet voor jou. Row level security toets je in fase 2, ingelogd in
+een gewone browser.
+
+**Klaar als:** alle negen regels 'goed' zeggen en `select * from uren_export`
+draait (leeg is goed, er is nog niets bevestigd).
+
+> Beide bestanden zijn vooraf doorgedraaid op een echte PostgreSQL: `schema.sql`
+> loopt in één keer door en alle negen controles slagen. Struikelt het bij jou
+> alsnog, dan zit het verschil dus in de omgeving en niet in het schema — kijk
+> dan eerst of `create extension btree_gist` erdoor kwam.
 
 **Op wiens account.** In `projectoverzicht.md` staat: zijn account, niet het
 jouwe. Dat blijft kloppen, maar niet vanaf minuut één — je gaat hem geen

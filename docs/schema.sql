@@ -543,3 +543,54 @@ insert into personen (naam, rol) values
 --
 -- update personen set auth_user_id = '<uuid uit auth.users>'
 --  where naam = '<naam>';
+
+
+-- ---------------------------------------------------------------------
+-- Het weekrooster
+--
+-- Dit is het sjabloon waar de maandaguitrol van fase 3 zijn diensten uit
+-- haalt. Doordeweeks twee bussen, in het weekend drie. Weekdag 1 is
+-- maandag, gelijk aan de check op de tabel.
+--
+-- Namen in plaats van uuid's, want die uuid's kent niemand. De joins
+-- zoeken ze op, en als je een naam verkeerd typt komt die regel er
+-- gewoon niet in -- controleer daarom onderaan of het er 17 zijn.
+-- ---------------------------------------------------------------------
+insert into sjabloon_regels (weekdag, post_id, persoon_id, dienstsoort_id)
+select r.weekdag, po.id, pe.id, ds.id
+from (values
+  (1, 'Bus 2', 'Remy',  'vroeg'),
+  (1, 'Bus 3', 'Daan',  'laat'),
+
+  (2, 'Bus 2', 'Samir', 'vroeg'),
+  (2, 'Bus 3', 'Joost', 'laat'),
+
+  (3, 'Bus 2', 'Ilias', 'vroeg'),
+  (3, 'Bus 3', 'Bram',  'laat'),
+
+  (4, 'Bus 2', 'Remy',  'vroeg'),
+  (4, 'Bus 3', 'Teun',  'laat'),
+
+  (5, 'Bus 2', 'Omar',  'vroeg'),
+  (5, 'Bus 3', 'Lars',  'laat'),
+  (5, 'Bus 4', 'Daan',  'laat'),
+
+  (6, 'Bus 2', 'Remy',  'vroeg'),
+  (6, 'Bus 3', 'Samir', 'laat'),
+  (6, 'Bus 4', 'Joost', 'laat'),
+
+  (7, 'Bus 2', 'Ilias', 'vroeg'),
+  (7, 'Bus 3', 'Bram',  'laat'),
+  (7, 'Bus 4', 'Teun',  'laat')
+) as r(weekdag, post, persoon, dienstsoort)
+join posten        po on po.naam = r.post
+join personen      pe on pe.naam = r.persoon
+join dienstsoorten ds on ds.naam = r.dienstsoort;
+
+
+-- Controle: dit hoort 17 te zijn, en per weekdag 2, 2, 2, 2, 3, 3, 3.
+-- Staat er minder, dan is er een naam verkeerd gespeld hierboven.
+select weekdag, count(*) as regels
+  from sjabloon_regels
+ group by weekdag
+ order by weekdag;
