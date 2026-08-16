@@ -106,7 +106,7 @@ aan fase 4 begonnen.
 
 ---
 
-## Fase 1 — Schema live
+## Fase 1 — Schema live ✅
 
 **Doel:** een fundament waarvan je hebt gecontroleerd dat het klopt, niet
 waarvan je aanneemt dat het klopt.
@@ -147,6 +147,10 @@ een gewone browser.
 **Klaar als:** alle negen regels 'goed' zeggen en `select * from uren_export`
 draait (leeg is goed, er is nog niets bevestigd).
 
+> **Gedaan.** Draait op Supabase, Frankfurt. Sjabloon 2-2-2-2-3-3-3, negen van
+> de negen controles goed, `uren_export` leeg zoals het hoort. De testfunctie
+> mag weg met `drop function test_schema();`.
+>
 > Beide bestanden zijn vooraf doorgedraaid op een echte PostgreSQL: `schema.sql`
 > loopt in één keer door en alle negen controles slagen. Struikelt het bij jou
 > alsnog, dan zit het verschil dus in de omgeving en niet in het schema — kijk
