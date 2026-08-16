@@ -1,0 +1,362 @@
+/* Mobiel eerst. Geen framework: dit is één scherm breed en een handvol
+   componenten, daar heb je geen build-stap voor nodig. */
+
+:root {
+	--achtergrond: #f6f6f4;
+	--vlak: #ffffff;
+	--rand: #e2e2dd;
+	--tekst: #1b1b18;
+	--gedempt: #6b6b63;
+
+	--groen: #1f7a4d;
+	--groen-vlak: #e6f2eb;
+	--amber: #9a6414;
+	--amber-vlak: #fdf1dd;
+	--blauw: #1e5fa8;
+	--blauw-vlak: #e6eef8;
+	--rood: #a33232;
+	--rood-vlak: #f8e9e9;
+
+	--radius: 12px;
+	--ruimte: 1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--achtergrond: #16161a;
+		--vlak: #1f1f24;
+		--rand: #32323a;
+		--tekst: #ececf0;
+		--gedempt: #9a9aa4;
+
+		--groen: #6dd39b;
+		--groen-vlak: #17301f;
+		--amber: #e0b269;
+		--amber-vlak: #33260f;
+		--blauw: #8ab6ee;
+		--blauw-vlak: #16233a;
+		--rood: #e79191;
+		--rood-vlak: #351c1c;
+	}
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	background: var(--achtergrond);
+}
+
+body {
+	margin: 0;
+	background: var(--achtergrond);
+	color: var(--tekst);
+	font-family:
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		sans-serif;
+	font-size: 16px;
+	line-height: 1.5;
+	-webkit-text-size-adjust: 100%;
+}
+
+h1 {
+	font-size: 1.35rem;
+	margin: 0;
+}
+
+h2 {
+	font-size: 1rem;
+	margin: 0 0 0.5rem;
+	color: var(--gedempt);
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+a {
+	color: inherit;
+}
+
+/* ── Schil ─────────────────────────────────────────────────────────── */
+
+.schil {
+	max-width: 34rem;
+	margin: 0 auto;
+	padding: 0 var(--ruimte) 4rem;
+}
+
+.strook {
+	background: var(--amber-vlak);
+	color: var(--amber);
+	font-size: 0.8rem;
+	text-align: center;
+	padding: 0.4rem var(--ruimte);
+	border-bottom: 1px solid var(--rand);
+}
+
+.kop {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	background: var(--achtergrond);
+	padding: var(--ruimte) 0 0.75rem;
+	border-bottom: 1px solid var(--rand);
+	margin-bottom: var(--ruimte);
+}
+
+.kop .datum {
+	color: var(--gedempt);
+	font-size: 0.85rem;
+}
+
+nav.tabs {
+	display: flex;
+	gap: 0.4rem;
+	margin-top: 0.75rem;
+}
+
+nav.tabs a {
+	flex: 1;
+	text-align: center;
+	padding: 0.5rem 0.25rem;
+	border: 1px solid var(--rand);
+	border-radius: var(--radius);
+	background: var(--vlak);
+	text-decoration: none;
+	font-size: 0.85rem;
+	color: var(--gedempt);
+}
+
+nav.tabs a[aria-current='page'] {
+	border-color: var(--tekst);
+	color: var(--tekst);
+	font-weight: 600;
+}
+
+/* ── Kaarten ───────────────────────────────────────────────────────── */
+
+.kaart {
+	background: var(--vlak);
+	border: 1px solid var(--rand);
+	border-radius: var(--radius);
+	padding: 0.85rem;
+	margin-bottom: 0.6rem;
+}
+
+.kaart.aandacht {
+	border-color: var(--amber);
+}
+
+.kaart.nu {
+	border-color: var(--tekst);
+	border-width: 2px;
+}
+
+.regel {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 0.75rem;
+}
+
+.dag {
+	font-weight: 600;
+	text-transform: capitalize;
+}
+
+.detail {
+	color: var(--gedempt);
+	font-size: 0.9rem;
+}
+
+.tijden {
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.doorgehaald {
+	text-decoration: line-through;
+	color: var(--gedempt);
+}
+
+/* ── Merktekens ────────────────────────────────────────────────────── */
+
+.merk {
+	display: inline-block;
+	font-size: 0.75rem;
+	padding: 0.1rem 0.45rem;
+	border-radius: 999px;
+	white-space: nowrap;
+}
+
+.merk.verwacht {
+	background: var(--achtergrond);
+	color: var(--gedempt);
+	border: 1px solid var(--rand);
+}
+.merk.gemeld {
+	background: var(--blauw-vlak);
+	color: var(--blauw);
+}
+.merk.bevestigd {
+	background: var(--groen-vlak);
+	color: var(--groen);
+}
+.merk.afgemeld,
+.merk.vervallen {
+	background: var(--rood-vlak);
+	color: var(--rood);
+}
+.merk.afwijking {
+	background: var(--amber-vlak);
+	color: var(--amber);
+}
+.merk.achteraf {
+	background: var(--amber-vlak);
+	color: var(--amber);
+}
+
+/* ── Knoppen ───────────────────────────────────────────────────────── */
+
+button {
+	font: inherit;
+	cursor: pointer;
+	border-radius: var(--radius);
+	border: 1px solid var(--rand);
+	background: var(--vlak);
+	color: var(--tekst);
+	padding: 0.7rem 0.9rem;
+	min-height: 44px;
+}
+
+button:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+button.groot {
+	width: 100%;
+	font-size: 1.05rem;
+	font-weight: 600;
+	min-height: 52px;
+}
+
+button.primair {
+	background: var(--tekst);
+	color: var(--achtergrond);
+	border-color: var(--tekst);
+}
+
+.knoppen {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}
+
+.knoppen button {
+	flex: 1;
+}
+
+.stelrij {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	margin-top: 0.5rem;
+}
+
+.stelrij button {
+	flex: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+.stellabel {
+	flex: 0 0 3.4rem;
+	color: var(--gedempt);
+	font-size: 0.85rem;
+}
+
+.uitkomst {
+	text-align: center;
+	font-size: 1.4rem;
+	font-variant-numeric: tabular-nums;
+	margin: 0.75rem 0 0;
+}
+
+/* ── Tabel (export) ────────────────────────────────────────────────── */
+
+.tabelrand {
+	overflow-x: auto;
+	border: 1px solid var(--rand);
+	border-radius: var(--radius);
+	background: var(--vlak);
+}
+
+table {
+	border-collapse: collapse;
+	width: 100%;
+	font-size: 0.85rem;
+}
+
+th,
+td {
+	text-align: left;
+	padding: 0.5rem 0.6rem;
+	border-bottom: 1px solid var(--rand);
+	white-space: nowrap;
+}
+
+th {
+	color: var(--gedempt);
+	font-weight: 600;
+	font-size: 0.75rem;
+	text-transform: uppercase;
+}
+
+tbody tr:last-child td {
+	border-bottom: none;
+}
+
+td.getal {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Diversen ──────────────────────────────────────────────────────── */
+
+.leeg {
+	color: var(--gedempt);
+	font-size: 0.9rem;
+	padding: 0.5rem 0;
+}
+
+.notitie {
+	font-size: 0.85rem;
+	color: var(--gedempt);
+	border-left: 2px solid var(--rand);
+	padding-left: 0.75rem;
+	margin: 1rem 0;
+}
+
+.blok {
+	margin-bottom: 1.75rem;
+}
+
+details summary {
+	cursor: pointer;
+	color: var(--gedempt);
+	font-size: 0.9rem;
+	padding: 0.5rem 0;
+}
+
+select {
+	font: inherit;
+	padding: 0.5rem;
+	border-radius: var(--radius);
+	border: 1px solid var(--rand);
+	background: var(--vlak);
+	color: var(--tekst);
+	min-height: 44px;
+}
