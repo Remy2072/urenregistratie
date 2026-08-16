@@ -374,6 +374,48 @@ iets herbouwt om restaurantpersoneel toe te laten.
 
 ---
 
+## Opruimen
+
+Schulden die je onderweg bewust hebt gemaakt. Ze staan hier zodat je ze niet
+hoeft te onthouden — en zodat je ziet dat het er minder zijn dan het voelt.
+
+### Verdwijnt vanzelf in fase 4
+
+Op het moment dat het bezorgerscherm echte data ophaalt, valt het prototype
+weg. Dat is geen apart klusje maar een gevolg:
+
+- `src/lib/nepdata.ts` — de twee verzonnen weken.
+- `src/lib/prototype.svelte.ts` — `meld()` en `bevestig()` worden twee
+  Supabase-aanroepen.
+- `NU` maakt plaats voor `vandaagInNederland()`. Die functie staat al in
+  `tijd.ts` en wordt nu nog niet gebruikt.
+- De scheiding tussen "prototype" en "echt" in `+layout.svelte`: de strook
+  bovenaan, de lijst `prototypePaden` en de vaste datum in de kop.
+
+### Los op te ruimen
+
+| Wat | Wanneer | Waarom |
+|---|---|---|
+| Componenten splitsen | begin fase 4 | Nu staat alles in drie pagina's. Doe het vóór je erin gaat werken, niet erna |
+| Alle routes achter de login | fase 4 | Nu is alleen `/ik` beschermd; de rest draait nog op nepdata en hoeft dat niet |
+| `drop function test_schema();` | wanneer je eraan denkt | Testfunctie uit fase 1, staat nog in de database |
+| `/ik` een plek geven | fase 4 of 5 | Handig als controle, maar geen scherm dat een bezorger nodig heeft |
+| Vercel-deploy | vóór fase 7 | Dubbel bijhouden werkt niet als de app alleen op jouw laptop draait |
+| `.env` op Vercel zetten | tegelijk | Twee waarden, dezelfde als lokaal |
+| Deployment Protection op main | tegelijk | Vanaf fase 4 staan er echte namen en uren in |
+| Branch `fase-0-prototype` | ná fase 5 | Zolang de baas het echte scherm nog niet gezien heeft, is de demo je enige verhaal |
+| `npm audit`: `cookie <0.7.0` | bij een SvelteKit-update | Lage ernst, komt via SvelteKit zelf, er is nog geen fix. `audit fix --force` zou Kit naar 0.0.30 downgraden — niet doen |
+
+### En één gewoonte
+
+**Geef je feedback per fase, niet opgespaard.** Dit is de plek waar dit soort
+projecten stilvalt: lever je fase 4 op en komt er daarna een lijst van dertig
+opmerkingen, dan is dat geen afronden meer maar opnieuw beginnen. Kijk na elke
+fase een kwartier, zeg wat er niet klopt, en dat gaat mee in de volgende. De
+"klaar als" per fase is daar precies voor bedoeld.
+
+---
+
 ## Wat in geen enkele fase gebouwd wordt
 
 Staat ook in `projectoverzicht.md`, maar hier omdat scope juist tijdens het
