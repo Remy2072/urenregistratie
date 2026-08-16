@@ -360,3 +360,42 @@ select {
 	color: var(--tekst);
 	min-height: 44px;
 }
+
+/* ── Formulier ─────────────────────────────────────────────────────── */
+
+.veld {
+	display: block;
+	margin-bottom: 0.85rem;
+}
+
+.veld span {
+	display: block;
+	font-size: 0.85rem;
+	color: var(--gedempt);
+	margin-bottom: 0.3rem;
+}
+
+.veld input {
+	font: inherit;
+	width: 100%;
+	padding: 0.7rem 0.75rem;
+	min-height: 48px;
+	border-radius: var(--radius);
+	border: 1px solid var(--rand);
+	background: var(--vlak);
+	color: var(--tekst);
+}
+
+.veld input:focus-visible {
+	outline: 2px solid var(--tekst);
+	outline-offset: 1px;
+}
+
+.fout {
+	background: var(--rood-vlak);
+	color: var(--rood);
+	font-size: 0.9rem;
+	padding: 0.6rem 0.75rem;
+	border-radius: var(--radius);
+	margin: 0 0 0.5rem;
+}
