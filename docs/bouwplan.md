@@ -166,7 +166,7 @@ overtypen.
 
 ---
 
-## Fase 2 — Login
+## Fase 2 — Login ✅
 
 **Doel:** de app weet wie je bent, en vanaf hier klopt wat je ziet.
 
@@ -185,6 +185,18 @@ je superuser en gelden de policies niet.
 
 **Niet doen:** wachtwoord vergeten, e-mailverificatie, rollenbeheer in een
 scherm. Tien mensen, jij zet ze er zelf in.
+
+> **Gedaan.** `/inloggen` en `/ik`. Alles gaat server-side via
+> `hooks.server.ts`, dus er is geen browserclient nodig en de sessie zit in
+> een cookie.
+>
+> De toets: ingelogd als Daan ziet de app 1 persoon, 2 sjabloonregels en 3
+> posten; als Kwan 10, 17 en 3. Diezelfde publieke sleutel geeft zonder login
+> `permission denied for table personen`. De rechten uit fase 1 werken dus in
+> het echt, niet alleen in de SQL-editor.
+>
+> De rol zit niet in Supabase Auth maar in `personen.rol`. Auth weet alleen
+> wie je bent; `auth_user_id` legt de verbinding.
 
 ---
 
