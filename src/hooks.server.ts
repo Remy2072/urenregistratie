@@ -13,9 +13,9 @@ import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
 /**
  * Waar je zonder login mag komen. Al het andere gaat naar /inloggen.
  *
- * Vanaf fase 4 staan er echte namen en gewerkte uren in de database. Dat een
- * scherm toevallig nog nepdata toont is dan geen reden om de deur open te
- * laten staan -- en het is precies het soort uitzondering dat je later vergeet.
+ * Er staan namen en gewerkte uren in de database. Een uitzondering "want dat
+ * scherm is toch niet gevoelig" is precies het soort uitzondering dat je later
+ * vergeet, dus die is er niet.
  */
 const openbaar = ['/inloggen'];
 
@@ -24,8 +24,8 @@ export const ingesteld = Boolean(PUBLIC_SUPABASE_URL && PUBLIC_SUPABASE_KEY);
 
 export const handle: Handle = async ({ event, resolve }) => {
 	if (!ingesteld) {
-		// Niet omvallen. Het prototype draait op nepdata en heeft Supabase
-		// helemaal niet nodig; alleen inloggen kan dan niet.
+		// Niet omvallen zonder .env. Je komt dan niet verder dan /inloggen, en
+		// dat scherm legt uit wat er ontbreekt. Zie .env.example.
 		event.locals.supabase = null;
 		event.locals.veiligeSessie = async () => ({ session: null, user: null });
 		return resolve(event);

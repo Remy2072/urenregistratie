@@ -5,8 +5,8 @@ declare global {
 		interface Locals {
 			/**
 			 * Praat met Supabase namens de ingelogde gebruiker, dus mét RLS.
-			 * Null als er nog geen .env is ingevuld -- dan blijft het prototype
-			 * gewoon werken en zegt alleen het inlogscherm er iets van.
+			 * Null als er nog geen .env is ingevuld. Dan kom je nergens verder
+			 * dan het inlogscherm, en dat zegt er iets over.
 			 */
 			supabase: SupabaseClient | null;
 			/** Sessie én gebruiker, allebei geverifieerd bij Supabase. */
@@ -14,8 +14,10 @@ declare global {
 		}
 		interface PageData {
 			ingelogd: boolean;
-			/** Je naam uit `personen`. Null als de login nog niet gekoppeld is. */
-			ik: { naam: string } | null;
+			/** Wie je bent volgens `personen`. Null als de login nog niet gekoppeld is. */
+			ik: { id: string; naam: string; rol: 'medewerker' | 'beheerder' } | null;
+			/** Heb je zelf diensten? Bepaalt of het bezorgertabblad er staat. */
+			bezorger: boolean;
 			/** Datum en tijd in Nederland, gelezen op de server. */
 			nu: { datum: string; tijd: string };
 		}

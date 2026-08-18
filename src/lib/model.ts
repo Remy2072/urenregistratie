@@ -1,9 +1,11 @@
 // De vorm van de gegevens, één op één met schema.sql.
 //
-// Dit bestand is het scharnier van fase 0. Zolang de nepdata precies deze
-// vorm heeft, vervang je in fase 4 alleen de bron -- de schermen blijven
-// staan. Daarom snake_case en niet camelCase: zo komt het straks uit
-// Supabase en hoeft er onderweg niets omgezet te worden.
+// snake_case en niet camelCase: zo komt het uit Supabase, en dan hoeft er
+// onderweg niets omgezet te worden.
+//
+// Dit bestand was het scharnier van fase 0. De nepdata had precies deze vorm,
+// en daardoor hoefde er in fase 4 alleen een bron te veranderen -- de schermen
+// bleven staan. Dat is precies zo gelopen.
 
 /** 'YYYY-MM-DD', zoals `date` in Postgres. Geen tijdzone, geen Date-object. */
 export type Datum = string;

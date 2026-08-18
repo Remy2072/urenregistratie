@@ -22,37 +22,40 @@ npm run dev
 
 ## Waar we nu staan
 
-**Fase 3 af, fase 4 is de volgende.** De database staat en doet zijn werk: het
-schema draait op Supabase, inloggen werkt, en de diensten van een week ontstaan
-vanzelf uit het weekrooster (`select * from rol_week_uit();`).
+**Fase 0 tot en met 6 af.** De hele keten draait op de database: de bezorger
+meldt zijn dienst, de baas bevestigt, en er komt een bestand uit voor de
+boekhouder. Er zit geen nepdata meer in — het prototype uit fase 0 staat nog in
+de branch `fase-0-prototype`.
 
-Wat er nog niet is, is de verbinding tussen die twee. **De drie schermen
-hieronder draaien nog op nepdata** en weten niets van de database. Dat is fase
-4: het bezorgerscherm als eerste scherm dat echt is.
+Dit is het **dev-project**. Hier staan verzonnen namen in en die blijven hier
+staan; per bedrijf wordt deze repository gekloond met een eigen
+Supabase-project. Zie fase 8 in het bouwplan.
 
-### De schermen (nog prototype)
+### De schermen
 
-Er zit geen database achter en er wordt niets bewaard: ververs de pagina en
-alles staat weer zoals het was. De app doet alsof het donderdag 20 augustus
-2026, 22:15 is, midden in week 34.
-
-Drie schermen:
+Wat je ziet hangt af van wie je bent — de tabbladen volgen je rol.
 
 - `/mijn-week` — de bezorger. Eén tik voor "gedraaid", knoppen voor afwijken,
-  en een vergeten dienst kun je achteraf alsnog invullen.
+  een vergeten dienst kun je achteraf alsnog invullen, en een melding die nog
+  niet bevestigd is kun je aanpassen.
 - `/overzicht` — de baas. Bovenaan alleen afwijkingen, achteraf gemelde en
-  niet-gemelde diensten. Bevestigen kan los of in bulk.
-- `/export` — de boekhouder. Alleen bevestigde diensten, alleen uren.
+  niet-gemelde diensten. Bevestigen los of in bulk, en een dienst verzetten.
+- `/export` — de boekhouder. Alleen bevestigde diensten, alleen uren, als CSV.
+
+Wat er nog moet: installeren bij het eerste bedrijf (fase 7) en deze repo
+opschonen tot boilerplate (fase 8).
 
 ## Opbouw
 
 | Bestand | Waarvoor |
 |---|---|
 | `src/lib/model.ts` | De vorm van de gegevens, één op één met `docs/schema.sql` |
-| `src/lib/nepdata.ts` | Twee weken verzonnen data. Verdwijnt in fase 4 |
 | `src/lib/tijd.ts` | Alles met datums en tijden. De enige plek waar de tijdzone uitmaakt |
-| `src/lib/prototype.svelte.ts` | Toestand in het geheugen. Wordt in fase 4 Supabase |
+| `src/lib/server/wie.ts` | Wie ben ik volgens `personen` — de rol komt hier vandaan, niet uit Auth |
+| `src/lib/server/uren.ts` | Wat de boekhouder krijgt. Het enige bestand dat je aanpast voor een ander formaat |
+| `src/lib/componenten/` | Meldkaart, tijdstappers, statusmerkjes |
 
-De nepdata heeft precies de vorm die Supabase straks teruggeeft, snake_case en
-al. Daardoor krijgen de schermen in fase 4 alleen een andere bron en hoeven ze
-niet opnieuw gebouwd te worden.
+De nepdata had precies de vorm die Supabase teruggeeft, snake_case en al.
+Daardoor kregen de schermen in fase 4 alleen een andere bron en hoefden ze niet
+opnieuw gebouwd te worden. Dat is ook zo gelopen; `model.ts` is er nog en is nu
+één op één het schema.

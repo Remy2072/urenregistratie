@@ -641,20 +641,20 @@ iets herbouwt om restaurantpersoneel toe te laten.
 Schulden die je onderweg bewust hebt gemaakt. Ze staan hier zodat je ze niet
 hoeft te onthouden — en zodat je ziet dat het er minder zijn dan het voelt.
 
-### Het prototype verdwijnt in drieën, niet in één keer
+### Het prototype is weg ✅
 
-Hier stond dat het prototype vanzelf wegvalt zodra het bezorgerscherm echte
-data ophaalt. Dat klopt maar voor een derde: `/mijn-week` is los van de nepdata
-sinds fase 4, maar `/overzicht` en `/export` leunen er nog op en dat blijft zo
-tot fase 5 en 6. Wat er dus nog staat en wanneer het weg mag:
+Hier stond eerst dat het prototype vanzelf zou wegvallen zodra het
+bezorgerscherm echte data ophaalde, en daarna dat dat maar voor een derde
+klopte. Inmiddels is het alle drie gebeurd: `/mijn-week` in fase 4,
+`/overzicht` in fase 5, `/export` in fase 6.
 
-- `src/lib/nepdata.ts` en `src/lib/prototype.svelte.ts` — nu alleen nog in
-  gebruik door het bazenscherm en de export. Weg na fase 6.
-- De scheiding tussen "prototype" en "echt" in `+layout.svelte`: de strook
-  bovenaan en de lijst `prototypePaden`. Die krimpt elke fase; `/mijn-week`
-  staat er niet meer in.
-- `NU` uit `nepdata.ts` — vervangen door `nuInNederland()`, die de klok op de
-  server leest. Het prototype gebruikt `NU` nog voor zijn vaste week 34.
+Toen ook de uitlegpagina op `/` wegviel — die was alleen nuttig zolang er niets
+werkte — hadden `nepdata.ts` en `prototype.svelte.ts` geen gebruikers meer en
+zijn ze verwijderd, samen met de prototypestrook in `+layout.svelte`. `/` stuurt
+je nu door naar jouw scherm.
+
+De demo staat nog in de branch `fase-0-prototype`, en dat is nu de enige plek
+waar hij staat.
 
 ### Los op te ruimen
 
@@ -662,10 +662,10 @@ tot fase 5 en 6. Wat er dus nog staat en wanneer het weg mag:
 |---|---|---|
 | `pg_cron` op de weekuitrol | na een paar handmatige weken | Draait nu met de hand. De regel staat klaar onderaan `weekgeneratie.sql` |
 | `drop function test_schema();` en `test_weekgeneratie();` | wanneer je eraan denkt | Testfuncties uit fase 1 en 3, staan nog in de database |
-| Vercel-deploy | vóór fase 7 | Dubbel bijhouden werkt niet als de app alleen op jouw laptop draait |
+| Vercel-deploy | vóór fase 7, en het eerste wat er nu ligt | Dubbel bijhouden werkt niet als de app alleen op jouw laptop draait — en je kunt het de baas pas op zijn eigen telefoon laten zien als het ergens staat |
 | `.env` op Vercel zetten | tegelijk | Twee waarden, dezelfde als lokaal |
 | Deployment Protection op main | tegelijk | Vanaf fase 4 staan er echte namen en uren in |
-| Branch `fase-0-prototype` | ná fase 5 | Zolang de baas het echte scherm nog niet gezien heeft, is de demo je enige verhaal |
+| Branch `fase-0-prototype` | laten staan | Sinds het prototype uit `main` is, is dit de enige plek waar de demo nog bestaat |
 | `npm audit`: `cookie <0.7.0` | bij een SvelteKit-update | Lage ernst, komt via SvelteKit zelf, er is nog geen fix. `audit fix --force` zou Kit naar 0.0.30 downgraden — niet doen |
 
 ### En één gewoonte
