@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { wieBenIk } from '$lib/server/wie';
+import { isEigenaar, wieBenIk } from '$lib/server/wie';
 import { haalUren } from '$lib/server/uren';
 import {
 	eersteVanDeMaand,
@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const nu = nuInNederland();
 	const ik = await wieBenIk(locals);
 
-	if (ik?.rol !== 'beheerder') return { nu, beheerder: false };
+	if (!isEigenaar(ik)) return { nu, beheerder: false };
 
 	// Standaard deze maand. De baas bevestigt per week, de boekhouder rekent af
 	// per maand -- dus is de maand de periode waarin dit scherm gebruikt wordt.

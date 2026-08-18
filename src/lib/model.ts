@@ -16,7 +16,11 @@ export type Tijd = string;
 /** ISO-tijdstempel, zoals `timestamptz`. */
 export type Tijdstip = string;
 
-export type Rol = 'medewerker' | 'beheerder';
+/**
+ * Een rangorde, geen lijstje. De eigenaar staat boven de manager: die kan
+ * alles behalve de export, en kan geen eigenaar aanraken.
+ */
+export type Rol = 'medewerker' | 'manager' | 'eigenaar';
 
 export type Status =
 	| 'verwacht' // uitgerold uit het sjabloon

@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { wieBenIk } from '$lib/server/wie';
+import { magBeheren, wieBenIk } from '$lib/server/wie';
 import { korteTijd, maandagVan, nuInNederland, plusDagen } from '$lib/tijd';
 
 export type SjabloonRegel = {
@@ -19,7 +19,7 @@ export type SjabloonRegel = {
 export const load: PageServerLoad = async ({ locals }) => {
 	const nu = nuInNederland();
 	const ik = await wieBenIk(locals);
-	if (ik?.rol !== 'beheerder') return { nu, beheerder: false };
+	if (!magBeheren(ik)) return { nu, beheerder: false };
 
 	const supabase = locals.supabase!;
 	const [regels, posten, personen, dienstsoorten] = await Promise.all([
@@ -87,7 +87,7 @@ const tekst = (f: FormData, naam: string) => String(f.get(naam) ?? '').trim();
 
 async function alleenBeheerder(locals: App.Locals) {
 	const ik = await wieBenIk(locals);
-	return ik?.rol === 'beheerder';
+	return magBeheren(ik);
 }
 
 export const actions: Actions = {

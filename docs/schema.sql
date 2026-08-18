@@ -44,7 +44,7 @@ create table personen (
   id             uuid primary key default gen_random_uuid(),
   naam           text        not null,
   rol            text        not null default 'medewerker'
-                             check (rol in ('medewerker', 'beheerder')),
+                             check (rol in ('medewerker', 'manager', 'eigenaar')),
   actief         boolean     not null default true,
   auth_user_id   uuid        unique references auth.users(id) on delete set null,
   aangemaakt_op  timestamptz not null default now()
@@ -244,30 +244,12 @@ create index on mutaties (dienst_id, wanneer);
 
 
 -- ---------------------------------------------------------------------
--- Weergave voor de export naar de boekhouder.
--- Alleen uren, nooit euro's. Loon is de boekhouder zijn werk.
+-- De export naar de boekhouder staat verderop.
 --
--- security_invoker: zonder dit draait een view met de rechten van de
--- eigenaar en omzeilt hij de row level security hieronder -- dan leest
--- elke medewerker via deze view alsnog de uren van de hele ploeg.
+-- Hij hoort hier, bij de tabellen, maar hij leunt op is_eigenaar() en die
+-- functie hoort bij de rechten. Een view kan niet vooruit kijken, dus
+-- staat hij onder aan het rechtenblok hieronder.
 -- ---------------------------------------------------------------------
-create or replace view uren_export
-with (security_invoker = true) as
-select
-  p.naam                                              as medewerker,
-  d.datum,
-  po.naam                                             as post,
-  d.werkelijk_begin                                   as begin,
-  d.werkelijk_eind                                    as einde,
-  extract(epoch from (d.werkelijk_eind - d.werkelijk_begin)) / 3600 as uren,
-  (d.gepland_begin, d.gepland_eind)
-    is distinct from (d.werkelijk_begin, d.werkelijk_eind)          as afwijkend,
-  d.opmerking
-from diensten d
-join personen p  on p.id  = d.persoon_id
-join posten   po on po.id = d.post_id
-where d.status = 'bevestigd'
-order by p.naam, d.datum;
 
 
 -- =====================================================================
@@ -302,6 +284,8 @@ as $$
   select id from personen where auth_user_id = auth.uid();
 $$;
 
+-- is_beheerder() zegt: mag deze persoon beheren. Daar vallen twee rollen
+-- onder, want een manager doet alles behalve de boekhouding.
 create or replace function is_beheerder()
 returns boolean
 language sql
@@ -310,11 +294,55 @@ security definer
 set search_path = public, auth
 as $$
   select coalesce(
-    (select rol = 'beheerder' and actief
+    (select rol in ('manager', 'eigenaar') and actief
        from personen
       where auth_user_id = auth.uid()),
     false);
 $$;
+
+-- En wie is de eigenaar? Alleen nodig voor de export en voor het aanraken
+-- van een andere eigenaar.
+create or replace function is_eigenaar()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select coalesce(
+    (select rol = 'eigenaar' and actief
+       from personen
+      where auth_user_id = auth.uid()),
+    false);
+$$;
+
+
+-- ---------------------------------------------------------------------
+-- Weergave voor de export naar de boekhouder.
+-- Alleen uren, nooit euro's. Loon is de boekhouder zijn werk.
+--
+-- security_invoker: zonder dit draait een view met de rechten van de
+-- eigenaar en omzeilt hij de row level security hieronder -- dan leest
+-- elke medewerker via deze view alsnog de uren van de hele ploeg.
+-- ---------------------------------------------------------------------
+create or replace view uren_export
+with (security_invoker = true) as
+select
+  p.naam                                              as medewerker,
+  d.datum,
+  po.naam                                             as post,
+  d.werkelijk_begin                                   as begin,
+  d.werkelijk_eind                                    as einde,
+  extract(epoch from (d.werkelijk_eind - d.werkelijk_begin)) / 3600 as uren,
+  (d.gepland_begin, d.gepland_eind)
+    is distinct from (d.werkelijk_begin, d.werkelijk_eind)          as afwijkend,
+  d.opmerking
+from diensten d
+join personen p  on p.id  = d.persoon_id
+join posten   po on po.id = d.post_id
+where d.status = 'bevestigd'
+  and is_eigenaar()          -- de boekhouding is van de eigenaar; zie rollen.sql
+order by p.naam, d.datum;
 
 
 -- ---------------------------------------------------------------------
@@ -442,12 +470,17 @@ create policy personen_lezen on personen
   for select to authenticated
   using (is_beheerder() or auth_user_id = auth.uid());
 
+-- Een manager komt niet aan een eigenaar. using is de rij zoals hij was,
+-- with check de rij zoals hij wordt -- die tweede belet dat een manager
+-- iemand (of zichzelf) tot eigenaar promoveert.
 create policy personen_toevoegen on personen
-  for insert to authenticated with check (is_beheerder());
+  for insert to authenticated
+  with check (is_eigenaar() or (is_beheerder() and rol = 'medewerker'));
 
 create policy personen_wijzigen on personen
   for update to authenticated
-  using (is_beheerder()) with check (is_beheerder());
+  using      (is_eigenaar() or (is_beheerder() and rol <> 'eigenaar'))
+  with check (is_eigenaar() or (is_beheerder() and rol <> 'eigenaar'));
 
 -- posten en dienstsoorten: geen persoonsgegevens, iedereen mag lezen
 create policy posten_lezen on posten
@@ -498,6 +531,51 @@ create policy diensten_invoeren on diensten
 create policy diensten_beheren on diensten
   for update to authenticated
   using (is_beheerder()) with check (is_beheerder());
+
+-- ---------------------------------------------------------------------
+-- Rollen zijn van de eigenaar
+--
+-- De policy hierboven houdt een manager bij een eigenaar vandaan, maar niet
+-- bij het veld `rol` zelf: een policy ziet de rij zoals hij was óf zoals hij
+-- wordt, nooit allebei tegelijk. Voor "dit veld mag jij niet veranderen" heb
+-- je dus een trigger nodig -- dezelfde reden als bij
+-- dienst_wijziging_bewaken(), waar een medewerker zijn eigen geplande tijden
+-- niet mag verzetten.
+--
+-- Wat een manager wél mag: iemand aannemen, een naam corrigeren, iemand op
+-- non-actief zetten. Wat hij niet mag: van iemand een manager maken, of van
+-- zichzelf een eigenaar.
+-- ---------------------------------------------------------------------
+create or replace function persoon_wijziging_bewaken()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  -- service role (migraties, scripts) en de eigenaar mogen alles
+  if auth.uid() is null or is_eigenaar() then
+    return new;
+  end if;
+
+  if old.rol = 'eigenaar' then
+    raise exception 'Alleen een eigenaar wijzigt een eigenaar';
+  end if;
+
+  if new.rol is distinct from old.rol then
+    raise exception 'Alleen een eigenaar wijzigt rollen';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists persoon_wijziging_bewaken on personen;
+
+create trigger persoon_wijziging_bewaken
+  before update on personen
+  for each row execute function persoon_wijziging_bewaken();
+
 
 -- mutaties: je leest wat over jou gaat, en verder kan niemand hier iets.
 -- Schrijven doet alleen de trigger hierboven; die draait als eigenaar en

@@ -5,7 +5,7 @@
 
 	// Als beheerder zie je de hele ploeg, als bezorger alleen jezelf. Dat
 	// verschil is precies wat de policies doen.
-	let beheerder = $derived(data.persoon?.rol === 'beheerder');
+	let beheerder = $derived(data.persoon?.rol === 'manager' || data.persoon?.rol === 'eigenaar');
 </script>
 
 <div class="blok">

@@ -32,11 +32,11 @@ insert into personen (naam, rol) values
   ('Teun',  'medewerker'), ('Omar',  'medewerker'),
   ('Lars',  'medewerker');
 
--- Er staat nog geen beheerder in. Zonder die rij kan niemand een dienst
+-- Er staat nog geen eigenaar in. Zonder die rij kan niemand een dienst
 -- bevestigen en blijft alles op 'gemeld' staan -- dan telt er niets mee
 -- in de export. Vul de naam van de baas in:
 --
--- insert into personen (naam, rol) values ('<naam baas>', 'beheerder');
+-- insert into personen (naam, rol) values ('<naam baas>', 'eigenaar');
 --
 -- En koppel bij stap 6 elke persoon aan zijn login:
 --

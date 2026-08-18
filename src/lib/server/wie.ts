@@ -3,6 +3,12 @@ import type { Rol } from '$lib/model';
 
 export type Ik = { id: string; naam: string; rol: Rol };
 
+/** Mag deze persoon beheren? Manager en eigenaar allebei. */
+export const magBeheren = (ik: Ik | null) => ik?.rol === 'manager' || ik?.rol === 'eigenaar';
+
+/** De boekhouding is van de eigenaar. Zie de uitleg in rollen.sql. */
+export const isEigenaar = (ik: Ik | null) => ik?.rol === 'eigenaar';
+
 /**
  * Wie ben ik volgens `personen`?
  *

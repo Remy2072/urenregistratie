@@ -1,13 +1,13 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { wieBenIk } from '$lib/server/wie';
+import { magBeheren, wieBenIk } from '$lib/server/wie';
 import { beheerClient, verzinWachtwoord } from '$lib/server/beheersleutel';
 import { isHalfUur, korteTijd, nuInNederland } from '$lib/tijd';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const nu = nuInNederland();
 	const ik = await wieBenIk(locals);
-	if (ik?.rol !== 'beheerder') return { nu, beheerder: false };
+	if (!magBeheren(ik)) return { nu, beheerder: false };
 
 	const supabase = locals.supabase!;
 	const [posten, dienstsoorten, personen] = await Promise.all([
@@ -67,10 +67,16 @@ function vertaal(fout: { code?: string; message: string }, wat: string): string 
 
 async function alleenBeheerder(locals: App.Locals) {
 	const ik = await wieBenIk(locals);
-	return ik?.rol === 'beheerder' ? ik : null;
+	return magBeheren(ik) ? ik : null;
 }
 
 const tekst = (f: FormData, naam: string) => String(f.get(naam) ?? '').trim();
+
+/** Uit een formulier komt tekst; hier wordt het weer een rol. */
+function alsRol(w: FormDataEntryValue | null): 'medewerker' | 'manager' | 'eigenaar' {
+	const r = String(w);
+	return r === 'eigenaar' || r === 'manager' ? r : 'medewerker';
+}
 const aan = (f: FormData, naam: string) => f.get(naam) !== null;
 
 export const actions: Actions = {
@@ -155,14 +161,17 @@ export const actions: Actions = {
 
 	// ── Mensen ─────────────────────────────────────────────────────────
 	persoonToevoegen: async ({ request, locals }) => {
-		if (!(await alleenBeheerder(locals))) return fail(403, { fout: 'Alleen een beheerder.' });
+		const ik = await alleenBeheerder(locals);
+		if (!ik) return fail(403, { fout: 'Alleen een beheerder.' });
 		const f = await request.formData();
 		const naam = tekst(f, 'naam');
 		if (!naam) return fail(400, { fout: 'Geef een naam.' });
 
-		const { error } = await locals
-			.supabase!.from('personen')
-			.insert({ naam, rol: tekst(f, 'rol') === 'beheerder' ? 'beheerder' : 'medewerker' });
+		// Een manager neemt bezorgers aan; wie er manager wordt beslist de
+		// eigenaar. Staat ook in de policy, zie rollen.sql.
+		const rol = ik.rol === 'eigenaar' ? alsRol(f.get('rol')) : 'medewerker';
+
+		const { error } = await locals.supabase!.from('personen').insert({ naam, rol });
 		if (error) return fail(400, { fout: vertaal(error, 'persoon') });
 		return {
 			gedaan: 'toegevoegd',
@@ -325,20 +334,35 @@ export const actions: Actions = {
 
 		const f = await request.formData();
 		const id = tekst(f, 'id');
-		const rol = tekst(f, 'rol') === 'beheerder' ? 'beheerder' : 'medewerker';
+		const rol = alsRol(f.get('rol'));
 		const actief = aan(f, 'actief');
 
 		// Jezelf degraderen of op non-actief zetten kan het laatste zijn wat je
 		// in deze app doet. Daar is geen weg terug uit zonder de SQL-editor.
-		if (id === ik.id && (rol !== 'beheerder' || !actief)) {
+		if (id === ik.id && (rol !== ik.rol || !actief)) {
 			return fail(400, {
-				fout: 'Je eigen rol of je eigen account kun je hier niet uitzetten — laat een van de andere beheerders dat doen.'
+				fout: 'Je eigen rol of je eigen account kun je hier niet uitzetten — laat iemand anders dat doen.'
 			});
 		}
 
+		// Rollen zijn van de eigenaar. Een manager die dit formulier verstuurt
+		// laat de rol dus staan zoals hij was -- en probeert hij het toch, dan
+		// is er nog de trigger in rollen.sql.
+		const { data: was } = await locals
+			.supabase!.from('personen')
+			.select('rol, naam')
+			.eq('id', id)
+			.maybeSingle();
+		if (!was) return fail(404, { fout: 'Die persoon bestaat niet.' });
+
+		if (ik.rol !== 'eigenaar' && was.rol === 'eigenaar') {
+			return fail(403, { fout: `${was.naam} is eigenaar — daar kan alleen een eigenaar aan.` });
+		}
+		const nieuweRol = ik.rol === 'eigenaar' ? rol : was.rol;
+
 		const { error } = await locals
 			.supabase!.from('personen')
-			.update({ naam: tekst(f, 'naam'), rol, actief })
+			.update({ naam: tekst(f, 'naam'), rol: nieuweRol, actief })
 			.eq('id', id);
 		if (error) return fail(400, { fout: vertaal(error, 'persoon') });
 		return { gedaan: 'opgeslagen' };

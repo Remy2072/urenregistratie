@@ -21,7 +21,8 @@
 
 	let pad = $derived(page.url.pathname);
 	let titel = $derived(titels[pad] ?? 'Urenregistratie');
-	let beheerder = $derived(data.ik?.rol === 'beheerder');
+	let beheerder = $derived(data.ik?.rol === 'manager' || data.ik?.rol === 'eigenaar');
+	let eigenaar = $derived(data.ik?.rol === 'eigenaar');
 </script>
 
 <svelte:head>
@@ -51,7 +52,9 @@
 			{/if}
 			{#if beheerder}
 				<a href="/overzicht" aria-current={pad === '/overzicht' ? 'page' : undefined}>Baas</a>
-				<a href="/export" aria-current={pad === '/export' ? 'page' : undefined}>Boekhouder</a>
+				{#if eigenaar}
+					<a href="/export" aria-current={pad === '/export' ? 'page' : undefined}>Boekhouder</a>
+				{/if}
 				<a href="/beheer" aria-current={pad === '/beheer' ? 'page' : undefined}>Beheer</a>
 			{/if}
 		</nav>

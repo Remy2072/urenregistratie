@@ -9,13 +9,13 @@ import {
 	nuInNederland,
 	plusDagen
 } from '$lib/tijd';
-import { wieBenIk } from '$lib/server/wie';
+import { magBeheren, wieBenIk } from '$lib/server/wie';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const nu = nuInNederland();
 	const ik = await wieBenIk(locals);
 
-	if (ik?.rol !== 'beheerder') {
+	if (!magBeheren(ik)) {
 		return { nu, beheerder: false, maandag: maandagVan(nu.datum) };
 	}
 
@@ -71,7 +71,7 @@ function rechttoe(diensten: Dienst[]): Dienst[] {
 export const actions: Actions = {
 	bevestig: async ({ request, locals }) => {
 		const ik = await wieBenIk(locals);
-		if (ik?.rol !== 'beheerder') return fail(403, { fout: 'Alleen een beheerder bevestigt.' });
+		if (!magBeheren(ik)) return fail(403, { fout: 'Alleen een beheerder bevestigt.' });
 
 		const id = String((await request.formData()).get('id') ?? '');
 		const { error } = await locals
@@ -90,7 +90,7 @@ export const actions: Actions = {
 	 */
 	bevestigAlle: async ({ request, locals }) => {
 		const ik = await wieBenIk(locals);
-		if (ik?.rol !== 'beheerder') return fail(403, { fout: 'Alleen een beheerder bevestigt.' });
+		if (!magBeheren(ik)) return fail(403, { fout: 'Alleen een beheerder bevestigt.' });
 
 		const formulier = await request.formData();
 		const maandag = maandagVan(String(formulier.get('week') ?? ''));
@@ -125,7 +125,7 @@ export const actions: Actions = {
 	 */
 	ruil: async ({ request, locals }) => {
 		const ik = await wieBenIk(locals);
-		if (ik?.rol !== 'beheerder') return fail(403, { fout: 'Alleen een beheerder ruilt.' });
+		if (!magBeheren(ik)) return fail(403, { fout: 'Alleen een beheerder ruilt.' });
 
 		const formulier = await request.formData();
 		const id = String(formulier.get('id') ?? '');

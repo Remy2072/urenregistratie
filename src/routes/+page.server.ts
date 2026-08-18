@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { wieBenIk } from '$lib/server/wie';
+import { magBeheren, wieBenIk } from '$lib/server/wie';
 import type { PageServerLoad } from './$types';
 
 /**
@@ -12,5 +12,5 @@ import type { PageServerLoad } from './$types';
  */
 export const load: PageServerLoad = async ({ locals }) => {
 	const ik = await wieBenIk(locals);
-	redirect(303, ik?.rol === 'beheerder' ? '/overzicht' : '/mijn-week');
+	redirect(303, magBeheren(ik) ? '/overzicht' : '/mijn-week');
 };

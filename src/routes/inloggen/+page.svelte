@@ -56,6 +56,11 @@
 			</button>
 		</div>
 	</form>
+
+<p class="notitie">
+	Wachtwoord kwijt? Vraag je baas — die zet er in een minuut een nieuwe voor je klaar. Er komt geen
+	mail aan te pas, dus je hoeft nergens anders in te loggen om erbij te kunnen.
+</p>
 </div>
 
 <div class="blok">

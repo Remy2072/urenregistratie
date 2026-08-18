@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { wieBenIk } from '$lib/server/wie';
+import { isEigenaar, wieBenIk } from '$lib/server/wie';
 import { bestandsnaam, haalUren, naarCsv } from '$lib/server/uren';
 
 /**
@@ -13,7 +13,7 @@ import { bestandsnaam, haalUren, naarCsv } from '$lib/server/uren';
  */
 export const GET: RequestHandler = async ({ locals, url }) => {
 	const ik = await wieBenIk(locals);
-	if (ik?.rol !== 'beheerder') error(403, 'Alleen een beheerder haalt de uren op.');
+	if (!isEigenaar(ik)) error(403, 'De uren van de hele ploeg zijn voor de eigenaar.');
 
 	const van = url.searchParams.get('van') ?? '';
 	const tot = url.searchParams.get('tot') ?? '';

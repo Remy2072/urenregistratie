@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { Persoon } from '$lib/model';
-import { wieBenIk } from '$lib/server/wie';
+import { magBeheren, wieBenIk } from '$lib/server/wie';
 import { korteTijd, maandagVan, nuInNederland, plusDagen } from '$lib/tijd';
 
 export type RoosterRegel = {
@@ -25,7 +25,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const dezeWeek = maandagVan(nu.datum);
 	const week = maandagVan(url.searchParams.get('week') ?? nu.datum);
 	const zondag = plusDagen(week, 6);
-	const beheerder = ik?.rol === 'beheerder';
+	const beheerder = magBeheren(ik);
 
 	// De view `rooster` en niet `diensten`: die laat een bezorger alleen zijn
 	// eigen rijen zien. Zie de uitleg bij de view in schema.sql.
@@ -123,7 +123,7 @@ export const actions: Actions = {
 	 */
 	wijzig: async ({ request, locals }) => {
 		const ik = await wieBenIk(locals);
-		if (ik?.rol !== 'beheerder') return fail(403, { fout: 'Alleen een beheerder deelt in.' });
+		if (!magBeheren(ik)) return fail(403, { fout: 'Alleen een beheerder deelt in.' });
 
 		const formulier = await request.formData();
 		const id = String(formulier.get('id') ?? '');
@@ -178,7 +178,7 @@ export const actions: Actions = {
 	 */
 	toevoegen: async ({ request, locals }) => {
 		const ik = await wieBenIk(locals);
-		if (ik?.rol !== 'beheerder') return fail(403, { fout: 'Alleen een beheerder deelt in.' });
+		if (!magBeheren(ik)) return fail(403, { fout: 'Alleen een beheerder deelt in.' });
 
 		const formulier = await request.formData();
 		const datum = String(formulier.get('datum') ?? '');
@@ -218,7 +218,7 @@ export const actions: Actions = {
 	 */
 	vervallen: async ({ request, locals }) => {
 		const ik = await wieBenIk(locals);
-		if (ik?.rol !== 'beheerder') return fail(403, { fout: 'Alleen een beheerder deelt in.' });
+		if (!magBeheren(ik)) return fail(403, { fout: 'Alleen een beheerder deelt in.' });
 
 		const id = String((await request.formData()).get('id') ?? '');
 		const { error } = await locals

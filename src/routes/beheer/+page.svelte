@@ -218,13 +218,16 @@
 					>
 						<input type="hidden" name="id" value={p.id} />
 						<label class="veld"><span>Naam</span><input name="naam" value={p.naam} /></label>
-						<label class="veld">
-							<span>Rol</span>
-							<select name="rol">
-								<option value="medewerker" selected={p.rol === 'medewerker'}>Bezorger</option>
-								<option value="beheerder" selected={p.rol === 'beheerder'}>Beheerder</option>
-							</select>
-						</label>
+						{#if data.ik?.rol === 'eigenaar'}
+							<label class="veld">
+								<span>Rol</span>
+								<select name="rol">
+									<option value="medewerker" selected={p.rol === 'medewerker'}>Bezorger</option>
+									<option value="manager" selected={p.rol === 'manager'}>Manager</option>
+									<option value="eigenaar" selected={p.rol === 'eigenaar'}>Eigenaar</option>
+								</select>
+							</label>
+						{/if}
 						<label class="regel" style="gap:0.5rem;margin-top:0.5rem">
 							<input type="checkbox" name="actief" checked={p.actief} />
 							<span class="detail">Werkt hier</span>
@@ -238,7 +241,8 @@
 					<div class="regel">
 						<span class="dag">{p.naam}</span>
 						<span>
-							{#if p.rol === 'beheerder'}<Merk soort="bevestigd" tekst="beheerder" />{/if}
+							{#if p.rol === 'eigenaar'}<Merk soort="bevestigd" tekst="eigenaar" />{/if}
+							{#if p.rol === 'manager'}<Merk soort="gemeld" tekst="manager" />{/if}
 							{#if !p.actief}<Merk soort="afgemeld" tekst="werkt hier niet meer" />{/if}
 							{#if !p.auth_user_id}<Merk soort="achteraf" tekst="geen login" />{/if}
 						</span>
@@ -279,14 +283,24 @@
 		<form method="post" action="?/persoonToevoegen" use:enhance={naarDeMelding}>
 			<p class="regel" style="gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem">
 				<input name="naam" placeholder="Naam" />
-				<select name="rol">
-					<option value="medewerker">Bezorger</option>
-					<option value="beheerder">Beheerder</option>
-				</select>
+				{#if data.ik?.rol === 'eigenaar'}
+					<select name="rol">
+						<option value="medewerker">Bezorger</option>
+						<option value="manager">Manager</option>
+						<option value="eigenaar">Eigenaar</option>
+					</select>
+				{/if}
 				<button class="primair">Toevoegen</button>
 			</p>
 		</form>
 
+		<p class="notitie">
+			<strong>Eigenaar</strong> kan alles, inclusief de export naar de boekhouder.
+			<strong>Manager</strong> kan alles behalve die export en behalve rollen: hij neemt bezorgers
+			aan, corrigeert namen en zet mensen op non-actief, maar wie er manager wordt beslist de
+			eigenaar. Aan een eigenaar komt hij helemaal niet. Dat staat ook in de database en niet
+			alleen in dit scherm.
+		</p>
 		<p class="notitie">
 			Iemand gaat op "werkt hier niet meer", hij wordt niet verwijderd. Anders verdwijnt hij ook
 			uit de weken waarin hij wél gereden heeft, en dan klopt geen enkel oud overzicht meer.
