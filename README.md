@@ -10,6 +10,7 @@ Achtergrond en beslissingen staan in `docs/`:
 | `docs/projectoverzicht.md` | Wat het wordt en waarom, en wat we bewust niet bouwen |
 | `docs/bouwplan.md` | De acht fases, met per fase een "klaar als" |
 | `docs/schema.sql` | Het datamodel, inclusief rechten. Draait op Supabase |
+| `docs/weekgeneratie.sql` | De wekelijkse uitrol van het sjabloon naar diensten |
 
 ## Draaien
 
@@ -20,9 +21,19 @@ npm run dev
 
 ## Waar we nu staan
 
-**Fase 0 — prototype.** Er zit geen database achter en er wordt niets bewaard:
-ververs de pagina en alles staat weer zoals het was. De app doet alsof het
-donderdag 20 augustus 2026, 22:15 is, midden in week 34.
+**Fase 3 af, fase 4 is de volgende.** De database staat en doet zijn werk: het
+schema draait op Supabase, inloggen werkt, en de diensten van een week ontstaan
+vanzelf uit het weekrooster (`select * from rol_week_uit();`).
+
+Wat er nog niet is, is de verbinding tussen die twee. **De drie schermen
+hieronder draaien nog op nepdata** en weten niets van de database. Dat is fase
+4: het bezorgerscherm als eerste scherm dat echt is.
+
+### De schermen (nog prototype)
+
+Er zit geen database achter en er wordt niets bewaard: ververs de pagina en
+alles staat weer zoals het was. De app doet alsof het donderdag 20 augustus
+2026, 22:15 is, midden in week 34.
 
 Drie schermen:
 

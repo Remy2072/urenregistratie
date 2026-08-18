@@ -227,9 +227,11 @@ met bezorgen.
       een nieuwe die hij moet leren.
 - [ ] Hoeveel tijd kost die administratie hem per week? (Bepaalt of dit voor hem
       een project of een hobby is.)
-- [ ] **Afronden:** klaar om 21:20 — wordt dat 21:30 of 21:00? Naar boven of
+- [x] **Afronden:** klaar om 21:20 — wordt dat 21:30 of 21:00? Naar boven of
       naar het dichtstbijzijnde? Hier bestaat nu een ongeschreven gewoonte, en
       zodra het in een app staat wordt het een regel.
+      **Antwoord: het dichtstbijzijnde half uur, knip op `:15` en `:45`.**
+      21:10 wordt 21:00, 21:20 wordt 21:30.
 - [ ] Werkt het restaurantrooster hetzelfde? Andere dienstlengtes, pauzes? Als
       het afwijkt, wil je dat weten vóór je het model vastzet.
 - [ ] Wie mag een dienst bevestigen of aanpassen — alleen hij, of ook iemand

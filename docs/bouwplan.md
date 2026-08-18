@@ -200,7 +200,7 @@ scherm. Tien mensen, jij zet ze er zelf in.
 
 ---
 
-## Fase 3 — Weekgeneratie
+## Fase 3 — Weekgeneratie ✅
 
 **Doel:** diensten ontstaan zonder dat iemand iets doet.
 
@@ -222,6 +222,58 @@ Twee dingen om goed te doen:
 **Klaar als:** twee keer uitrollen geeft evenveel diensten als één keer, en een
 week na een sjabloonwijziging rolt correct uit terwijl de week ervóór
 onaangetast blijft.
+
+> **Gedaan.** `weekgeneratie.sql` en `weekgeneratie-test.sql`. Twee functies,
+> omdat kijken en doen twee dingen zijn:
+>
+> ```sql
+> select * from sjabloon_slots(current_date);   -- wat zou hij doen
+> select * from rol_week_uit();                 -- doe het, en vertel wat je deed
+> ```
+>
+> `rol_week_uit` geeft een regel terug per slot met wat ermee gebeurd is:
+> `nieuw`, `stond er al`, `stond er al — vervallen`, `overgeslagen — die dag al
+> een andere dienst`. Dat rapport is de reden dat je hem een paar weken met de
+> hand kán draaien zonder daarna in de tabel te gaan kijken.
+>
+> Twaalf controles, en ze staan alle twaalf op 'goed' op Supabase zelf --
+> dezelfde uitkomst als vooraf op een lokale PostgreSQL. Week 34 is er in één
+> keer uitgerold: 17 diensten, allemaal 'nieuw'.
+>
+> **De beslissing die tijdens het bouwen naar boven kwam: de uitrol raakt nooit
+> een bestaande dienst aan.** Alleen inserts, geen updates. Dat klinkt
+> vanzelfsprekend tot je bedenkt wat de alternatieven doen — een uitrol die
+> "bijwerkt" zet zondagnacht de melding van iemand terug op `verwacht` omdat het
+> sjabloon iets anders zegt. Vandaar drie dingen die anders zijn dan het
+> bouwplan hierboven voorzag:
+>
+> - **Twee `not exists` in plaats van alleen `on conflict`.** `on conflict` kan
+>   maar naar één index kijken, en er zijn er twee die hier kunnen afgaan:
+>   `diensten_post_bezet` én `diensten_persoon_bezet`. Die tweede gaat af zodra
+>   de baas één dienst geruild heeft — dan staat iemand ergens waar het sjabloon
+>   hem niet verwacht, en zonder die extra check loopt niet die ene regel maar
+>   de hele uitrol stuk.
+> - **De slotcontrole kijkt bewust niet naar status.** Overal elders in het
+>   schema betekent `vervallen` "telt niet mee", maar hier niet: een geannuleerde
+>   dienst is een besluit van de baas en geen leeg gaatje. Zou de uitrol eroverheen
+>   kijken, dan zet elke volgende run zijn annulering stilzwijgend terug.
+> - **Cron draait maandag 01:00 UTC, niet maandag 00:00.** pg_cron rekent in de
+>   tijdzone van de database en die staat op Supabase in UTC. "Maandag 00:00"
+>   is daar zondag 22:00 in de zomer en 23:00 in de winter — een half jaar lang
+>   rolt hij dan de vórige week uit. Dit is precies de tijdzonefout uit de
+>   uitgangspunten hierboven, maar dan op de plek waar je hem niet zoekt.
+>
+> **En één vondst in het schema, gevonden door het te draaien.** `geldig_vanaf`
+> stond op `current_date`. Draai je `schema.sql` op een woensdag, dan geldt het
+> sjabloon pas vanaf woensdag en rolt de eerste week alleen woensdag tot en met
+> zondag uit — zonder foutmelding, want die maandag bestáát dan niet als
+> sjabloonregel. Het sjabloon onderaan `schema.sql` zet nu expliciet de maandag
+> van die week. Belangrijk bij de verhuizing naar het account van de baas in
+> fase 4, want daar draai je dat bestand opnieuw.
+>
+> **Wat nog niet af is: cron staat er niet op.** Dat is met opzet — eerst een
+> paar weken met de hand, zoals hierboven staat. De regel staat klaar onderaan
+> `weekgeneratie.sql`.
 
 ---
 
@@ -251,10 +303,22 @@ Eén scherm: jouw week. Per dienst één regel, en de dienst van vandaag bovenaa
   Het vlaggetje is afleidbaar (`gemeld_op::date > datum`), je hoeft niets extra
   op te slaan.
 
-**Blokkerende vraag:** wat gebeurt er bij 21:20? De database staat alleen hele
-en halve uren toe, dus de `+30`-knop dwingt al een keuze af. Welke kant je
-afrondt is aan de baas, en dat wil je weten vóór je deze knoppen bouwt — daarna
-is het een regel waar mensen zich naar gaan gedragen.
+**Afronden — beantwoord: naar het dichtstbijzijnde half uur.** De database
+staat alleen hele en halve uren toe, dus de `+30`-knop dwong al een keuze af.
+De regel is nu: de knip ligt op `:15` en `:45`. Klaar om 21:10 meldt 21:00,
+klaar om 21:20 meldt 21:30.
+
+Twee dingen die daaruit volgen voor dit scherm:
+
+- **De knoppen rekenen niet, de bezorger kiest.** Er is geen tijdkiezer en dus
+  ook nergens een tijd met minuten die afgerond moet worden — je stapt van half
+  uur naar half uur. Afronden is daarom geen code maar een afspraak, en die
+  afspraak hoort op het scherm te staan, niet in een handleiding. Eén regel bij
+  de stappers is genoeg.
+- **Bij twijfel niet naar boven.** Dit is de helft van de gevallen waarin het
+  in het nadeel van de bezorger uitpakt, en dat is precies waarom het een
+  afspraak van de baas moest zijn en niet van jou. Leg hem uit zoals hij is —
+  hij middelt over een maand weg — en verzin er geen coulanceregel bij.
 
 **Hier komt de opsplitsing in componenten.** In het prototype staat alles nog
 in drie pagina's, en dat is daar prima: die schermen waren om te laten zien,
@@ -361,14 +425,14 @@ dat moment is precies het verkeerde om er dan pas over te beginnen.
 
 | Vraag | Blokkeert | Aan wie |
 |---|---|---|
-| Afronden: 21:20 wordt 21:00 of 21:30? | Fase 4 | Baas |
+| ~~Afronden: 21:20 wordt 21:00 of 21:30?~~ | ~~Fase 4~~ | **Beantwoord: dichtstbijzijnde half uur** |
 | Wie mag bevestigen? | Fase 5 | Baas |
 | Niet-gemelde dienst: namens invullen? | Fase 5 | Baas |
 | Exportformaat | Fase 6 | Boekhouder |
 | Hoe ziet de huidige Excel eruit? | Fase 6 | Baas |
 | Werkt het restaurantrooster hetzelfde? | Ná fase 7 | Baas |
 
-De eerste vier moet je op tijd stellen. De laatste is geen blokkade maar
+Er staan er nog drie open die je op tijd moet stellen. De laatste is geen blokkade maar
 bepaalt of het model straks de keuken aankan, dus je wil het antwoord vóór je
 iets herbouwt om restaurantpersoneel toe te laten.
 
@@ -396,9 +460,10 @@ weg. Dat is geen apart klusje maar een gevolg:
 
 | Wat | Wanneer | Waarom |
 |---|---|---|
+| `pg_cron` op de weekuitrol | na een paar handmatige weken | Draait nu met de hand. De regel staat klaar onderaan `weekgeneratie.sql` |
 | Componenten splitsen | begin fase 4 | Nu staat alles in drie pagina's. Doe het vóór je erin gaat werken, niet erna |
 | Alle routes achter de login | fase 4 | Nu is alleen `/ik` beschermd; de rest draait nog op nepdata en hoeft dat niet |
-| `drop function test_schema();` | wanneer je eraan denkt | Testfunctie uit fase 1, staat nog in de database |
+| `drop function test_schema();` en `test_weekgeneratie();` | wanneer je eraan denkt | Testfuncties uit fase 1 en 3, staan nog in de database |
 | `/ik` een plek geven | fase 4 of 5 | Handig als controle, maar geen scherm dat een bezorger nodig heeft |
 | Vercel-deploy | vóór fase 7 | Dubbel bijhouden werkt niet als de app alleen op jouw laptop draait |
 | `.env` op Vercel zetten | tegelijk | Twee waarden, dezelfde als lokaal |

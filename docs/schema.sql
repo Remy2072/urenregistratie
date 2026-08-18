@@ -586,9 +586,16 @@ insert into personen (naam, rol) values
 -- Namen in plaats van uuid's, want die uuid's kent niemand. De joins
 -- zoeken ze op, en als je een naam verkeerd typt komt die regel er
 -- gewoon niet in -- controleer daarom onderaan of het er 17 zijn.
+--
+-- geldig_vanaf staat expliciet op de maandag van deze week, en niet op
+-- de standaard current_date. Draai je dit bestand op een woensdag, dan
+-- zou het sjabloon pas vanaf woensdag gelden en rolt de uitrol van fase
+-- 3 die week een halve week uit -- zonder foutmelding, want die maandag
+-- bestaat dan gewoon niet als sjabloonregel. Je ziet het pas als iemand
+-- vraagt waar zijn maandag gebleven is.
 -- ---------------------------------------------------------------------
-insert into sjabloon_regels (weekdag, post_id, persoon_id, dienstsoort_id)
-select r.weekdag, po.id, pe.id, ds.id
+insert into sjabloon_regels (weekdag, post_id, persoon_id, dienstsoort_id, geldig_vanaf)
+select r.weekdag, po.id, pe.id, ds.id, date_trunc('week', current_date)::date
 from (values
   (1, 'Bus 2', 'Remy',  'vroeg'),
   (1, 'Bus 3', 'Daan',  'laat'),
