@@ -8,8 +8,9 @@ Achtergrond en beslissingen staan in `docs/`:
 | Bestand | Waarvoor |
 |---|---|
 | `docs/projectoverzicht.md` | Wat het wordt en waarom, en wat we bewust niet bouwen |
-| `docs/bouwplan.md` | De acht fases, met per fase een "klaar als" |
-| `docs/schema.sql` | Het datamodel, inclusief rechten. Draait op Supabase |
+| `docs/bouwplan.md` | De fases, met per fase een "klaar als" |
+| `docs/schema.sql` | Het datamodel, inclusief rechten. Voor elk bedrijf hetzelfde |
+| `docs/startdata.sql` | Posten, diensten en het weekrooster. Het enige dat per bedrijf verschilt |
 | `docs/weekgeneratie.sql` | De wekelijkse uitrol van het sjabloon naar diensten |
 
 ## Draaien

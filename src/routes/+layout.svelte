@@ -48,6 +48,9 @@
 			<p class="datum">
 				{dagNaam(data.nu.datum)}
 				{datumLang(data.nu.datum)}, {data.nu.tijd} · week {isoWeek(data.nu.datum)}
+				{#if data.ik}
+					· <a href="/ik">{data.ik.naam}</a>
+				{/if}
 			</p>
 		{/if}
 
@@ -56,11 +59,6 @@
 			<a href="/mijn-week" aria-current={pad === '/mijn-week' ? 'page' : undefined}>Bezorger</a>
 			<a href="/overzicht" aria-current={pad === '/overzicht' ? 'page' : undefined}>Baas</a>
 			<a href="/export" aria-current={pad === '/export' ? 'page' : undefined}>Boekhouder</a>
-			{#if data.ingelogd}
-				<a href="/ik" aria-current={pad === '/ik' ? 'page' : undefined}>Ik</a>
-			{:else}
-				<a href="/inloggen" aria-current={pad === '/inloggen' ? 'page' : undefined}>Inloggen</a>
-			{/if}
 		</nav>
 	</header>
 

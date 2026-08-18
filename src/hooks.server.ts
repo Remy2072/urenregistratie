@@ -6,8 +6,18 @@
 // kom je nergens bij. Daarom staan de policies in schema.sql en niet hier.
 
 import { createServerClient } from '@supabase/ssr';
-import type { Handle } from '@sveltejs/kit';
+import { redirect, type Handle } from '@sveltejs/kit';
+import type { Session, User } from '@supabase/supabase-js';
 import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
+
+/**
+ * Waar je zonder login mag komen. Al het andere gaat naar /inloggen.
+ *
+ * Vanaf fase 4 staan er echte namen en gewerkte uren in de database. Dat een
+ * scherm toevallig nog nepdata toont is dan geen reden om de deur open te
+ * laten staan -- en het is precies het soort uitzondering dat je later vergeet.
+ */
+const openbaar = ['/inloggen'];
 
 /** Zonder .env is er geen database. Zie .env.example. */
 export const ingesteld = Boolean(PUBLIC_SUPABASE_URL && PUBLIC_SUPABASE_KEY);
@@ -36,22 +46,37 @@ export const handle: Handle = async ({ event, resolve }) => {
 	 * getSession() leest alleen het koekje en kijkt niet of het klopt -- daar
 	 * kun je dus niets op baseren. getUser() vraagt het na bij Supabase. Deze
 	 * functie doet allebei en geeft niets terug als de tweede stap faalt.
+	 *
+	 * De uitkomst wordt per verzoek onthouden. Zonder dat vraagt één pagina het
+	 * drie keer na bij Supabase -- de deurcontrole hieronder, de layout en de
+	 * pagina zelf -- en dat zijn drie netwerkverzoeken voor hetzelfde antwoord.
 	 */
+	let onthouden: { session: Session | null; user: User | null } | null = null;
+
 	event.locals.veiligeSessie = async () => {
+		if (onthouden) return onthouden;
+
 		const supabase = event.locals.supabase!;
 		const {
 			data: { session }
 		} = await supabase.auth.getSession();
-		if (!session) return { session: null, user: null };
+		if (!session) return (onthouden = { session: null, user: null });
 
 		const {
 			data: { user },
 			error
 		} = await supabase.auth.getUser();
-		if (error) return { session: null, user: null };
+		if (error) return (onthouden = { session: null, user: null });
 
-		return { session, user };
+		return (onthouden = { session, user });
 	};
+
+	// De deur. event.route.id is null voor alles wat geen pagina is -- statische
+	// bestanden, de favicon -- en dat hoeft hier niet langs.
+	if (event.route.id && !openbaar.includes(event.url.pathname)) {
+		const { user } = await event.locals.veiligeSessie();
+		if (!user) redirect(303, '/inloggen');
+	}
 
 	return resolve(event, {
 		filterSerializedResponseHeaders: (naam) =>

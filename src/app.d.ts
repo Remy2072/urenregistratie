@@ -14,6 +14,8 @@ declare global {
 		}
 		interface PageData {
 			ingelogd: boolean;
+			/** Je naam uit `personen`. Null als de login nog niet gekoppeld is. */
+			ik: { naam: string } | null;
 			/** Datum en tijd in Nederland, gelezen op de server. */
 			nu: { datum: string; tijd: string };
 		}

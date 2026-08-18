@@ -5,7 +5,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// Al ingelogd? Dan hoef je dit scherm niet te zien.
 	if (!locals.supabase) return { ingesteld: false };
 	const { user } = await locals.veiligeSessie();
-	if (user) redirect(303, '/ik');
+	if (user) redirect(303, '/mijn-week');
 	return { ingesteld: true };
 };
 
@@ -35,6 +35,6 @@ export const actions: Actions = {
 			return fail(400, { email, fout: 'E-mailadres of wachtwoord klopt niet.' });
 		}
 
-		redirect(303, '/ik');
+		redirect(303, '/mijn-week');
 	}
 };

@@ -64,6 +64,7 @@ voren omdat er nu iets van afhangt.
 | 5 | Bazenscherm | De baas hoeft niet meer over te typen | 1 weekend |
 | 6 | Export | De boekhouder krijgt wat hij wil | 1 avond |
 | 7 | Overgang | Het bonnetje mag weg | 3 weken doorlooptijd |
+| 8 | Boilerplate | Een tweede bedrijf zonder codewijziging | 1 weekend |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
 dus reken op twee tot drie maanden doorlooptijd. Dat is prima: er is geen
@@ -111,12 +112,14 @@ aan fase 4 begonnen.
 **Doel:** een fundament waarvan je hebt gecontroleerd dat het klopt, niet
 waarvan je aanneemt dat het klopt.
 
-1. Supabase-project aanmaken en `schema.sql` in één keer plakken. Het sjabloon
-   zit er onderaan in, dus na deze stap staan er 17 regels: per weekdag 2, 2,
-   2, 2, 3, 3, 3. Dat telt het bestand zelf af als laatste query.
-2. Beheerder toevoegen (die regel staat uitgecommentarieerd onderaan het
-   bestand). Zonder beheerder kan niemand bevestigen en telt er niets mee in
-   de export.
+1. Supabase-project aanmaken en `schema.sql` in één keer plakken, en daarna
+   `startdata.sql`. Dat tweede bestand is het enige dat per bedrijf verschilt:
+   posten, dienstsoorten, mensen en het weekrooster. Na die stap staan er 17
+   sjabloonregels — per weekdag 2, 2, 2, 2, 3, 3, 3 — en dat telt het bestand
+   zelf af als laatste query.
+2. Beheerder toevoegen (die regel staat uitgecommentarieerd onderaan
+   `startdata.sql`). Zonder beheerder kan niemand bevestigen en telt er niets
+   mee in de export.
 3. `schema-test.sql` plakken. Dat probeert negen dingen die niet mogen en geeft
    een tabel terug waarin elke regel 'goed' hoort te zeggen.
 
@@ -421,6 +424,47 @@ dat moment is precies het verkeerde om er dan pas over te beginnen.
 
 ---
 
+## Fase 8 — Boilerplate
+
+**Doel:** een tweede bedrijf staat er binnen een avond op, zonder dat je één
+`.svelte`-bestand aanraakt.
+
+Dit is de fase die er tijdens het bouwen bij is gekomen. Deze repository is niet
+de app van Tjon maar het **dev-project**: hier moet alles werken, met verzonnen
+namen. Is hij af, dan kloon je hem per bedrijf — eigen naam, eigen
+Supabase-project, door jou ingericht.
+
+**Dit is geen multi-tenancy**, en daarmee blijft het binnen wat
+`projectoverzicht.md` buiten scope zet. Eén installatie per bedrijf, één
+database per bedrijf. Twee bedrijven komen elkaar nooit tegen omdat ze elkaars
+bestaan niet kennen — een stuk goedkoper dan het alternatief, en bij tien man
+per zaak ook eerlijker.
+
+De afstand is klein, want het schema was al generiek: er staat `post` en geen
+`bus`, en niets bedrijfsspecifieks in de structuur. Wat er nog moet gebeuren:
+
+- **De naam uit de code.** Nu staat "Urenregistratie" hard in `+layout.svelte`.
+  Bedrijfsnaam, kleur en favicon horen in één configuratiebestand.
+- **`schema-test.sql` losmaken van de data.** Die zoekt nu `'Bus 2'` en
+  `'vroeg'` op naam op. Bij een bedrijf met andere posten faalt hij op iets wat
+  niet stuk is. Laat hem pakken wat er is in plaats van wat hij verwacht.
+- **Een installatiehandleiding.** Zes stappen: schema, startdata,
+  weekgeneratie, logins koppelen, `.env`, deploy. Als jij het over een half jaar
+  opnieuw doet ben je die volgorde kwijt.
+- **De afrondregel als keuze.** Halve uren zitten in `is_half_uur()` en de
+  richting staat als afspraak op het scherm. Een ander bedrijf werkt misschien
+  met kwartieren. Dat is één functie en één regel tekst — maar wel op twee
+  plekken, dus schrijf op dat ze bij elkaar horen.
+
+**Klaar als:** je een tweede bedrijf hebt opgezet en de enige bestanden die je
+hebt aangeraakt `startdata.sql` en het configuratiebestand zijn.
+
+**Niet nu doen.** Dit staat hier zodat het niet in fase 4 tot en met 7 sluipt.
+Eerst moet het bij één bedrijf echt werken; een boilerplate van iets dat nog
+nooit een maand heeft gedraaid is een boilerplate van je aannames.
+
+---
+
 ## Open vragen, gekoppeld aan hun fase
 
 | Vraag | Blokkeert | Aan wie |
@@ -443,28 +487,28 @@ iets herbouwt om restaurantpersoneel toe te laten.
 Schulden die je onderweg bewust hebt gemaakt. Ze staan hier zodat je ze niet
 hoeft te onthouden — en zodat je ziet dat het er minder zijn dan het voelt.
 
-### Verdwijnt vanzelf in fase 4
+### Het prototype verdwijnt in drieën, niet in één keer
 
-Op het moment dat het bezorgerscherm echte data ophaalt, valt het prototype
-weg. Dat is geen apart klusje maar een gevolg:
+Hier stond dat het prototype vanzelf wegvalt zodra het bezorgerscherm echte
+data ophaalt. Dat klopt maar voor een derde: `/mijn-week` is los van de nepdata
+sinds fase 4, maar `/overzicht` en `/export` leunen er nog op en dat blijft zo
+tot fase 5 en 6. Wat er dus nog staat en wanneer het weg mag:
 
-- `src/lib/nepdata.ts` — de twee verzonnen weken.
-- `src/lib/prototype.svelte.ts` — `meld()` en `bevestig()` worden twee
-  Supabase-aanroepen.
-- `NU` maakt plaats voor `vandaagInNederland()`. Die functie staat al in
-  `tijd.ts` en wordt nu nog niet gebruikt.
+- `src/lib/nepdata.ts` en `src/lib/prototype.svelte.ts` — nu alleen nog in
+  gebruik door het bazenscherm en de export. Weg na fase 6.
 - De scheiding tussen "prototype" en "echt" in `+layout.svelte`: de strook
-  bovenaan, de lijst `prototypePaden` en de vaste datum in de kop.
+  bovenaan en de lijst `prototypePaden`. Die krimpt elke fase; `/mijn-week`
+  staat er niet meer in.
+- `NU` uit `nepdata.ts` — vervangen door `nuInNederland()`, die de klok op de
+  server leest. Het prototype gebruikt `NU` nog voor zijn vaste week 34.
 
 ### Los op te ruimen
 
 | Wat | Wanneer | Waarom |
 |---|---|---|
+| Verhuizen naar het account van de baas | fase 4, vóór je een week echt gaat melden | Hier gaan echte namen en uren in. Schema en weekgeneratie erop, sjabloon overtypen, `auth_user_id` koppelen, `.env` om |
 | `pg_cron` op de weekuitrol | na een paar handmatige weken | Draait nu met de hand. De regel staat klaar onderaan `weekgeneratie.sql` |
-| Componenten splitsen | begin fase 4 | Nu staat alles in drie pagina's. Doe het vóór je erin gaat werken, niet erna |
-| Alle routes achter de login | fase 4 | Nu is alleen `/ik` beschermd; de rest draait nog op nepdata en hoeft dat niet |
 | `drop function test_schema();` en `test_weekgeneratie();` | wanneer je eraan denkt | Testfuncties uit fase 1 en 3, staan nog in de database |
-| `/ik` een plek geven | fase 4 of 5 | Handig als controle, maar geen scherm dat een bezorger nodig heeft |
 | Vercel-deploy | vóór fase 7 | Dubbel bijhouden werkt niet als de app alleen op jouw laptop draait |
 | `.env` op Vercel zetten | tegelijk | Twee waarden, dezelfde als lokaal |
 | Deployment Protection op main | tegelijk | Vanaf fase 4 staan er echte namen en uren in |
