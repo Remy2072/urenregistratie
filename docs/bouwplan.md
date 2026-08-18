@@ -63,7 +63,7 @@ voren omdat er nu iets van afhangt.
 | 4 | Bezorgerscherm | Jij hebt geen bonnetje meer nodig | 2 weekenden |
 | 5 | Bazenscherm | De baas hoeft niet meer over te typen | 1 weekend |
 | 6 | Export | De boekhouder krijgt wat hij wil | 1 avond |
-| 7 | Overgang | Het bonnetje mag weg | 3 weken doorlooptijd |
+| 7 | Installatie en overgang | Eerste echte draai, dan mag het bonnetje weg | 3 weken doorlooptijd |
 | 8 | Boilerplate | Een tweede bedrijf zonder codewijziging | 1 weekend |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
@@ -305,6 +305,14 @@ Eén scherm: jouw week. Per dienst één regel, en de dienst van vandaag bovenaa
 - **Achteraf melden** — een dienst van gisteren of eergisteren kan gewoon nog.
   Het vlaggetje is afleidbaar (`gemeld_op::date > datum`), je hoeft niets extra
   op te slaan.
+- **Corrigeren** — een melding die nog niet bevestigd is, kun je aanpassen.
+  Dit stond niet in de oorspronkelijke lijst en kwam pas boven bij het testen:
+  het scherm sprak `schema.sql` tegen. Daar staat op `diensten_melden`
+  `using (... status in ('verwacht', 'gemeld'))` — de database liet een tweede
+  melding altijd al toe — maar het scherm liet je er na één tik niet meer bij.
+  Eén misklik op "Gedraaid" en je moest de baas vragen. Zodra hij bevestigd
+  heeft is het wél zijn oordeel en houdt de policy je tegen; dat is de grens en
+  die klopte al.
 
 **Afronden — beantwoord: naar het dichtstbijzijnde half uur.** De database
 staat alleen hele en halve uren toe, dus de `+30`-knop dwong al een keuze af.
@@ -330,8 +338,16 @@ de meldkaart, de statusmerkjes, de tijdstappers en de dienstregel als losse
 componenten hebben. Doe die splitsing aan het begin van de fase, niet aan het
 eind — dan bouw je de rest er meteen mee.
 
-**Klaar als:** jij een volle week je eigen diensten meldt zonder één bonnetje te
-schrijven. Vanaf hier draait dit naast het bonnetje, niet in plaats daarvan.
+**Klaar als:** je in dit project een week lang je diensten meldt — gedraaid,
+afwijkend, en eentje achteraf — en dat alle drie in de database terechtkomen
+zoals je ze hebt ingevoerd.
+
+*Dit stond eerst anders:* "jij meldt een volle week je eigen diensten zonder
+bonnetje". Dat kan hier niet en dat moet ook niet. Deze repository is het
+dev-project en er gaan nooit echte namen of uren in — zie fase 8. Naast het
+bonnetje draaien hoort bij de eerste echte installatie, en die staat nu in fase
+7. De reden is simpel: je gaat niet bij de baas van Tjon zitten proefdraaien
+terwijl er nog bugs in zitten.
 
 **Niet doen:** ruilen. Dat is een beheerdersactie en die zit in fase 5.
 
@@ -407,13 +423,24 @@ Nooit euro's. Uren eruit, loon is zijn werk.
 
 ---
 
-## Fase 7 — Overgang
+## Fase 7 — Eerste installatie en overgang
 
 **Doel:** het bonnetje mag weg — en hij besluit dat, niet jij.
 
-Twee tot drie weken dubbel bijhouden: bonnetje én app. Elke week vergelijken.
-Zit er verschil in, dan is dat een bug of een misverstand over de regels, en
-allebei wil je die nu vinden.
+**Hier gaat de app pas voor het eerst echt draaien.** Fase 4 tot en met 6 zijn
+af in het dev-project, met verzonnen namen: de bezorger meldt, de baas
+bevestigt, de export komt eruit. Pas als die hele keten rond is zet je een
+installatie op voor Tjon — eigen Supabase-project op het account van de baas,
+`schema.sql`, een eigen `startdata.sql` met de echte ploeg, `weekgeneratie.sql`,
+een login per persoon, `.env` om.
+
+Die volgorde is de hele reden dat het dev-project bestaat. Ga je bij de baas
+proefdraaien terwijl er nog bugs in zitten, dan is hij je testomgeving en kost
+elke fout je zijn vertrouwen in plaats van een middag.
+
+Daarna twee tot drie weken dubbel bijhouden: bonnetje én app. Elke week
+vergelijken. Zit er verschil in, dan is dat een bug of een misverstand over de
+regels, en allebei wil je die nu vinden.
 
 Zet vóór deze fase op papier wat je oplevert en wat er ná oplevering wel en niet
 bij zit. Je bent bezorger én bouwer van het systeem dat jouw uren registreert;
@@ -506,7 +533,6 @@ tot fase 5 en 6. Wat er dus nog staat en wanneer het weg mag:
 
 | Wat | Wanneer | Waarom |
 |---|---|---|
-| Verhuizen naar het account van de baas | fase 4, vóór je een week echt gaat melden | Hier gaan echte namen en uren in. Schema en weekgeneratie erop, sjabloon overtypen, `auth_user_id` koppelen, `.env` om |
 | `pg_cron` op de weekuitrol | na een paar handmatige weken | Draait nu met de hand. De regel staat klaar onderaan `weekgeneratie.sql` |
 | `drop function test_schema();` en `test_weekgeneratie();` | wanneer je eraan denkt | Testfuncties uit fase 1 en 3, staan nog in de database |
 | Vercel-deploy | vóór fase 7 | Dubbel bijhouden werkt niet als de app alleen op jouw laptop draait |

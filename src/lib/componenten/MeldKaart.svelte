@@ -8,6 +8,11 @@
 
 	De knop verandert van tekst zodra je iets bijstelt. Dat is met opzet: je ziet
 	wat je gaat melden vóór je meldt, en niet pas op het bazenscherm.
+
+	Dezelfde kaart doet het corrigeren van een melding die nog niet bevestigd is.
+	Dat mocht altijd al -- in schema.sql staat op diensten_melden
+	`using (... status in ('verwacht', 'gemeld'))` -- alleen bood het scherm het
+	niet aan. Eén misklik op "Gedraaid" en je moest de baas vragen.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
@@ -20,8 +25,27 @@
 	let {
 		dienst,
 		post,
-		achteraf = false
-	}: { dienst: Dienst; post: string; achteraf?: boolean } = $props();
+		achteraf = false,
+		corrigeren = false,
+		sluit
+	}: {
+		dienst: Dienst;
+		post: string;
+		achteraf?: boolean;
+		corrigeren?: boolean;
+		sluit?: () => void;
+	} = $props();
+
+	// Corrigeer je een melding, dan begin je bij wat er gemeld is. Meld je voor
+	// het eerst, dan bij wat er gepland stond. Het verschil dat je te zien
+	// krijgt gaat in beide gevallen over de planning -- dat is wat de baas
+	// straks beoordeelt.
+	let basisBegin = $derived(
+		corrigeren && dienst.werkelijk_begin ? dienst.werkelijk_begin : dienst.gepland_begin
+	);
+	let basisEind = $derived(
+		corrigeren && dienst.werkelijk_eind ? dienst.werkelijk_eind : dienst.gepland_eind
+	);
 
 	// Bijstelling in minuten ten opzichte van de planning. Niet de tijd zelf,
 	// zodat "terug naar gepland" altijd gewoon de tegenovergestelde tik is.
@@ -29,8 +53,8 @@
 	let bijEind = $state(0);
 	let bezig = $state(false);
 
-	let begin = $derived(verschuif(dienst.gepland_begin, bijBegin));
-	let eind = $derived(verschuif(dienst.gepland_eind, bijEind));
+	let begin = $derived(verschuif(basisBegin, bijBegin));
+	let eind = $derived(verschuif(basisEind, bijEind));
 	let gewijzigd = $derived(bijBegin !== 0 || bijEind !== 0);
 	let verschil = $derived(
 		minuten(eind) - minuten(begin) - (minuten(dienst.gepland_eind) - minuten(dienst.gepland_begin))
@@ -43,8 +67,8 @@
 	 * met één tik terugdraait is meer in de weg dan behulpzaam.
 	 */
 	function stap(veld: 'begin' | 'eind', delta: number) {
-		const nieuwBegin = minuten(dienst.gepland_begin) + (veld === 'begin' ? bijBegin + delta : bijBegin);
-		const nieuwEind = minuten(dienst.gepland_eind) + (veld === 'eind' ? bijEind + delta : bijEind);
+		const nieuwBegin = minuten(basisBegin) + (veld === 'begin' ? bijBegin + delta : bijBegin);
+		const nieuwEind = minuten(basisEind) + (veld === 'eind' ? bijEind + delta : bijEind);
 		if (nieuwBegin < 0 || nieuwEind > 23 * 60 + 30) return;
 		if (nieuwEind - nieuwBegin < 30) return;
 		if (veld === 'begin') bijBegin += delta;
@@ -80,6 +104,7 @@
 			return async ({ update }) => {
 				await update();
 				bezig = false;
+				sluit?.();
 			};
 		}}
 	>
@@ -87,9 +112,14 @@
 		<input type="hidden" name="begin" value={begin} />
 		<input type="hidden" name="eind" value={eind} />
 		<div class="knoppen">
-			<button class="groot primair" disabled={bezig}>
+			{#if corrigeren}
+				<button type="button" onclick={() => sluit?.()} disabled={bezig}>Laat maar</button>
+			{/if}
+			<button class="groot primair" disabled={bezig || (corrigeren && !gewijzigd)}>
 				{#if bezig}
 					Bezig…
+				{:else if corrigeren}
+					Opslaan {begin} – {eind}
 				{:else if gewijzigd}
 					Melden {begin} – {eind}
 				{:else}

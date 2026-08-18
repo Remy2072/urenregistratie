@@ -33,6 +33,11 @@
 	let dezeWeek = $derived(data.diensten.filter((d) => d.datum >= data.maandag));
 	let komtNog = $derived(dezeWeek.filter((d) => d.status === 'verwacht' && !teMelden(d)));
 	let afgehandeld = $derived(dezeWeek.filter((d) => d.status !== 'verwacht'));
+
+	// Welke gemelde dienst je op dit moment aan het corrigeren bent. Alleen
+	// 'gemeld' mag nog; zodra de baas hem bevestigd heeft is het zijn oordeel
+	// en niet meer jouw invoer. De database houdt dat ook zo tegen.
+	let corrigeert = $state<string | null>(null);
 </script>
 
 {#if form?.fout}
@@ -94,26 +99,44 @@
 			<h2>Gedaan</h2>
 			{#each afgehandeld as d (d.id)}
 				{@const verschil = afwijkingInMinuten(d)}
-				<div class="kaart">
-					<DienstRegel dienst={d} post={post(d)} />
-					<div class="regel">
-						<span class="detail tijden">
-							{#if d.werkelijk_begin && d.werkelijk_eind}
-								{d.werkelijk_begin} – {d.werkelijk_eind}
-								· {urenTekst(duurInUren(d.werkelijk_begin, d.werkelijk_eind))} uur
-							{:else}
-								{d.gepland_begin} – {d.gepland_eind}
-							{/if}
-						</span>
-						<span>
-							{#if verschil !== 0}
-								<Merk soort="afwijking" tekst={afwijkingTekst(verschil)} />
-							{/if}
-							<Merk soort={d.status} />
-						</span>
+				{#if corrigeert === d.id}
+					<MeldKaart
+						dienst={d}
+						post={post(d)}
+						corrigeren
+						sluit={() => (corrigeert = null)}
+					/>
+				{:else}
+					<div class="kaart">
+						<DienstRegel dienst={d} post={post(d)} />
+						<div class="regel">
+							<span class="detail tijden">
+								{#if d.werkelijk_begin && d.werkelijk_eind}
+									{d.werkelijk_begin} – {d.werkelijk_eind}
+									· {urenTekst(duurInUren(d.werkelijk_begin, d.werkelijk_eind))} uur
+								{:else}
+									{d.gepland_begin} – {d.gepland_eind}
+								{/if}
+							</span>
+							<span>
+								{#if verschil !== 0}
+									<Merk soort="afwijking" tekst={afwijkingTekst(verschil)} />
+								{/if}
+								<Merk soort={d.status} />
+							</span>
+						</div>
+						{#if d.status === 'gemeld'}
+							<div class="knoppen">
+								<button type="button" onclick={() => (corrigeert = d.id)}>Aanpassen</button>
+							</div>
+						{/if}
 					</div>
-				</div>
+				{/if}
 			{/each}
+			<p class="notitie">
+				Verkeerd getikt? Zolang de baas hem nog niet bevestigd heeft kun je een melding
+				aanpassen. Daarna is het zijn oordeel en gaat het via hem.
+			</p>
 		</div>
 	{/if}
 
