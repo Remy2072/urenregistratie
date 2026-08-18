@@ -280,7 +280,7 @@ onaangetast blijft.
 
 ---
 
-## Fase 4 — Bezorgerscherm
+## Fase 4 — Bezorgerscherm ✅
 
 **Doel:** jij hebt geen bonnetje meer nodig.
 
@@ -348,6 +348,33 @@ dev-project en er gaan nooit echte namen of uren in — zie fase 8. Naast het
 bonnetje draaien hoort bij de eerste echte installatie, en die staat nu in fase
 7. De reden is simpel: je gaat niet bij de baas van Tjon zitten proefdraaien
 terwijl er nog bugs in zitten.
+
+> **Gedaan.** `/mijn-week` haalt je eigen diensten uit Supabase en meldt ze
+> terug. De componenten staan los in `src/lib/componenten/` — `MeldKaart`,
+> `TijdStapper`, `DienstRegel`, `Merk` — en die splitsing is aan het begin van
+> de fase gedaan, niet aan het eind.
+>
+> Getoetst als Daan: maandag stond open met het merkje achteraf, "Gedraaid"
+> zette hem op `gemeld` met 5 uur, en aanpassen naar 21:30 gaf `+30 min` en
+> 5,5 uur.
+>
+> Drie dingen die tijdens het bouwen naar boven kwamen:
+>
+> - **De klok wordt op de server gelezen**, in de load, en niet in een
+>   component. Anders rekent de browser mee met de tijdzone van de telefoon en
+>   ziet iemand op vakantie een andere week dan zijn collega hier.
+> - **De week ervóór wordt meegeladen.** "Gisteren kan gewoon nog" moet ook op
+>   maandag gelden, en dan ligt gisteren in de vorige week. Alleen wat daar nog
+>   openstaat komt op het scherm.
+> - **Postgres geeft een `time` terug als `'16:00:00'`.** Cosmetisch in de
+>   weergave, maar `afwijkend()` vergelijkt die tijden als tekst — zo zou elke
+>   dienst als afwijking binnenkomen. `korteTijd()` snijdt het af op de plek
+>   waar het binnenkomt, en dat is één plek.
+>
+> En alle routes zitten achter de login, via één deur in `hooks.server.ts` in
+> plaats van een wachter per route. Gevolg: de demo staat er ook achter. Wil je
+> de baas `/overzicht` laten zien, dan kan dat op jouw scherm of met een account
+> voor hem.
 
 **Niet doen:** ruilen. Dat is een beheerdersactie en die zit in fase 5.
 
