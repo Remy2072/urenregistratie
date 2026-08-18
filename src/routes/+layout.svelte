@@ -17,10 +17,10 @@
 		'/ik': 'Ingelogd'
 	};
 
-	// Het prototype draait op nepdata en een vast moment in week 34; alles
-	// onder /inloggen en /ik praat met de echte database. Dat verschil moet
-	// zichtbaar zijn, anders denkt iemand dat de demo echt is.
-	const prototypePaden = ['/', '/mijn-week', '/overzicht', '/export'];
+	// Wat nog op nepdata draait. /mijn-week is er in fase 4 uit gehaald en
+	// praat nu met de database; /overzicht en /export volgen in fase 5 en 6.
+	// Het verschil moet zichtbaar blijven, anders denkt iemand dat de demo echt is.
+	const prototypePaden = ['/', '/overzicht', '/export'];
 
 	let pad = $derived(page.url.pathname);
 	let titel = $derived(titels[pad] ?? 'Urenregistratie');
@@ -45,7 +45,10 @@
 				{datumLang(NU.datum)}, {NU.tijd} · week {isoWeek(NU.datum)}
 			</p>
 		{:else}
-			<p class="datum">Echte database</p>
+			<p class="datum">
+				{dagNaam(data.nu.datum)}
+				{datumLang(data.nu.datum)}, {data.nu.tijd} · week {isoWeek(data.nu.datum)}
+			</p>
 		{/if}
 
 		<nav class="tabs">

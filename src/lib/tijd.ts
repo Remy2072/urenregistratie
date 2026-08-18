@@ -131,14 +131,50 @@ export function maandagVan(datum: Datum): Datum {
 }
 
 /**
- * Welke dag is het nu, hier?
+ * Hoe laat is het nu, hier?
  *
  * Dit is de enige functie in de app die de echte klok gebruikt, en daarom de
  * enige plek waar de tijdzone uitmaakt. 'en-CA' geeft toevallig precies
- * YYYY-MM-DD. In het prototype wordt hij niet gebruikt -- daar staat NU vast
- * in nepdata.ts -- maar hij hoort hier zodat er in fase 4 geen tweede plek
- * ontstaat.
+ * YYYY-MM-DD; 'en-GB' geeft 00:00 om middernacht waar 'nl-NL' er in sommige
+ * browsers 24:00 van maakt.
+ *
+ * Roep hem aan op de server, in een load-functie, en geef de uitkomst door aan
+ * het scherm. Doe je het in een component, dan rekent de browser mee met de
+ * tijdzone van de telefoon -- en dan ziet iemand op vakantie een andere week
+ * dan zijn collega hier.
  */
+export function nuInNederland(): { datum: Datum; tijd: Tijd } {
+	const nu = new Date();
+	return {
+		datum: new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam' }).format(nu),
+		tijd: new Intl.DateTimeFormat('en-GB', {
+			timeZone: 'Europe/Amsterdam',
+			hour: '2-digit',
+			minute: '2-digit',
+			hour12: false
+		}).format(nu)
+	};
+}
+
 export function vandaagInNederland(): Datum {
-	return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam' }).format(new Date());
+	return nuInNederland().datum;
+}
+
+/**
+ * Postgres geeft een `time` terug als '16:00:00'; overal in deze app is een
+ * tijd 'HH:MM'. Snij dat af zodra het binnenkomt, want de rest van de app
+ * vergelijkt tijden als tekst -- afwijkend() kijkt of werkelijk_begin gelijk
+ * is aan gepland_begin, en '16:00' is niet gelijk aan '16:00:00'.
+ */
+export function korteTijd(t: Tijd | null): Tijd | null {
+	return t === null ? null : t.slice(0, 5);
+}
+
+/**
+ * Dezelfde regel als is_half_uur() in schema.sql. De database is en blijft de
+ * baas -- dit is er alleen zodat de app een nette zin kan zeggen in plaats van
+ * een constraint-fout door te geven.
+ */
+export function isHalfUur(t: Tijd): boolean {
+	return /^([01]\d|2[0-3]):(00|30)$/.test(t);
 }

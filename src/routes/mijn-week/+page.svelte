@@ -1,196 +1,125 @@
 <script lang="ts">
 	import type { Dienst } from '$lib/model';
-	import { MAANDAG_34, NU, personen, postNaam } from '$lib/nepdata';
-	import { meld, staat } from '$lib/prototype.svelte';
-	import {
-		afwijkingInMinuten,
-		afwijkingTekst,
-		dagNaam,
-		datumKort,
-		duurInUren,
-		minuten,
-		plusDagen,
-		urenTekst,
-		verschuif
-	} from '$lib/tijd';
+	import DienstRegel from '$lib/componenten/DienstRegel.svelte';
+	import MeldKaart from '$lib/componenten/MeldKaart.svelte';
+	import Merk from '$lib/componenten/Merk.svelte';
+	import { afwijkingInMinuten, afwijkingTekst, duurInUren, minuten, urenTekst } from '$lib/tijd';
+	import type { ActionData, PageData } from './$types';
 
-	const eindeWeek = plusDagen(MAANDAG_34, 6);
+	let { data, form }: { data: PageData; form: ActionData } = $props();
 
-	let mijnWeek = $derived(
-		staat.diensten
-			.filter((d) => d.persoon_id === staat.ikId && d.datum >= MAANDAG_34 && d.datum <= eindeWeek)
-			.sort((a, b) => a.datum.localeCompare(b.datum))
-	);
+	const post = (d: Dienst) => data.posten[d.post_id] ?? 'onbekende post';
 
-	/** De dienst is voorbij maar er is nog niets mee gedaan. */
+	/**
+	 * De dienst is afgelopen en er is nog niets mee gedaan.
+	 *
+	 * Let op het verschil met het bazenscherm: daar telt een dienst pas de dag
+	 * erna als "niet gemeld". Hier staat hij open zodra hij voorbij is, want jij
+	 * bent degene die hem nu kan invullen.
+	 */
 	function teMelden(d: Dienst): boolean {
 		if (d.status !== 'verwacht') return false;
-		if (d.datum < NU.datum) return true;
-		return d.datum === NU.datum && minuten(d.gepland_eind) <= minuten(NU.tijd);
+		if (d.datum < data.nu.datum) return true;
+		return d.datum === data.nu.datum && minuten(d.gepland_eind) <= minuten(data.nu.tijd);
 	}
 
-	let openstaand = $derived(mijnWeek.filter(teMelden));
-	let komtNog = $derived(mijnWeek.filter((d) => d.status === 'verwacht' && !teMelden(d)));
-	let afgehandeld = $derived(mijnWeek.filter((d) => d.status !== 'verwacht'));
+	// Openstaand mag uit de week ervoor komen -- op maandag ligt gisteren daar.
+	// Vandaag bovenaan: dat is de dienst die je op dit moment komt melden.
+	let openstaand = $derived(
+		data.diensten.filter(teMelden).sort((a, b) => b.datum.localeCompare(a.datum))
+	);
 
-	/** Per dienst hoeveel minuten begin en eind zijn bijgesteld. Reset bij melden. */
-	type Bijstelling = { begin: number; eind: number };
-	let bijstelling = $state<Record<string, Bijstelling>>({});
-
-	function tijden(d: Dienst) {
-		const b = bijstelling[d.id] ?? { begin: 0, eind: 0 };
-		return {
-			begin: verschuif(d.gepland_begin, b.begin),
-			eind: verschuif(d.gepland_eind, b.eind)
-		};
-	}
-
-	function stel(d: Dienst, veld: 'begin' | 'eind', delta: number) {
-		const huidig = bijstelling[d.id] ?? { begin: 0, eind: 0 };
-		const nieuw = { ...huidig, [veld]: huidig[veld] + delta };
-		const begin = minuten(d.gepland_begin) + nieuw.begin;
-		const eind = minuten(d.gepland_eind) + nieuw.eind;
-
-		// Dezelfde grenzen als het schema: eind na begin, en alles binnen één
-		// kalenderdag. Zie dienst_werkelijk_klopt in schema.sql.
-		if (begin < 0 || eind > 23 * 60 + 30) return;
-		if (eind - begin < 30) return;
-
-		bijstelling[d.id] = nieuw;
-	}
-
-	function melden(d: Dienst) {
-		const t = tijden(d);
-		meld(d, t.begin, t.eind);
-		delete bijstelling[d.id];
-	}
-
-	const ik = $derived(personen.find((p) => p.id === staat.ikId));
-	const bezorgers = personen.filter((p) => p.rol === 'medewerker');
+	// De rest van het scherm gaat alleen over deze week.
+	let dezeWeek = $derived(data.diensten.filter((d) => d.datum >= data.maandag));
+	let komtNog = $derived(dezeWeek.filter((d) => d.status === 'verwacht' && !teMelden(d)));
+	let afgehandeld = $derived(dezeWeek.filter((d) => d.status !== 'verwacht'));
 </script>
 
-{#snippet kop(d: Dienst)}
-	<div class="regel">
-		<span class="dag">{dagNaam(d.datum)} {datumKort(d.datum)}</span>
-		<span class="detail">{postNaam(d.post_id)}</span>
-	</div>
-{/snippet}
-
-{#if openstaand.length > 0}
-	<div class="blok">
-		<h2>{openstaand.length === 1 ? 'Nog invullen' : `Nog invullen (${openstaand.length})`}</h2>
-
-		{#each openstaand as d (d.id)}
-			{@const t = tijden(d)}
-			{@const gewijzigd = t.begin !== d.gepland_begin || t.eind !== d.gepland_eind}
-			{@const verschil =
-				minuten(t.eind) - minuten(t.begin) - (minuten(d.gepland_eind) - minuten(d.gepland_begin))}
-			<div class="kaart nu">
-				{@render kop(d)}
-				<p class="detail" style="margin:0.2rem 0 0">
-					Gepland <span class="tijden">{d.gepland_begin} – {d.gepland_eind}</span>
-					{#if d.datum < NU.datum}
-						· <span class="merk achteraf">achteraf</span>
-					{/if}
-				</p>
-
-				<p class="uitkomst">
-					<span class="tijden">{t.begin} – {t.eind}</span>
-					{#if verschil !== 0}
-						<span class="merk afwijking">{afwijkingTekst(verschil)}</span>
-					{/if}
-				</p>
-
-				<div class="stelrij">
-					<span class="stellabel">Begin</span>
-					<button onclick={() => stel(d, 'begin', -30)}>−30</button>
-					<button onclick={() => stel(d, 'begin', 30)}>+30</button>
-				</div>
-				<div class="stelrij">
-					<span class="stellabel">Einde</span>
-					<button onclick={() => stel(d, 'eind', -30)}>−30</button>
-					<button onclick={() => stel(d, 'eind', 30)}>+30</button>
-					<button onclick={() => stel(d, 'eind', 60)}>+60</button>
-				</div>
-
-				<div class="knoppen">
-					<button class="groot primair" onclick={() => melden(d)}>
-						{gewijzigd ? `Melden ${t.begin} – ${t.eind}` : 'Gedraaid'}
-					</button>
-				</div>
-			</div>
-		{/each}
-
-		{#if openstaand.some((d) => d.datum < NU.datum)}
-			<p class="notitie">
-				Die van maandag was je vergeten. Geen ritje terug en geen collega bellen: je vult hem nu
-				alsnog in. De baas ziet erbij staan dat het achteraf was.
-			</p>
-		{/if}
-	</div>
+{#if form?.fout}
+	<p class="fout">{form.fout}</p>
 {/if}
 
-{#if komtNog.length > 0}
+{#if !data.ik}
 	<div class="blok">
-		<h2>Komt nog</h2>
-		{#each komtNog as d (d.id)}
-			<div class="kaart">
-				{@render kop(d)}
-				<div class="regel">
-					<span class="detail tijden">{d.gepland_begin} – {d.gepland_eind}</span>
-					<span class="merk verwacht">verwacht</span>
-				</div>
-			</div>
-		{/each}
-		<p class="notitie">
-			Kun je niet? Dat gaat via de baas, niet hier — hij verzet de dienst en dan staat hij bij je
-			collega in het scherm. Zo blijft er één plek waar staat wie er die avond echt gereden heeft.
+		<h2>Nog niet gekoppeld</h2>
+		<p class="detail">
+			Je bent ingelogd, maar deze login hangt nog niet aan een persoon in het rooster. Dat is één
+			regel in de database — vraag of <code>auth_user_id</code> bij je naam gezet wordt.
 		</p>
 	</div>
-{/if}
+{:else}
+	{#if openstaand.length > 0}
+		<div class="blok">
+			<h2>{openstaand.length === 1 ? 'Nog invullen' : `Nog invullen (${openstaand.length})`}</h2>
 
-{#if afgehandeld.length > 0}
-	<div class="blok">
-		<h2>Gedaan</h2>
-		{#each afgehandeld as d (d.id)}
-			{@const verschil = afwijkingInMinuten(d)}
-			<div class="kaart">
-				{@render kop(d)}
-				<div class="regel">
-					<span class="detail tijden">
-						{#if d.werkelijk_begin && d.werkelijk_eind}
-							{d.werkelijk_begin} – {d.werkelijk_eind}
-							· {urenTekst(duurInUren(d.werkelijk_begin, d.werkelijk_eind))} uur
-						{:else}
-							{d.gepland_begin} – {d.gepland_eind}
-						{/if}
-					</span>
-					<span>
-						{#if verschil !== 0}
-							<span class="merk afwijking">{afwijkingTekst(verschil)}</span>
-						{/if}
-						<span class="merk {d.status}">{d.status}</span>
-					</span>
-				</div>
-			</div>
-		{/each}
-	</div>
-{/if}
-
-<div class="blok">
-	<h2>Prototype</h2>
-	<p class="detail">
-		Je kijkt nu als <strong>{ik?.naam}</strong>. In fase 2 komt dit uit je login; hier is het een
-		keuzelijst zodat je kunt laten zien dat iedereen alleen zijn eigen week ziet.
-	</p>
-	<p>
-		<select bind:value={staat.ikId}>
-			{#each bezorgers as p (p.id)}
-				<option value={p.id}>{p.naam}</option>
+			{#each openstaand as d (d.id)}
+				<MeldKaart dienst={d} post={post(d)} achteraf={d.datum < data.nu.datum} />
 			{/each}
-		</select>
-	</p>
-	{#if mijnWeek.length === 0}
-		<p class="leeg">{ik?.naam} staat deze week niet ingeroosterd.</p>
+
+			<p class="notitie">
+				Tijden gaan per half uur. Klaar om 21:20 meld je als 21:30, om 21:10 als 21:00 — het
+				dichtstbijzijnde half uur, met de knip op kwart over en kwart voor.
+			</p>
+
+			{#if openstaand.some((d) => d.datum < data.nu.datum)}
+				<p class="notitie">
+					Een dienst van gisteren kun je gewoon nu nog invullen. De baas ziet erbij staan dat het
+					achteraf was.
+				</p>
+			{/if}
+		</div>
 	{/if}
-</div>
+
+	{#if komtNog.length > 0}
+		<div class="blok">
+			<h2>Komt nog</h2>
+			{#each komtNog as d (d.id)}
+				<div class="kaart">
+					<DienstRegel dienst={d} post={post(d)} />
+					<div class="regel">
+						<span class="detail tijden">{d.gepland_begin} – {d.gepland_eind}</span>
+						<Merk soort="verwacht" />
+					</div>
+				</div>
+			{/each}
+			<p class="notitie">
+				Kun je niet? Dat gaat via de baas, niet hier — hij verzet de dienst en dan staat hij bij je
+				collega in het scherm. Zo blijft er één plek waar staat wie er die avond echt gereden heeft.
+			</p>
+		</div>
+	{/if}
+
+	{#if afgehandeld.length > 0}
+		<div class="blok">
+			<h2>Gedaan</h2>
+			{#each afgehandeld as d (d.id)}
+				{@const verschil = afwijkingInMinuten(d)}
+				<div class="kaart">
+					<DienstRegel dienst={d} post={post(d)} />
+					<div class="regel">
+						<span class="detail tijden">
+							{#if d.werkelijk_begin && d.werkelijk_eind}
+								{d.werkelijk_begin} – {d.werkelijk_eind}
+								· {urenTekst(duurInUren(d.werkelijk_begin, d.werkelijk_eind))} uur
+							{:else}
+								{d.gepland_begin} – {d.gepland_eind}
+							{/if}
+						</span>
+						<span>
+							{#if verschil !== 0}
+								<Merk soort="afwijking" tekst={afwijkingTekst(verschil)} />
+							{/if}
+							<Merk soort={d.status} />
+						</span>
+					</div>
+				</div>
+			{/each}
+		</div>
+	{/if}
+
+	{#if dezeWeek.length === 0 && openstaand.length === 0}
+		<div class="blok">
+			<p class="leeg">Je staat deze week niet ingeroosterd.</p>
+		</div>
+	{/if}
+{/if}

@@ -14,6 +14,8 @@ declare global {
 		}
 		interface PageData {
 			ingelogd: boolean;
+			/** Datum en tijd in Nederland, gelezen op de server. */
+			nu: { datum: string; tijd: string };
 		}
 	}
 }
