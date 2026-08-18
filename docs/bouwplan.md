@@ -799,6 +799,7 @@ waar hij staat.
 
 | Wat | Wanneer | Waarom |
 |---|---|---|
+| **`rollen.sql` opnieuw draaien op Supabase** | eerstvolgende keer dat je het project opent | Er is een stuk bij gekomen dat `huidige_persoon_id()` naar `actief` laat kijken. Zolang dat niet gedraaid is, kan iemand die op non-actief staat technisch nog bij zijn eigen diensten. Het bestand is veilig om twee keer te draaien |
 | `pg_cron` op de weekuitrol | na een paar handmatige weken | Draait nu met de hand. De regel staat klaar onderaan `weekgeneratie.sql` |
 | `drop function test_schema();` en `test_weekgeneratie();` | wanneer je eraan denkt | Testfuncties uit fase 1 en 3, staan nog in de database |
 | Vercel-deploy | vóór fase 7, en het eerste wat er nu ligt | Dubbel bijhouden werkt niet als de app alleen op jouw laptop draait — en je kunt het de baas pas op zijn eigen telefoon laten zien als het ergens staat |
