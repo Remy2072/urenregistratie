@@ -9,6 +9,9 @@
 
 	const titels: Record<string, string> = {
 		'/mijn-week': 'Mijn week',
+		'/beschikbaarheid': 'Beschikbaarheid',
+		'/rooster': 'Rooster',
+		'/beheer': 'Beheer',
 		'/overzicht': 'Weekoverzicht',
 		'/export': 'Export',
 		'/inloggen': 'Inloggen',
@@ -37,12 +40,18 @@
 		</p>
 
 		<nav class="tabs">
+			<a href="/rooster" aria-current={pad === '/rooster' ? 'page' : undefined}>Rooster</a>
 			{#if data.bezorger}
 				<a href="/mijn-week" aria-current={pad === '/mijn-week' ? 'page' : undefined}>Mijn week</a>
+				<a
+					href="/beschikbaarheid"
+					aria-current={pad === '/beschikbaarheid' ? 'page' : undefined}>Wanneer ik kan</a
+				>
 			{/if}
 			{#if beheerder}
 				<a href="/overzicht" aria-current={pad === '/overzicht' ? 'page' : undefined}>Baas</a>
 				<a href="/export" aria-current={pad === '/export' ? 'page' : undefined}>Boekhouder</a>
+				<a href="/beheer" aria-current={pad === '/beheer' ? 'page' : undefined}>Beheer</a>
 			{/if}
 		</nav>
 	</header>

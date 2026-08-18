@@ -62,7 +62,7 @@ rooster.** Het systeem weet al dat jij vrijdag 16:00–21:00 op Bus 3 staat.
 |---|---|
 | **Geen loonberekening** | Minimumloon is leeftijdsafhankelijk en verandert elk halfjaar. Zodra jij euro's uitrekent, ben jij verantwoordelijk voor fouten in iemands salaris. Lever uren; de boekhouder maakt er geld van. |
 | **Geen App Store-app** | €100/jaar voor niets. Een mobielvriendelijke webapp die je op je beginscherm zet, doet hetzelfde. Werkt op iPhone én Android, updaten zonder review. |
-| **Het rooster niet uit WhatsApp halen** | Dat werkt en heeft geen probleem. Haal je het weg en de app hapert één keer, dan is de groepsapp binnen een week terug en heb je twee waarheden. |
+| ~~**Het rooster niet uit WhatsApp halen**~~ | **Teruggedraaid — zie fase 9 in het bouwplan.** Het bezwaar klopte: haal je het rooster weg en de app hapert één keer, dan is de groepsapp binnen een week terug en heb je twee waarheden. Wat dat oplost is dat de app het WhatsApp-bericht zélf maakt, om te kopiëren en te plakken. Eén waarheid (de app), één kanaal (de groep). WhatsApp wordt niet vervangen maar bediend. |
 | **Geen multi-tenancy** | Klassieke plek waar je per ongeluk de uren van bedrijf A aan bedrijf B laat zien. Bouw voor één bedrijf, netjes generiek. Tweede klant = tweede instance. |
 | **Restaurantpersoneel nog niet** | Begin met de bezorgers: één rol, tien man, jij zit er zelf in en merkt direct wat niet werkt. Het model kan de keuken later aan. |
 

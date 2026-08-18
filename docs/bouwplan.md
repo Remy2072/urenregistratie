@@ -65,6 +65,7 @@ voren omdat er nu iets van afhangt.
 | 6 | Export | De boekhouder krijgt wat hij wil | 1 avond |
 | 7 | Installatie en overgang | Eerste echte draai, dan mag het bonnetje weg | 3 weken doorlooptijd |
 | 8 | Boilerplate | Een tweede bedrijf zonder codewijziging | 1 weekend |
+| 9 | Rooster | Beschikbaarheid ophalen en het rooster in de app maken | 2 weekenden |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
 dus reken op twee tot drie maanden doorlooptijd. Dat is prima: er is geen
@@ -619,6 +620,86 @@ nooit een maand heeft gedraaid is een boilerplate van je aannames.
 
 ---
 
+## Fase 9 — Rooster
+
+**Doel:** het rooster ontstaat in de app in plaats van in de groepsapp, en
+niemand hoeft meer terug te scrollen om te weten wanneer hij werkt.
+
+Deze fase draait iets om dat in `projectoverzicht.md` bewust buiten scope
+stond: *het rooster niet uit WhatsApp halen.* Dat bezwaar was goed en het is
+niet vervallen — "haal je het weg en de app hapert één keer, dan is de groepsapp
+binnen een week terug en heb je twee waarheden."
+
+Wat het oplost is de laatste stap hieronder: **de app maakt het
+WhatsApp-bericht.** De baas klikt het rooster in elkaar, drukt op kopiëren en
+plakt het in de groep. Eén waarheid — de app — en één kanaal — de groep.
+WhatsApp wordt niet vervangen maar bediend. Bouw je die knop niet, dan gaat dit
+bezwaar alsnog op en moet je deze fase niet beginnen.
+
+### Wat erin zit
+
+1. **Beschikbaarheid invullen.** Elke bezorger zet per weekdag of hij kan.
+2. **Het staat de volgende week al ingevuld.** Geen bevestiging nodig, wel aan
+   te passen.
+3. **Dashboard voor de baas:** wie kan welke dag.
+4. **Roostertab,** zichtbaar voor iedereen: wie staat er deze week op welke bus
+   en hoe laat. Dat is het scherm dat het terugscrollen in WhatsApp vervangt.
+5. **Rooster maken** door namen op bussen te zetten, en een knop die er een
+   bericht van maakt voor de groepsapp.
+
+### Het sjabloon blijft de basis
+
+*Beslist bij het opschrijven van deze fase.* De week rolt uit zoals nu, via
+`rol_week_uit()`, en de baas verzet alleen wat afwijkt. Beschikbaarheid is
+daarbij een signaal en geen invoer: "Lars heeft vrijdag weggezet" kleurt die
+dienst, en dan sleep je er iemand anders in.
+
+Het alternatief — elke week vanaf nul plannen — geeft meer vrijheid en kost elke
+week werk, ook in de vier weken op de vijf dat er niets verandert. Bij Tjon
+staat het rooster grotendeels vast, dus dat is een slechte ruil.
+
+### Twee soorten "ik kan niet"
+
+Hier zit het addertje, en het is de moeite waard om er even bij stil te staan.
+
+*"De waarden van vorige week staan er automatisch in"* betekent letterlijk
+overnemen: zet iemand deze week vrijdag weg omdat hij één keer naar een bruiloft
+moet, dan staat vrijdag volgende week ook weg. En de week daarna. Niemand die
+het merkt, want er staat gewoon wat er stond.
+
+Er zijn dus twee dingen die allebei "ik kan niet" heten:
+
+- **Structureel** — "ik heb op vrijdag college". Dat verandert een paar keer per
+  jaar.
+- **Incidenteel** — "deze vrijdag ben ik weg". Dat geldt één week.
+
+Het voorstel is om dat te bouwen zoals het sjabloon en de diensten al werken:
+een **standaardbeschikbaarheid** per persoon per weekdag, en per week de
+**afwijkingen** daarop. Dan is "volgende week staat het al ingevuld" gewoon de
+standaard, en is een incidentele afmelding er een voor één week. Wie iets
+structureels wil wijzigen krijgt er een keuze bij: *ook voortaan.*
+
+Dat is één vinkje extra en het scheelt het gesprek waarin iemand zegt dat hij al
+twee maanden geen vrijdag meer krijgt.
+
+### Waarop
+
+Slepen op laptop of tablet, aantikken op de telefoon — dat is besloten.
+Slepen op een klein scherm is bewerkelijk en foutgevoelig, dus daar wordt het
+"tik een bus aan, kies een naam". Twee bediening en, één scherm eronder.
+
+### Wanneer
+
+**Na fase 7 of ervoor, maar niet ertussendoor.** Ga je installeren, dan wil je
+niet halverwege het rooster omgooien. Doe je fase 9 eerst, dan ziet de baas
+meteen het geheel — en dat is precies wat hij te zien krijgt als je het hem
+verkoopt.
+
+**Klaar als:** de baas het rooster van een week in de app maakt, op kopiëren
+drukt, en dat bericht in de groepsapp zet zonder er iets aan te veranderen.
+
+---
+
 ## Open vragen, gekoppeld aan hun fase
 
 | Vraag | Blokkeert | Aan wie |
@@ -682,7 +763,11 @@ fase een kwartier, zeg wat er niet klopt, en dat gaat mee in de volgende. De
 
 Staat ook in `projectoverzicht.md`, maar hier omdat scope juist tijdens het
 bouwen uitloopt en niet tijdens het plannen: geen loonberekening, geen App
-Store-app, geen rooster in de app, geen multi-tenancy, geen restaurantpersoneel.
+Store-app, geen multi-tenancy, geen restaurantpersoneel.
+
+*"Geen rooster in de app" stond in dit rijtje en staat er niet meer.* Zie fase
+9 — en zie ook wat daar over die omkering staat, want het oorspronkelijke
+bezwaar was goed.
 
 Komt er tijdens een fase iets bij dat hier niet in staat, dan is dat geen
 uitbreiding maar een volgende fase. Schrijf het op en maak eerst af waar je mee

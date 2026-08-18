@@ -130,6 +130,13 @@ export function maandagVan(datum: Datum): Datum {
 	return plusDagen(datum, 1 - (d.getUTCDay() || 7));
 }
 
+/** 'maandag' bij 1, 'zondag' bij 7 -- zonder dat je een datum nodig hebt. */
+export function weekdagNaam(weekdag: number): string {
+	// 5 januari 2026 was een maandag. Elke maandag voldoet; deze staat vast
+	// zodat de uitkomst niet van vandaag afhangt.
+	return dagNaam(plusDagen('2026-01-05', weekdag - 1));
+}
+
 /** De eerste van de maand waar deze datum in valt. */
 export function eersteVanDeMaand(datum: Datum): Datum {
 	return `${datum.slice(0, 7)}-01`;
