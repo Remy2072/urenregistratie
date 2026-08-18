@@ -65,7 +65,7 @@ voren omdat er nu iets van afhangt.
 | 6 | Export | De boekhouder krijgt wat hij wil | 1 avond |
 | 7 | Installatie en overgang | Eerste echte draai, dan mag het bonnetje weg | 3 weken doorlooptijd |
 | 8 | Boilerplate | Een tweede bedrijf zonder codewijziging | 1 weekend |
-| 9 | Rooster | Beschikbaarheid ophalen en het rooster in de app maken | 2 weekenden |
+| 9 | Rooster en beheer | Beschikbaarheid, het rooster in de app, en de baas die zelf kan instellen | 2 weekenden |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
 dus reken op twee tot drie maanden doorlooptijd. Dat is prima: er is geen
@@ -620,7 +620,7 @@ nooit een maand heeft gedraaid is een boilerplate van je aannames.
 
 ---
 
-## Fase 9 — Rooster
+## Fase 9 — Rooster ✅
 
 **Doel:** het rooster ontstaat in de app in plaats van in de groepsapp, en
 niemand hoeft meer terug te scrollen om te weten wanneer hij werkt.
@@ -698,6 +698,57 @@ verkoopt.
 **Klaar als:** de baas het rooster van een week in de app maakt, op kopiëren
 drukt, en dat bericht in de groepsapp zet zonder er iets aan te veranderen.
 
+> **Gedaan.** `/rooster`, `/beschikbaarheid` en `/beheer`.
+>
+> **Beschikbaarheid staat in twee tabellen** — `beschikbaarheid_standaard` en
+> `beschikbaarheid_week` — precies zoals `sjabloon_regels` en `diensten` twee
+> dingen zijn. Wat normaal geldt, en wat er deze week van afwijkt. De knop
+> "Voortaan ook zo" maakt van een uitzondering alsnog je nieuwe normaal.
+>
+> **Een week die al loopt ligt vast.** Het scherm laat de knoppen weg en de
+> server weigert het ook, want een formulier is zo nagemaakt.
+>
+> **De view `rooster` was nodig en niet voorzien.** Een bezorger mag via de
+> policies alleen zijn eigen diensten zien — daar staan werkelijke tijden in en
+> die gaan over geld — maar het weekrooster moet iedereen kunnen zien. Die view
+> draait daarom als eigenaar en toont precies wat er nu in de groepsapp hangt:
+> dag, bus, naam, geplande tijden. Geen werkelijke tijden, geen opmerkingen.
+>
+> **Slepen is gesneuveld.** Het werkte niet prettig genoeg, dus indelen gaat met
+> keuzelijsten — op de telefoon en op de laptop hetzelfde. Dat het "op allebei"
+> moest werken is daarmee eerder gehaald dan met twee bedieningen.
+>
+> **Een bus of scooter kan maar één keer per dag.** Dat is een afspraak in het
+> scherm en geen constraint in de database. Moet er ooit toch een bus tweemaal
+> uit, dan is dat een aanpassing hier en geen migratie.
+>
+> ### En er kwam een beheerscherm bij
+>
+> Niet gepland, wel nodig: de baas kon geen bus toevoegen, geen diensttijd
+> wijzigen en niemand aannemen. Dat ging allemaal via de SQL-editor, en dat
+> werkt zolang jij er bent — maar je vertrekt en verkoopt het.
+>
+> `/beheer` doet posten, dienstsoorten en mensen. Verwijderen kan alleen zolang
+> er niets aan hangt; daarna houdt de database het tegen en is non-actief het
+> antwoord, zodat oude weken blijven kloppen. Jezelf degraderen kan niet.
+>
+> **Logins aanmaken hoort erbij**, en dat was de vraag die het scherm
+> afdwong: zonder login kan iemand wel ingeroosterd worden maar zijn uren nooit
+> melden — en omdat niemand namens hem invult, komt hij dan ook nooit in de
+> export. Hij werkt dan wel en wordt niet uitbetaald.
+>
+> Dat vraagt de beheersleutel van Supabase. Die staat in
+> `src/lib/server/beheersleutel.ts` — een `.server.`-bestand dat SvelteKit nooit
+> naar de browser stuurt — en wordt alleen gebruikt achter een controle op
+> beheerder. Geen uitnodigingsmails: die stranden op de gratis tier en vragen
+> dat iemand in zijn mail komt op het moment dat hij wil inloggen, precies de
+> stap waar dit project vanaf wilde. Het wachtwoord komt één keer in beeld, en
+> daarom is er ook een knop voor een nieuw wachtwoord — één keer verkeerd
+> verversen sluit iemand anders definitief buiten.
+>
+> **Wat er niet in zit: het sjabloon.** Het vaste weekrooster zet je nog steeds
+> in SQL. Dat is nu het laatste dat de baas niet zelf kan.
+
 ---
 
 ## Open vragen, gekoppeld aan hun fase
@@ -741,6 +792,7 @@ waar hij staat.
 
 | Wat | Wanneer | Waarom |
 |---|---|---|
+| Sjabloon beheren in een scherm | vóór de verkoop | Het vaste weekrooster gaat nog via SQL. Zolang jij er bent appt hij jou; daarna niet meer |
 | `pg_cron` op de weekuitrol | na een paar handmatige weken | Draait nu met de hand. De regel staat klaar onderaan `weekgeneratie.sql` |
 | `drop function test_schema();` en `test_weekgeneratie();` | wanneer je eraan denkt | Testfuncties uit fase 1 en 3, staan nog in de database |
 | Vercel-deploy | vóór fase 7, en het eerste wat er nu ligt | Dubbel bijhouden werkt niet als de app alleen op jouw laptop draait — en je kunt het de baas pas op zijn eigen telefoon laten zien als het ergens staat |
