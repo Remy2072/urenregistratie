@@ -91,6 +91,12 @@
 			}}
 		>
 			<input type="hidden" name="id" value={d.id} />
+			{#if d.status === 'gemeld' || d.status === 'bevestigd'}
+				<p class="notitie" style="margin:0.5rem 0 0">
+					Deze is al ingevuld door {naam(d.persoon_id)}. Verzetten betekent dat de verkeerde
+					persoon hem gemeld heeft, dus gaan de uren eraf en meldt de nieuwe hem zelf.
+				</p>
+			{/if}
 			<p class="regel" style="gap:0.5rem;margin:0.5rem 0 0">
 				<select name="persoon_id">
 					{#each (data.personen ?? []).filter((p) => p.actief) as p (p.id)}
@@ -203,6 +209,7 @@
 							<button class="primair">Bevestigen</button>
 						</div>
 					</form>
+					{@render ruilknop(d)}
 				{:else}
 					<p class="detail" style="margin:0.5rem 0 0">
 						Niemand heeft deze avond ingevuld. Appen als dat zin heeft — invullen doet hij zelf.
@@ -226,6 +233,7 @@
 						<span class="detail tijden">{d.werkelijk_begin} – {d.werkelijk_eind}</span>
 						<Merk soort="gemeld" />
 					</div>
+					{@render ruilknop(d)}
 				</div>
 			{/each}
 

@@ -469,6 +469,12 @@ die is er juist voor de fase waarin je nog goedkoop kunt bijsturen.
 >   zijn werk doet, netjes vertaald. Ruilen naar iemand die vrij was lukte.
 > - De bulkknop is apart uitgelokt met een dienst die op de dag zelf zonder
 >   afwijking gemeld werd, want anders komt hij nooit boven nul.
+> - Een gemelde dienst verzetten zette hem terug op `verwacht` met de uren
+>   eraf. Dat pad had eerst geen knop: verzetten kon alleen bij diensten waar
+>   nog niets mee gebeurd was, terwijl juist dít het geval is dat het bouwplan
+>   beschrijft — als de baas een gemelde dienst verzet, heeft de verkeerde
+>   persoon hem ingevuld. Nu staat de knop er ook bij een gemelde dienst, met
+>   de waarschuwing erbij dat de uren eraf gaan.
 >
 > **Wat welke diensten "zonder afwijking" zijn bepaalt de server, niet het
 > scherm.** Anders bepaalt de browser wat er ongezien bevestigd wordt, en dat
