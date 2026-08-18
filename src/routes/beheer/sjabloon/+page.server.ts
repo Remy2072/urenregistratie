@@ -31,7 +31,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.order('weekdag')
 			.order('geldig_vanaf'),
 		supabase.from('posten').select('id, naam').eq('actief', true).order('volgorde'),
-		supabase.from('personen').select('id, naam').eq('actief', true).order('naam'),
+		// Zonder eigenaren: die worden nergens ingeroosterd.
+		supabase
+			.from('personen')
+			.select('id, naam')
+			.eq('actief', true)
+			.neq('rol', 'eigenaar')
+			.order('naam'),
 		supabase.from('dienstsoorten').select('id, naam, begintijd, eindtijd').eq('actief', true).order('begintijd')
 	]);
 
@@ -98,10 +104,20 @@ export const actions: Actions = {
 		const weekdag = Number(f.get('weekdag'));
 		if (!(weekdag >= 1 && weekdag <= 7)) return fail(400, { fout: 'Onbekende dag.' });
 
+		const persoon_id = tekst(f, 'persoon_id');
+		const { data: persoon } = await locals
+			.supabase!.from('personen')
+			.select('rol')
+			.eq('id', persoon_id)
+			.maybeSingle();
+		if (persoon?.rol === 'eigenaar') {
+			return fail(400, { fout: 'Een eigenaar wordt niet ingeroosterd.' });
+		}
+
 		const { error } = await locals.supabase!.from('sjabloon_regels').insert({
 			weekdag,
 			post_id: tekst(f, 'post_id'),
-			persoon_id: tekst(f, 'persoon_id'),
+			persoon_id,
 			dienstsoort_id: tekst(f, 'dienstsoort_id'),
 			geldig_vanaf: tekst(f, 'geldig_vanaf')
 		});

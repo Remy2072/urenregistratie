@@ -8,6 +8,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { redirect, type Handle } from '@sveltejs/kit';
 import type { Session, User } from '@supabase/supabase-js';
+import type { Ik } from '$lib/server/wie';
 import { PUBLIC_SUPABASE_KEY, PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 /**
@@ -28,6 +29,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		// dat scherm legt uit wat er ontbreekt. Zie .env.example.
 		event.locals.supabase = null;
 		event.locals.veiligeSessie = async () => ({ session: null, user: null });
+		event.locals.ik = async () => null;
 		return resolve(event);
 	}
 
@@ -71,11 +73,51 @@ export const handle: Handle = async ({ event, resolve }) => {
 		return (onthouden = { session, user });
 	};
 
+	/**
+	 * Wie ben je volgens `personen`? Ook één keer per verzoek, om dezelfde
+	 * reden: de deurcontrole hieronder, de layout en het scherm vragen het
+	 * alle drie.
+	 */
+	let persoon: { klaar: boolean; waarde: Ik | null } = { klaar: false, waarde: null };
+
+	event.locals.ik = async () => {
+		if (persoon.klaar) return persoon.waarde;
+
+		const { user } = await event.locals.veiligeSessie();
+		if (!user) {
+			persoon = { klaar: true, waarde: null };
+			return null;
+		}
+
+		const { data } = await event.locals
+			.supabase!.from('personen')
+			.select('id, naam, rol, actief')
+			.eq('auth_user_id', user.id)
+			.maybeSingle();
+
+		persoon = { klaar: true, waarde: (data as Ik | null) ?? null };
+		return persoon.waarde;
+	};
+
 	// De deur. event.route.id is null voor alles wat geen pagina is -- statische
 	// bestanden, de favicon -- en dat hoeft hier niet langs.
 	if (event.route.id && !openbaar.includes(event.url.pathname)) {
 		const { user } = await event.locals.veiligeSessie();
 		if (!user) redirect(303, '/inloggen');
+
+		// Wie hier niet meer werkt komt er niet meer in. Zijn login blijft
+		// bestaan -- die gooien we niet weg, want dan verdwijnt de koppeling met
+		// zijn oude diensten -- maar hij levert niets meer op. Vinkt de baas hem
+		// weer aan, dan werkt alles weer.
+		//
+		// De database doet dit ook: huidige_persoon_id() kijkt naar `actief`, dus
+		// zelfs met een geldige sessie geven de policies niets terug. Dit is
+		// alleen de vriendelijke versie, met een zin erbij.
+		const ik = await event.locals.ik();
+		if (ik && !ik.actief) {
+			await event.locals.supabase!.auth.signOut();
+			redirect(303, '/inloggen?weg=1');
+		}
 	}
 
 	return resolve(event, {

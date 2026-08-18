@@ -11,6 +11,8 @@ declare global {
 			supabase: SupabaseClient | null;
 			/** Sessie én gebruiker, allebei geverifieerd bij Supabase. */
 			veiligeSessie: () => Promise<{ session: Session | null; user: User | null }>;
+			/** Wie je bent volgens `personen`. Per verzoek onthouden. */
+			ik: () => Promise<import('$lib/server/wie').Ik | null>;
 		}
 		interface PageData {
 			ingelogd: boolean;

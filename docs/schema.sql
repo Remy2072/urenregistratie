@@ -271,6 +271,11 @@ create index on mutaties (dienst_id, wanneer);
 -- ---------------------------------------------------------------------
 -- Wie ben ik, en mag ik beheren?
 --
+-- Allebei kijken ze naar `actief`. Iemand die niet meer hier werkt houdt zijn
+-- login -- die gooien we niet weg, want dan verdwijnt ook de koppeling met
+-- zijn oude diensten -- maar hij komt nergens meer bij. Vinkt de baas hem weer
+-- aan, dan werkt alles weer.
+--
 -- security definer omdat deze functies zelf in de policies op personen
 -- gebruikt worden -- zonder dat draait de policy in zichzelf rond.
 -- ---------------------------------------------------------------------
@@ -281,7 +286,7 @@ stable
 security definer
 set search_path = public, auth
 as $$
-  select id from personen where auth_user_id = auth.uid();
+  select id from personen where auth_user_id = auth.uid() and actief;
 $$;
 
 -- is_beheerder() zegt: mag deze persoon beheren. Daar vallen twee rollen

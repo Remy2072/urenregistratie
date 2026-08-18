@@ -47,7 +47,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	// is, welke posten er zijn en welke standaarddiensten erop kunnen.
 	const [personen, posten, dienstsoorten] = beheerder
 		? await Promise.all([
-				supabase.from('personen').select('id, naam, rol, actief').order('naam'),
+				// Een eigenaar wordt niet ingeroosterd: hij bevestigt en exporteert,
+				// en dat verhoudt zich slecht tot zijn eigen uren goedkeuren.
+				supabase
+					.from('personen')
+					.select('id, naam, rol, actief')
+					.neq('rol', 'eigenaar')
+					.order('naam'),
 				supabase.from('posten').select('id, naam, volgorde').eq('actief', true).order('volgorde'),
 				supabase
 					.from('dienstsoorten')
@@ -93,6 +99,23 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	};
 };
 
+/**
+ * Mag deze persoon ingeroosterd worden?
+ *
+ * De keuzelijsten laten een eigenaar niet zien, maar een formulier is zo
+ * nagemaakt -- en dit is precies het soort regel waar iemand omheen zou
+ * kunnen werken.
+ */
+async function magRijden(locals: App.Locals, persoon_id: string) {
+	if (!persoon_id) return true;
+	const { data } = await locals
+		.supabase!.from('personen')
+		.select('naam, rol')
+		.eq('id', persoon_id)
+		.maybeSingle();
+	return data?.rol !== 'eigenaar';
+}
+
 /** diensten_post_bezet en diensten_persoon_bezet, in gewone taal. */
 function vertaal(bericht: string): string {
 	if (bericht.includes('diensten_persoon_bezet')) {
@@ -130,6 +153,10 @@ export const actions: Actions = {
 		const persoon_id = String(formulier.get('persoon_id') ?? '');
 		const post_id = String(formulier.get('post_id') ?? '');
 		const dienstsoort_id = String(formulier.get('dienstsoort_id') ?? '');
+
+		if (!(await magRijden(locals, persoon_id))) {
+			return fail(400, { fout: 'Een eigenaar wordt niet ingeroosterd.' });
+		}
 
 		const { data: dienst } = await locals
 			.supabase!.from('diensten')
@@ -187,6 +214,10 @@ export const actions: Actions = {
 		const persoon_id = String(formulier.get('persoon_id') ?? '');
 		if (!datum || !post_id || !dienstsoort_id || !persoon_id) {
 			return fail(400, { fout: 'Er ontbreekt iets.' });
+		}
+
+		if (!(await magRijden(locals, persoon_id))) {
+			return fail(400, { fout: 'Een eigenaar wordt niet ingeroosterd.' });
 		}
 
 		const { data: soort } = await locals

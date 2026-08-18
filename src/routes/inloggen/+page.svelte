@@ -1,10 +1,18 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { enhance } from '$app/forms';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let bezig = $state(false);
 </script>
+
+{#if page.url.searchParams.has('weg')}
+	<p class="fout">
+		Je staat op non-actief en kunt daarom niet inloggen. Klopt dat niet, vraag dan je baas om je
+		weer aan te vinken.
+	</p>
+{/if}
 
 {#if !data.ingesteld}
 	<div class="blok">

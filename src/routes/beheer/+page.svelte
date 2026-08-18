@@ -5,6 +5,12 @@
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
+	// Wie er werkt en wie er ooit gewerkt heeft zijn twee lijsten. In één lijst
+	// staat een oud-collega tussen je huidige ploeg, en dan zoek je elke keer
+	// opnieuw wie er nu eigenlijk rijdt.
+	const werkend = $derived((data.personen ?? []).filter((p) => p.actief));
+	const vertrokken = $derived((data.personen ?? []).filter((p) => !p.actief));
+
 	/** Welke regel je aan het bewerken bent. Eén tegelijk, anders wordt het rommelig. */
 	let bewerkt = $state<string | null>(null);
 
@@ -205,7 +211,7 @@
 	<div class="blok">
 		<h2>Wie er werkt</h2>
 
-		{#each data.personen as p (p.id)}
+		{#each werkend as p (p.id)}
 			<div class="kaart">
 				{#if bewerkt === p.id}
 					<form
@@ -293,6 +299,53 @@
 				<button class="primair">Toevoegen</button>
 			</p>
 		</form>
+
+		{#if vertrokken.length > 0}
+			<h2 style="margin-top:1.6rem">Wie er niet meer werkt</h2>
+			{#each vertrokken as p (p.id)}
+				<div class="kaart">
+					{#if bewerkt === p.id}
+						<form
+							method="post"
+							action="?/persoonWijzig"
+							use:enhance={() => async ({ update }) => {
+								await update();
+								bewerkt = null;
+							}}
+						>
+							<input type="hidden" name="id" value={p.id} />
+							<input type="hidden" name="rol" value={p.rol} />
+							<label class="veld"><span>Naam</span><input name="naam" value={p.naam} /></label>
+							<label class="regel" style="gap:0.5rem;margin-top:0.5rem">
+								<input type="checkbox" name="actief" checked={p.actief} />
+								<span class="detail">Werkt hier</span>
+							</label>
+							<div class="knoppen">
+								<button type="button" onclick={() => (bewerkt = null)}>Laat maar</button>
+								<button class="primair">Opslaan</button>
+							</div>
+						</form>
+					{:else}
+						<div class="regel">
+							<span class="dag">{p.naam}</span>
+							<span>
+								{#if p.rol === 'eigenaar'}<Merk soort="bevestigd" tekst="eigenaar" />{/if}
+								{#if p.rol === 'manager'}<Merk soort="gemeld" tekst="manager" />{/if}
+								<Merk soort="afgemeld" tekst="kan niet inloggen" />
+							</span>
+						</div>
+						<div class="knoppen">
+							<button type="button" onclick={() => (bewerkt = p.id)}>Weer aannemen</button>
+						</div>
+					{/if}
+				</div>
+			{/each}
+			<p class="notitie">
+				Deze mensen kunnen niet inloggen, staan in geen enkele keuzelijst en rollen nergens meer
+				uit. Hun oude diensten en uren blijven staan, dus overzichten van toen kloppen nog. Vink
+				"Werkt hier" weer aan en alles doet het weer.
+			</p>
+		{/if}
 
 		<p class="notitie">
 			<strong>Eigenaar</strong> kan alles, inclusief de export naar de boekhouder.

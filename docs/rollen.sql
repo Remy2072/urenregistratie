@@ -179,3 +179,25 @@ drop trigger if exists persoon_wijziging_bewaken on personen;
 create trigger persoon_wijziging_bewaken
   before update on personen
   for each row execute function persoon_wijziging_bewaken();
+
+
+-- ---------------------------------------------------------------------
+-- Wie er niet meer werkt, komt nergens meer bij
+--
+-- huidige_persoon_id() keek alleen of de login aan een persoon hing, niet
+-- of die persoon er nog werkte. Iemand op non-actief kon dus nog gewoon
+-- zijn eigen diensten zien en melden.
+--
+-- De login blijft bestaan -- weggooien zou de koppeling met zijn oude
+-- diensten meenemen -- maar hij levert niets meer op. Vinkt de baas hem
+-- weer aan, dan werkt alles weer.
+-- ---------------------------------------------------------------------
+create or replace function huidige_persoon_id()
+returns uuid
+language sql
+stable
+security definer
+set search_path = public, auth
+as $$
+  select id from personen where auth_user_id = auth.uid() and actief;
+$$;
