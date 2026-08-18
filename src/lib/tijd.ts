@@ -130,6 +130,41 @@ export function maandagVan(datum: Datum): Datum {
 	return plusDagen(datum, 1 - (d.getUTCDay() || 7));
 }
 
+/** De eerste van de maand waar deze datum in valt. */
+export function eersteVanDeMaand(datum: Datum): Datum {
+	return `${datum.slice(0, 7)}-01`;
+}
+
+/** De laatste van die maand. Dag 0 van de volgende maand is de laatste van deze. */
+export function laatsteVanDeMaand(datum: Datum): Datum {
+	const d = new Date(`${datum.slice(0, 7)}-01T00:00:00Z`);
+	d.setUTCMonth(d.getUTCMonth() + 1);
+	d.setUTCDate(0);
+	return d.toISOString().slice(0, 10);
+}
+
+/** Een datum die in de maand ervoor valt. */
+export function maandTerug(datum: Datum): Datum {
+	const d = new Date(`${datum.slice(0, 7)}-01T00:00:00Z`);
+	d.setUTCDate(0);
+	return d.toISOString().slice(0, 10);
+}
+
+/** 'augustus 2026' */
+export function maandNaam(datum: Datum): string {
+	return new Date(`${datum.slice(0, 7)}-15T12:00:00Z`).toLocaleDateString('nl-NL', {
+		month: 'long',
+		year: 'numeric',
+		timeZone: 'UTC'
+	});
+}
+
+/** '17-08-2026' -- zoals een Nederlandse boekhouder een datum leest. */
+export function datumNL(datum: Datum): string {
+	const [j, m, d] = datum.split('-');
+	return `${d}-${m}-${j}`;
+}
+
 /**
  * Hoe laat is het nu, hier?
  *

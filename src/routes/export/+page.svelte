@@ -1,146 +1,137 @@
 <script lang="ts">
-	import type { ExportRegel } from '$lib/model';
-	import { naamVan, postNaam } from '$lib/nepdata';
-	import { staat } from '$lib/prototype.svelte';
-	import { afwijkend, datumKort, duurInUren, urenTekst } from '$lib/tijd';
+	import { datumKort, urenTekst } from '$lib/tijd';
+	import type { PageData } from './$types';
 
-	const periodes = [
-		{ id: 'aug', naam: 'Augustus 2026', van: '2026-08-01', tot: '2026-08-31' },
-		{ id: 'w33', naam: 'Week 33', van: '2026-08-10', tot: '2026-08-16' },
-		{ id: 'w34', naam: 'Week 34', van: '2026-08-17', tot: '2026-08-23' }
-	];
+	let { data }: { data: PageData } = $props();
 
-	let periodeId = $state('aug');
-	let periode = $derived(periodes.find((p) => p.id === periodeId)!);
-
-	/**
-	 * Dit is de view `uren_export` uit schema.sql, regel voor regel: alleen
-	 * bevestigde diensten, en de uren uit werkelijk_begin/eind. Nooit euro's.
-	 */
-	let regels = $derived<ExportRegel[]>(
-		staat.diensten
-			.filter(
-				(d) =>
-					d.status === 'bevestigd' &&
-					d.werkelijk_begin !== null &&
-					d.werkelijk_eind !== null &&
-					d.datum >= periode.van &&
-					d.datum <= periode.tot
-			)
-			.map((d) => ({
-				medewerker: naamVan(d.persoon_id),
-				datum: d.datum,
-				post: postNaam(d.post_id),
-				begin: d.werkelijk_begin!,
-				einde: d.werkelijk_eind!,
-				uren: duurInUren(d.werkelijk_begin!, d.werkelijk_eind!),
-				afwijkend: afwijkend(d),
-				opmerking: d.opmerking
-			}))
-			.sort((a, b) => a.medewerker.localeCompare(b.medewerker) || a.datum.localeCompare(b.datum))
-	);
-
+	let regels = $derived(data.regels ?? []);
 	let totaal = $derived(regels.reduce((s, r) => s + r.uren, 0));
 
-	function csv(): string {
-		const kolommen = ['medewerker', 'datum', 'post', 'begin', 'einde', 'uren', 'opmerking'];
-		const veld = (w: string) => (/[";\n]/.test(w) ? `"${w.replaceAll('"', '""')}"` : w);
-		const rijen = regels.map((r) =>
-			[
-				r.medewerker,
-				r.datum,
-				r.post,
-				r.begin,
-				r.einde,
-				urenTekst(r.uren),
-				r.opmerking ?? ''
-			]
-				.map(veld)
-				.join(';')
-		);
-		// Puntkomma, want Nederlandse Excel leest komma's niet als scheidingsteken.
-		return [kolommen.join(';'), ...rijen].join('\r\n');
-	}
+	// Per medewerker, want dat is wat de boekhouder overneemt. De regels
+	// eronder zijn de onderbouwing als hij iets navraagt.
+	let perPersoon = $derived.by(() => {
+		const per = new Map<string, number>();
+		for (const r of regels) per.set(r.medewerker, (per.get(r.medewerker) ?? 0) + r.uren);
+		return [...per].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+	});
 
-	function download() {
-		const blob = new Blob(['﻿' + csv()], { type: 'text/csv;charset=utf-8' });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = `uren-${periode.id}.csv`;
-		a.click();
-		URL.revokeObjectURL(url);
-	}
 </script>
 
-<div class="blok">
-	<p>
-		<select bind:value={periodeId}>
-			{#each periodes as p (p.id)}
-				<option value={p.id}>{p.naam}</option>
+{#if !data.beheerder}
+	<div class="blok">
+		<h2>Alleen voor de baas</h2>
+		<p class="detail">
+			De export gaat over de uren van de hele ploeg. Jouw week staat op
+			<a href="/mijn-week">Mijn week</a>.
+		</p>
+	</div>
+{:else}
+	<div class="blok">
+		<form method="get" class="regel" style="gap:0.6rem;flex-wrap:wrap">
+			<label class="veld"><span>Van</span><input type="date" name="van" value={data.van} /></label>
+			<label class="veld"><span>Tot en met</span><input type="date" name="tot" value={data.tot} /></label>
+			<button>Tonen</button>
+		</form>
+		<p class="regel" style="gap:0.8rem;flex-wrap:wrap;margin:0.7rem 0 0">
+			{#each data.snelkeuzes! as k (k.naam)}
+				<a href="?van={k.van}&tot={k.tot}">{k.naam}</a>
 			{/each}
-		</select>
-	</p>
+		</p>
+	</div>
 
-	{#if regels.length === 0}
-		<p class="leeg">Geen bevestigde diensten in deze periode.</p>
-	{:else}
-		<div class="tabelrand">
-			<table>
-				<thead>
-					<tr>
-						<th>Medewerker</th>
-						<th>Datum</th>
-						<th>Post</th>
-						<th>Begin</th>
-						<th>Einde</th>
-						<th class="getal">Uren</th>
-						<th>Opmerking</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each regels as r (r.medewerker + r.datum + r.post)}
+	<div class="blok">
+		{#if regels.length === 0}
+			<p class="leeg">Geen bevestigde diensten in deze periode.</p>
+		{:else}
+			<div class="tabelrand">
+				<table>
+					<thead>
 						<tr>
-							<td>{r.medewerker}</td>
-							<td>{datumKort(r.datum)}</td>
-							<td>{r.post}</td>
-							<td class="tijden">{r.begin}</td>
-							<td class="tijden">{r.einde}</td>
-							<td class="getal">{urenTekst(r.uren)}</td>
-							<td>{r.opmerking ?? ''}</td>
+							<th>Medewerker</th>
+							<th class="getal">Uren</th>
 						</tr>
-					{/each}
-				</tbody>
-				<tfoot>
-					<tr>
-						<td colspan="5"><strong>{regels.length} diensten</strong></td>
-						<td class="getal"><strong>{urenTekst(totaal)}</strong></td>
-						<td></td>
-					</tr>
-				</tfoot>
-			</table>
-		</div>
+					</thead>
+					<tbody>
+						{#each perPersoon as [naam, uren] (naam)}
+							<tr>
+								<td>{naam}</td>
+								<td class="getal">{urenTekst(uren)}</td>
+							</tr>
+						{/each}
+					</tbody>
+					<tfoot>
+						<tr>
+							<td><strong>{regels.length} diensten</strong></td>
+							<td class="getal"><strong>{urenTekst(totaal)}</strong></td>
+						</tr>
+					</tfoot>
+				</table>
+			</div>
 
-		<div class="knoppen">
-			<button class="groot" onclick={download}>CSV downloaden</button>
+			<form method="get" action="/export/bestand">
+				<input type="hidden" name="van" value={data.van} />
+				<input type="hidden" name="tot" value={data.tot} />
+				<div class="knoppen">
+					<button class="groot">CSV downloaden</button>
+				</div>
+			</form>
+		{/if}
+	</div>
+
+	{#if regels.length > 0}
+		<div class="blok">
+			<details>
+				<summary>Regel voor regel ({regels.length})</summary>
+				<div class="tabelrand">
+					<table>
+						<thead>
+							<tr>
+								<th>Medewerker</th>
+								<th>Datum</th>
+								<th>Post</th>
+								<th>Begin</th>
+								<th>Einde</th>
+								<th class="getal">Uren</th>
+								<th>Opmerking</th>
+							</tr>
+						</thead>
+						<tbody>
+							{#each regels as r (r.medewerker + r.datum + r.post)}
+								<tr>
+									<td>{r.medewerker}</td>
+									<td>{datumKort(r.datum)}</td>
+									<td>{r.post}</td>
+									<td class="tijden">{r.begin}</td>
+									<td class="tijden">{r.einde}</td>
+									<td class="getal">{urenTekst(r.uren)}</td>
+									<td>{r.opmerking ?? ''}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</details>
 		</div>
 	{/if}
-</div>
 
-<div class="blok">
-	<h2>Waarom dit er zo uitziet</h2>
-	<p class="detail">
-		Alleen diensten met status <strong>bevestigd</strong> staan erin — dat is wat het bonnetje nu
-		doet. De uren komen uit de werkelijke tijden, niet uit de geplande, zodat er bij het exporteren
-		nooit gekozen hoeft te worden.
-	</p>
-	<p class="detail">
-		Geen euro's. Minimumloon is leeftijdsafhankelijk en verandert elk halfjaar; zodra deze app
-		bedragen uitrekent, is hij verantwoordelijk voor fouten in iemands salaris.
-	</p>
-	<p class="notitie">
-		Deze kolommen zijn een gok. Fase 6 begint pas als de boekhouder heeft laten zien wat hij nu
-		krijgt: welke kolomnamen, per dag of een weektotaal, CSV of Excel. Past de export niet op zijn
-		werkwijze, dan typt de baas het alsnog over en heeft dit project niets opgelost.
-	</p>
-</div>
+	<div class="blok">
+		<h2>Wat hier wel en niet in staat</h2>
+		<p class="detail">
+			Alleen diensten met status <strong>bevestigd</strong>. Wat niemand gemeld heeft en wat de
+			baas niet heeft goedgekeurd staat er dus niet in — geen melding, geen uren.
+		</p>
+		<p class="detail">
+			De uren komen uit de werkelijke tijden en niet uit de geplande, zodat er bij het exporteren
+			nooit gekozen hoeft te worden.
+		</p>
+		<p class="detail">
+			Geen euro's. Minimumloon is leeftijdsafhankelijk en verandert elk halfjaar; zodra deze app
+			bedragen uitrekent, is hij verantwoordelijk voor fouten in iemands salaris.
+		</p>
+		<p class="notitie">
+			Deze kolommen zijn een keuze en geen wet. Ze staan op één plek in
+			<code>src/lib/server/uren.ts</code> — bij het opzetten voor een bedrijf leg je ze naast de
+			sheet die de boekhouder nu gebruikt en pas je ze daar aan.
+		</p>
+	</div>
+{/if}

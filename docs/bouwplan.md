@@ -488,22 +488,65 @@ die is er juist voor de fase waarin je nog goedkoop kunt bijsturen.
 
 ---
 
-## Fase 6 — Export
+## Fase 6 — Export ✅
 
 **Doel:** de boekhouder hoeft niets over te typen.
 
 De view `uren_export` staat er al. Wat er nog bij komt is een knop die er een
 bestand van maakt over een periode.
 
-**Blokkerende vraag — en dit is de enige die de hele fase tegenhoudt:** welk
-formaat wil de boekhouder? Kolomnamen, per dag of weektotaal, CSV of Excel.
-Vraag een lege of geanonimiseerde versie van de huidige sheet. Bouw je dit op
-gevoel, dan typt de baas het alsnog over en heeft het hele project niets
-opgeleverd.
+**De blokkerende vraag is verhuisd, niet verdwenen.** Welk formaat de
+boekhouder wil — kolomnamen, per dag of weektotaal, CSV of Excel — blijft de
+vraag die bepaalt of dit iets oplevert. Maar hij hoort bij de installatie en
+niet bij het bouwen: het exportformaat is precies zo'n ding dat per bedrijf
+verschilt, net als de posten en het rooster. In het dev-project bouw je een
+export die werkt en die op één plek te herschrijven is; bij de installatie leg
+je hem naast de sheet die de boekhouder nu gebruikt.
+
+Wat overeind blijft: **bouw hem daar niet op gevoel.** Vraag een lege of
+geanonimiseerde versie van zijn huidige sheet. Past de export niet op zijn
+werkwijze, dan typt de baas het alsnog over en heeft het hele project niets
+opgelost.
 
 Nooit euro's. Uren eruit, loon is zijn werk.
 
-**Klaar als:** de boekhouder het bestand opent en zegt dat het klopt.
+**Klaar als:** je in dit project een periode kiest, het bestand downloadt en
+erin ziet staan wat er bevestigd is — en niets meer dan dat.
+
+*De echte toets blijft dat de boekhouder zegt dat het klopt.* Die staat in fase
+7, bij de installatie.
+
+> **Gedaan.** `/export` draait op de view `uren_export`. Periode kiezen met
+> van/tot of een snelkeuze (deze week, vorige week, deze maand, vorige maand),
+> totalen per medewerker, de regels eronder ingeklapt als onderbouwing, en een
+> knop die er een CSV van maakt.
+>
+> **Het bestand is een adres en geen knop.** `/export/bestand?van=…&tot=…` zet
+> het bestand op de server in elkaar. Bouw je het in de browser, dan bestaat de
+> export alleen zolang die pagina open staat en kun je hem niet doorsturen of
+> in een script gebruiken. Ingelogd zijn en beheerder zijn geldt er net zo goed.
+>
+> Getoetst door het bestand echt te downloaden en er byte voor byte in te
+> kijken:
+>
+> ```
+> efbbbf  ← de BOM
+> Medewerker;Datum;Post;Begin;Einde;Uren;Opmerking
+> Daan;17-08-2026;Bus 3;15:30;20:30;5;
+> ```
+>
+> Vier dingen die er voor een Nederlandse boekhouder toe doen en die je alleen
+> ziet als je het bestand echt opent: **puntkomma's** als scheidingsteken (bij
+> ons is de komma het decimaalteken), **datums als dd-mm-jjjj**, **uren met een
+> komma**, en die **BOM** vooraan — zonder die drie bytes leest Excel het
+> bestand als Windows-1252 en maakt het van 'André' iets anders.
+>
+> En wat er níét in stond is net zo belangrijk: de dienst die bij een ruil was
+> teruggezet naar `verwacht` ontbreekt. Geen melding en geen bevestiging, dus
+> geen uren.
+>
+> De kolommen staan op één plek, in `src/lib/server/uren.ts`. Dat is het enige
+> bestand dat verandert als een bedrijf iets anders wil.
 
 ---
 
@@ -583,8 +626,8 @@ nooit een maand heeft gedraaid is een boilerplate van je aannames.
 | ~~Afronden: 21:20 wordt 21:00 of 21:30?~~ | ~~Fase 4~~ | **Beantwoord: dichtstbijzijnde half uur** |
 | ~~Wie mag bevestigen?~~ | ~~Fase 5~~ | **Beantwoord: twee bazen en een manager** |
 | ~~Niet-gemelde dienst: namens invullen?~~ | ~~Fase 5~~ | **Beantwoord: nee, de bezorger meldt zelf** |
-| Exportformaat | Fase 6 | Boekhouder |
-| Hoe ziet de huidige Excel eruit? | Fase 6 | Baas |
+| Exportformaat | Bij de installatie (fase 7) | Boekhouder |
+| Hoe ziet de huidige Excel eruit? | Bij de installatie (fase 7) | Baas |
 | Werkt het restaurantrooster hetzelfde? | Ná fase 7 | Baas |
 
 Wat er nog openstaat gaat allemaal over de export, en dat is één gesprek. De laatste is geen blokkade maar

@@ -17,9 +17,10 @@
 		'/ik': 'Ingelogd'
 	};
 
-	// Wat nog op nepdata draait. Deze lijst krimpt elke fase: /mijn-week ging
-	// eruit in fase 4, /overzicht in fase 5. /export volgt in fase 6.
-	const prototypePaden = ['/', '/export'];
+	// Alleen de uitlegpagina draait nog op nepdata: die laat het vaste moment in
+	// week 34 zien om uit te leggen waar de app voor is. De drie schermen zelf
+	// praten allemaal met de database.
+	const prototypePaden = ['/'];
 
 	let pad = $derived(page.url.pathname);
 	let titel = $derived(titels[pad] ?? 'Urenregistratie');

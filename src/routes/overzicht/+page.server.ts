@@ -9,22 +9,11 @@ import {
 	nuInNederland,
 	plusDagen
 } from '$lib/tijd';
-
-/** Ben ik beheerder? De policies weten het ook, maar dit scherm wil het zeggen. */
-async function beheerderZijn(locals: App.Locals) {
-	const { user } = await locals.veiligeSessie();
-	if (!locals.supabase || !user) return null;
-	const { data } = await locals.supabase
-		.from('personen')
-		.select('id, naam, rol')
-		.eq('auth_user_id', user.id)
-		.maybeSingle();
-	return (data as { id: string; naam: string; rol: string } | null) ?? null;
-}
+import { wieBenIk } from '$lib/server/wie';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const nu = nuInNederland();
-	const ik = await beheerderZijn(locals);
+	const ik = await wieBenIk(locals);
 
 	if (ik?.rol !== 'beheerder') {
 		return { nu, beheerder: false, maandag: maandagVan(nu.datum) };
@@ -81,7 +70,7 @@ function rechttoe(diensten: Dienst[]): Dienst[] {
 
 export const actions: Actions = {
 	bevestig: async ({ request, locals }) => {
-		const ik = await beheerderZijn(locals);
+		const ik = await wieBenIk(locals);
 		if (ik?.rol !== 'beheerder') return fail(403, { fout: 'Alleen een beheerder bevestigt.' });
 
 		const id = String((await request.formData()).get('id') ?? '');
@@ -100,7 +89,7 @@ export const actions: Actions = {
 	 * formulier -- anders bepaalt de browser wat "zonder afwijking" betekent.
 	 */
 	bevestigAlle: async ({ request, locals }) => {
-		const ik = await beheerderZijn(locals);
+		const ik = await wieBenIk(locals);
 		if (ik?.rol !== 'beheerder') return fail(403, { fout: 'Alleen een beheerder bevestigt.' });
 
 		const formulier = await request.formData();
@@ -135,7 +124,7 @@ export const actions: Actions = {
 	 * gaat hij terug naar 'verwacht' zodat de nieuwe persoon hem alsnog meldt.
 	 */
 	ruil: async ({ request, locals }) => {
-		const ik = await beheerderZijn(locals);
+		const ik = await wieBenIk(locals);
 		if (ik?.rol !== 'beheerder') return fail(403, { fout: 'Alleen een beheerder ruilt.' });
 
 		const formulier = await request.formData();

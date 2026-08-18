@@ -1,22 +1,11 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { Dienst } from '$lib/model';
 import { isHalfUur, korteTijden, maandagVan, minuten, nuInNederland, plusDagen } from '$lib/tijd';
-
-/** Wie ben ik, volgens de database? Null als de login nog niet gekoppeld is. */
-async function ikZelf(locals: App.Locals) {
-	const { user } = await locals.veiligeSessie();
-	if (!locals.supabase || !user) redirect(303, '/inloggen');
-	const { data } = await locals.supabase
-		.from('personen')
-		.select('id, naam')
-		.eq('auth_user_id', user.id)
-		.maybeSingle();
-	return data as { id: string; naam: string } | null;
-}
+import { wieBenIk } from '$lib/server/wie';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const ik = await ikZelf(locals);
+	const ik = await wieBenIk(locals);
 	const supabase = locals.supabase!;
 
 	// De klok wordt hier gelezen en niet in het scherm. Zo kijkt iedereen naar
@@ -65,7 +54,7 @@ export const actions: Actions = {
 	 * Dat is precies waarom "achteraf gemeld" niet te vervalsen is vanaf hier.
 	 */
 	melden: async ({ request, locals }) => {
-		const ik = await ikZelf(locals);
+		const ik = await wieBenIk(locals);
 		if (!ik) return fail(403, { fout: 'Deze login hangt nog niet aan een persoon.' });
 
 		const formulier = await request.formData();
