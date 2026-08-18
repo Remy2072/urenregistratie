@@ -393,7 +393,7 @@ Postgres, en dat is geen toeval maar het ontwerp.
 
 ---
 
-## Fase 5 — Bazenscherm
+## Fase 5 — Bazenscherm ✅
 
 **Doel:** één scherm, zondagavond, klaar in vijf minuten.
 
@@ -422,12 +422,63 @@ Ruilt de baas een dienst die al gemeld was, dan is dat een fout die je wil
 zien: dan heeft de verkeerde persoon hem ingevuld. Zet de dienst in dat geval
 terug op `verwacht`, zodat de nieuwe persoon hem alsnog meldt.
 
-**Blokkerende vragen:** mag iemand anders dan de baas bevestigen? En: vult hij
-een niet-gemelde dienst zelf in op basis van het rooster, of moet de medewerker
-het altijd zelf doen? Het eerste is makkelijker, het tweede is eerlijker — en
-het bepaalt of dit scherm een "invullen namens"-knop krijgt.
+**Beide blokkerende vragen zijn beantwoord.**
 
-**Klaar als:** de baas een echte week doorloopt en niets hoeft op te zoeken.
+**Wie mag bevestigen: drie mensen.** Twee bazen en een manager. Dat vraagt geen
+enkele wijziging — `personen.rol` kent er al meer dan één en alle policies
+hangen aan `is_beheerder()`, niet aan één persoon. Wat het wél belangrijk maakt
+is `bevestigd_door`: met drie mensen die kunnen bevestigen is "wie heeft dit
+goedgekeurd" een vraag die echt gesteld gaat worden, en die kolom vult zichzelf
+al in de trigger. Zet ze in `startdata.sql` alle drie op `beheerder`.
+
+**Geen "invullen namens"-knop.** De verantwoordelijkheid blijft bij de
+bezorger. De baas ziet op zijn scherm wie nog niet gemeld heeft en kan hem
+appen als dat zin heeft, maar hij vult niets voor hem in.
+
+Dat is de strengere van de twee en het maakt dit scherm eenvoudiger, maar er
+zit een staart aan die je moet willen: **een dienst die niemand meldt blijft op
+`verwacht` staan en komt dus nooit in de export.** Geen melding, geen uren. Dat
+is precies wat "eigen verantwoordelijkheid" betekent, maar het betekent ook dat
+zo'n dienst zichtbaar moet blijven staan tot iemand er iets mee doet — niet
+wegvallen omdat de week voorbij is. Hij blijft daarom in het aandachtslijstje
+staan, ook als hij van vorige maand is.
+
+**Klaar als:** de hele keten draait in dit project — een bezorger meldt, de baas
+ziet het staan, bevestigt los en in bulk, en kan een dienst verzetten.
+
+*Ook dit stond eerst anders:* "de baas loopt een echte week door". Een echte
+week bestaat pas na de eerste installatie, en die staat nu in fase 7. Wat wél
+nu moet gebeuren is hem dit scherm laten zien met de verzonnen ploeg erin en
+een kwartier naar hem luisteren — dat is de gewoonte onderaan dit bouwplan, en
+die is er juist voor de fase waarin je nog goedkoop kunt bijsturen.
+
+> **Gedaan.** `/overzicht` draait op de database. Bovenaan wat aandacht vraagt,
+> daaronder wat rechttoe is met de bulkknop, dan de rest ingeklapt en de
+> totalen per persoon.
+>
+> Getoetst met twee sessies naast elkaar — Daan in het gewone venster, Kwan in
+> een incognitovenster — want dat is de enige manier om de keten echt te
+> volgen:
+>
+> - Daan meldde maandag een half uur eerder begonnen én geëindigd. Dat toont
+>   als `andere tijden, even lang` en zonder getal, precies het geval waar de
+>   fase-4-tekst voor waarschuwde: wél een afwijking, maar hij kost niets.
+> - Bevestigen los werkte, en de dienst verhuisde naar de totalen.
+> - Ruilen naar iemand die die dag al reed werd geweigerd met "Die staat die
+>   dag al ergens anders ingeroosterd" — dat is `diensten_persoon_bezet` die
+>   zijn werk doet, netjes vertaald. Ruilen naar iemand die vrij was lukte.
+> - De bulkknop is apart uitgelokt met een dienst die op de dag zelf zonder
+>   afwijking gemeld werd, want anders komt hij nooit boven nul.
+>
+> **Wat welke diensten "zonder afwijking" zijn bepaalt de server, niet het
+> scherm.** Anders bepaalt de browser wat er ongezien bevestigd wordt, en dat
+> is precies de knop waar je dat niet wil.
+>
+> **En de niet-gemelde diensten blijven staan.** Er is geen "invullen namens",
+> dus er is ook niets dat zo'n dienst opruimt. Zou hij alleen in zijn eigen week
+> zichtbaar zijn, dan verdwijnt hij zodra de week voorbij is en merkt niemand
+> ooit dat er een avond niet verantwoord is. Vandaar het blok "Blijft
+> openstaan" bovenaan, dat verder terugkijkt dan de week die je bekijkt.
 
 ---
 
@@ -524,13 +575,13 @@ nooit een maand heeft gedraaid is een boilerplate van je aannames.
 | Vraag | Blokkeert | Aan wie |
 |---|---|---|
 | ~~Afronden: 21:20 wordt 21:00 of 21:30?~~ | ~~Fase 4~~ | **Beantwoord: dichtstbijzijnde half uur** |
-| Wie mag bevestigen? | Fase 5 | Baas |
-| Niet-gemelde dienst: namens invullen? | Fase 5 | Baas |
+| ~~Wie mag bevestigen?~~ | ~~Fase 5~~ | **Beantwoord: twee bazen en een manager** |
+| ~~Niet-gemelde dienst: namens invullen?~~ | ~~Fase 5~~ | **Beantwoord: nee, de bezorger meldt zelf** |
 | Exportformaat | Fase 6 | Boekhouder |
 | Hoe ziet de huidige Excel eruit? | Fase 6 | Baas |
 | Werkt het restaurantrooster hetzelfde? | Ná fase 7 | Baas |
 
-Er staan er nog drie open die je op tijd moet stellen. De laatste is geen blokkade maar
+Wat er nog openstaat gaat allemaal over de export, en dat is één gesprek. De laatste is geen blokkade maar
 bepaalt of het model straks de keuken aankan, dus je wil het antwoord vóór je
 iets herbouwt om restaurantpersoneel toe te laten.
 

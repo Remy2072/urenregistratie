@@ -170,6 +170,17 @@ export function korteTijd(t: Tijd | null): Tijd | null {
 	return t === null ? null : t.slice(0, 5);
 }
 
+/** Alle vier de tijden van een dienst ingekort. Zie korteTijd(). */
+export function korteTijden<T extends Dienst>(d: T): T {
+	return {
+		...d,
+		gepland_begin: korteTijd(d.gepland_begin),
+		gepland_eind: korteTijd(d.gepland_eind),
+		werkelijk_begin: korteTijd(d.werkelijk_begin),
+		werkelijk_eind: korteTijd(d.werkelijk_eind)
+	} as T;
+}
+
 /**
  * Dezelfde regel als is_half_uur() in schema.sql. De database is en blijft de
  * baas -- dit is er alleen zodat de app een nette zin kan zeggen in plaats van

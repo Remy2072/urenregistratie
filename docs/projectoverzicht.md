@@ -234,11 +234,12 @@ met bezorgen.
       21:10 wordt 21:00, 21:20 wordt 21:30.
 - [ ] Werkt het restaurantrooster hetzelfde? Andere dienstlengtes, pauzes? Als
       het afwijkt, wil je dat weten vóór je het model vastzet.
-- [ ] Wie mag een dienst bevestigen of aanpassen — alleen hij, of ook iemand
-      anders?
-- [ ] Niet-gemelde dienst: vult hij die zelf in op basis van het rooster, of
+- [x] Wie mag een dienst bevestigen of aanpassen — alleen hij, of ook iemand
+      anders? **Antwoord: drie mensen — twee bazen en een manager.**
+- [x] Niet-gemelde dienst: vult hij die zelf in op basis van het rooster, of
       moet de medewerker het altijd zelf bevestigen? (Eerste is makkelijker,
-      tweede is eerlijker.)
+      tweede is eerlijker.) **Antwoord: de bezorger meldt zelf. De baas ziet
+      wie het nog niet gedaan heeft en kan appen, maar vult niets in.**
 
 ### Aan de boekhouder
 

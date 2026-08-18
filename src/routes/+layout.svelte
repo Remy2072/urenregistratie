@@ -17,10 +17,9 @@
 		'/ik': 'Ingelogd'
 	};
 
-	// Wat nog op nepdata draait. /mijn-week is er in fase 4 uit gehaald en
-	// praat nu met de database; /overzicht en /export volgen in fase 5 en 6.
-	// Het verschil moet zichtbaar blijven, anders denkt iemand dat de demo echt is.
-	const prototypePaden = ['/', '/overzicht', '/export'];
+	// Wat nog op nepdata draait. Deze lijst krimpt elke fase: /mijn-week ging
+	// eruit in fase 4, /overzicht in fase 5. /export volgt in fase 6.
+	const prototypePaden = ['/', '/export'];
 
 	let pad = $derived(page.url.pathname);
 	let titel = $derived(titels[pad] ?? 'Urenregistratie');

@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { Dienst } from '$lib/model';
-import { isHalfUur, korteTijd, maandagVan, minuten, nuInNederland, plusDagen } from '$lib/tijd';
+import { isHalfUur, korteTijden, maandagVan, minuten, nuInNederland, plusDagen } from '$lib/tijd';
 
 /** Wie ben ik, volgens de database? Null als de login nog niet gekoppeld is. */
 async function ikZelf(locals: App.Locals) {
@@ -52,13 +52,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		ik,
 		// Tijden hier één keer inkorten, zodat geen enkel scherm '16:00:00'
 		// hoeft te kennen. Zie korteTijd().
-		diensten: (diensten ?? []).map((d) => ({
-			...d,
-			gepland_begin: korteTijd(d.gepland_begin),
-			gepland_eind: korteTijd(d.gepland_eind),
-			werkelijk_begin: korteTijd(d.werkelijk_begin),
-			werkelijk_eind: korteTijd(d.werkelijk_eind)
-		})) as Dienst[],
+		diensten: ((diensten ?? []) as Dienst[]).map(korteTijden),
 		posten: Object.fromEntries((posten ?? []).map((p) => [p.id, p.naam])),
 		fout: error?.message ?? null
 	};
