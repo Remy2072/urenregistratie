@@ -746,8 +746,15 @@ drukt, en dat bericht in de groepsapp zet zonder er iets aan te veranderen.
 > daarom is er ook een knop voor een nieuw wachtwoord — één keer verkeerd
 > verversen sluit iemand anders definitief buiten.
 >
-> **Wat er niet in zit: het sjabloon.** Het vaste weekrooster zet je nog steeds
-> in SQL. Dat is nu het laatste dat de baas niet zelf kan.
+> **En het sjabloon kan er ook in**, op `/beheer/sjabloon`. Wijzigingen gaan in
+> per een datum en gooien niets weg — zo blijft terug te zien wie er in maart op
+> dinsdag stond. Alleen een regel die nog nooit gegolden heeft mag echt weg.
+> De twee uitsluitingen uit `schema.sql` krijgen daar gewone taal: "Die staat op
+> die weekdag al ingeroosterd" in plaats van `sjabloon_geen_dubbele_persoon`.
+>
+> Daarmee hoeft de baas voor het werk zelf niet meer in Supabase. Wat er nog
+> overblijft is de wekelijkse uitrol, en die verdwijnt zodra `pg_cron` erop
+> staat.
 
 ---
 
@@ -792,7 +799,6 @@ waar hij staat.
 
 | Wat | Wanneer | Waarom |
 |---|---|---|
-| Sjabloon beheren in een scherm | vóór de verkoop | Het vaste weekrooster gaat nog via SQL. Zolang jij er bent appt hij jou; daarna niet meer |
 | `pg_cron` op de weekuitrol | na een paar handmatige weken | Draait nu met de hand. De regel staat klaar onderaan `weekgeneratie.sql` |
 | `drop function test_schema();` en `test_weekgeneratie();` | wanneer je eraan denkt | Testfuncties uit fase 1 en 3, staan nog in de database |
 | Vercel-deploy | vóór fase 7, en het eerste wat er nu ligt | Dubbel bijhouden werkt niet als de app alleen op jouw laptop draait — en je kunt het de baas pas op zijn eigen telefoon laten zien als het ergens staat |

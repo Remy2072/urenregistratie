@@ -274,6 +274,51 @@ export const actions: Actions = {
 		};
 	},
 
+	/**
+	 * Het e-mailadres van een login wijzigen.
+	 *
+	 * Het adres doet verder niets -- er gaat nooit post heen -- maar het is wel
+	 * wat iemand elke keer intypt. Staat er een typefout in, dan zit hij daar
+	 * anders voorgoed aan vast.
+	 */
+	adresWijzig: async ({ request, locals }) => {
+		if (!(await alleenBeheerder(locals))) return fail(403, { fout: 'Alleen een beheerder.' });
+
+		const f = await request.formData();
+		const email = tekst(f, 'email').toLowerCase();
+		if (!email.includes('@')) return fail(400, { fout: 'Geef een geldig e-mailadres.' });
+
+		const admin = beheerClient();
+		if (!admin) {
+			return fail(503, {
+				fout: 'De beheersleutel (SUPABASE_SECRET_KEY) staat niet in .env — zie .env.example.'
+			});
+		}
+
+		const { data: persoon } = await locals
+			.supabase!.from('personen')
+			.select('naam, auth_user_id')
+			.eq('id', tekst(f, 'id'))
+			.maybeSingle();
+		if (!persoon?.auth_user_id) return fail(404, { fout: 'Die persoon heeft nog geen login.' });
+
+		// email_confirm, anders zet Supabase het adres pas om zodra iemand op een
+		// bevestigingsmail klikt -- en die sturen we juist niet.
+		const { error } = await admin.auth.admin.updateUserById(persoon.auth_user_id, {
+			email,
+			email_confirm: true
+		});
+		if (error) {
+			return fail(400, {
+				fout: error.message.includes('already been registered')
+					? 'Dat adres is al van iemand anders.'
+					: error.message
+			});
+		}
+
+		return { gedaan: `${persoon.naam} logt nu in met ${email}.` };
+	},
+
 	persoonWijzig: async ({ request, locals }) => {
 		const ik = await alleenBeheerder(locals);
 		if (!ik) return fail(403, { fout: 'Alleen een beheerder.' });

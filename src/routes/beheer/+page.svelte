@@ -25,6 +25,9 @@
 {#if form?.let_op}
 	<p class="notitie">{form.let_op}</p>
 {/if}
+{#if typeof form?.gedaan === 'string' && form.gedaan.includes('@')}
+	<p class="notitie">{form.gedaan}</p>
+{/if}
 {#if form?.login}
 	<!--
 		Eén keer in beeld en nooit meer. Supabase bewaart alleen een versleutelde
@@ -55,6 +58,17 @@
 		<p class="detail">Hier stel je in wie er werkt en waarop.</p>
 	</div>
 {:else}
+	<div class="blok">
+		<h2>Het vaste weekrooster</h2>
+		<p class="detail">
+			Wie er élke maandag, elke dinsdag enzovoort rijdt. Daar maakt de wekelijkse uitrol de
+			diensten van.
+		</p>
+		<div class="knoppen">
+			<a href="/beheer/sjabloon">Weekrooster instellen →</a>
+		</div>
+	</div>
+
 	<!-- ── Posten ──────────────────────────────────────────────────── -->
 	<div class="blok">
 		<h2>Bussen en scooters</h2>
@@ -242,9 +256,17 @@
 							</p>
 						</form>
 					{:else if p.auth_user_id}
-						<p class="detail" style="margin:0.4rem 0 0">
-							Logt in met {data.adressen?.[p.auth_user_id] ?? 'een onbekend adres'}
-						</p>
+						<form method="post" action="?/adresWijzig" use:enhance={naarDeMelding}>
+							<input type="hidden" name="id" value={p.id} />
+							<p class="regel" style="gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0 0">
+								<input
+									name="email"
+									type="email"
+									value={data.adressen?.[p.auth_user_id] ?? ''}
+								/>
+								<button>Adres opslaan</button>
+							</p>
+						</form>
 						<form method="post" action="?/nieuwWachtwoord" use:enhance={naarDeMelding}>
 							<input type="hidden" name="id" value={p.id} />
 							<div class="knoppen"><button>Nieuw wachtwoord</button></div>

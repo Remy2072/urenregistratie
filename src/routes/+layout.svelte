@@ -12,6 +12,7 @@
 		'/beschikbaarheid': 'Beschikbaarheid',
 		'/rooster': 'Rooster',
 		'/beheer': 'Beheer',
+		'/beheer/sjabloon': 'Weekrooster',
 		'/overzicht': 'Weekoverzicht',
 		'/export': 'Export',
 		'/inloggen': 'Inloggen',
