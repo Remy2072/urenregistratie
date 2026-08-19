@@ -1,6 +1,15 @@
 import type { Rol } from '$lib/model';
 
-export type Ik = { id: string; naam: string; rol: Rol; actief: boolean };
+export type Ik = {
+	id: string;
+	naam: string;
+	rol: Rol;
+	actief: boolean;
+	/** Waarmee je inlogt. Alleen jij ziet hem, en de baas in het beheerscherm. */
+	gebruikersnaam: string | null;
+	/** Het enige veld dat je van jezelf mag wijzigen. Zie profiel.sql. */
+	telefoon: string | null;
+};
 
 /** Mag deze persoon beheren? Manager en eigenaar allebei. */
 export const magBeheren = (ik: Ik | null) => ik?.rol === 'manager' || ik?.rol === 'eigenaar';

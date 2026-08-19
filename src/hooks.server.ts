@@ -89,11 +89,21 @@ export const handle: Handle = async ({ event, resolve }) => {
 			return null;
 		}
 
-		const { data } = await event.locals
+		const { data, error } = await event.locals
 			.supabase!.from('personen')
-			.select('id, naam, rol, actief')
+			.select('id, naam, rol, actief, gebruikersnaam, telefoon')
 			.eq('auth_user_id', user.id)
 			.maybeSingle();
+
+		// Zonder deze regel wordt een kapotte query stilletjes "deze login hangt
+		// nog niet aan een persoon", en dat is een heel ander probleem. De
+		// verdenking staat erbij: ontbreekt er een kolom, dan is de migratie nog
+		// niet gedraaid.
+		if (error) {
+			console.error(
+				`personen ophalen mislukte: ${error.message} — staan docs/rollen.sql en docs/profiel.sql al op deze database?`
+			);
+		}
 
 		persoon = { klaar: true, waarde: (data as Ik | null) ?? null };
 		return persoon.waarde;

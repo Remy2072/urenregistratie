@@ -12,6 +12,17 @@
 	let toon = $state(false);
 </script>
 
+{#if page.url.searchParams.has('nieuw')}
+	<div class="blok">
+		<div class="kaart nu">
+			<div class="regel"><span class="dag">Je wachtwoord is gewijzigd</span></div>
+			<p class="detail" style="margin:0.4rem 0 0">
+				Log opnieuw in, met je nieuwe wachtwoord. Op je andere telefoons ook.
+			</p>
+		</div>
+	</div>
+{/if}
+
 {#if page.url.searchParams.has('weg')}
 	<p class="fout">
 		Je staat op non-actief en kunt daarom niet inloggen. Klopt dat niet, vraag dan je baas om je
@@ -43,14 +54,20 @@
 		}}
 	>
 		<label class="veld">
-			<span>E-mailadres</span>
+			<span>{data.gebruikersnaam ? 'Gebruikersnaam' : 'E-mailadres'}</span>
+			<!--
+				Geen type="email": dan weigert de browser 'daanb' voordat de server
+				hem ooit ziet. De server bepaalt wat het is, aan het apenstaartje.
+			-->
 			<input
-				name="email"
-				type="email"
+				name="wie"
+				type="text"
 				autocomplete="username"
-				inputmode="email"
+				autocapitalize="none"
+				spellcheck="false"
 				required
-				value={form?.email ?? ''}
+				placeholder={data.gebruikersnaam ? 'daanb' : 'jij@voorbeeld.nl'}
+				value={form?.wie ?? ''}
 			/>
 		</label>
 
@@ -86,11 +103,18 @@
 		</div>
 	</form>
 
-<p class="notitie">
-	Wachtwoord kwijt? Vraag je baas — die zet er in een minuut een nieuwe voor je klaar. Er komt geen
-	mail aan te pas, dus je hoeft nergens anders in te loggen om erbij te kunnen.
-</p>
-</div>
+		{#if data.gebruikersnaam}
+			<p class="notitie">
+				Je gebruikersnaam is een kort woord dat je van de baas krijgt, zoals <code>daanb</code>. Je
+				oude e-mailadres blijft ook werken.
+			</p>
+		{/if}
+
+		<p class="notitie">
+			Wachtwoord kwijt? Vraag je baas — die zet er in een minuut een nieuwe voor je klaar. Er komt
+			geen mail aan te pas, dus je hoeft nergens anders in te loggen om erbij te kunnen.
+		</p>
+	</div>
 
 <div class="blok">
 	<p class="notitie">

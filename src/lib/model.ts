@@ -36,6 +36,12 @@ export type Persoon = {
 	naam: string;
 	rol: Rol;
 	actief: boolean;
+
+	/** Waarmee hij inlogt. Null zolang hij geen login heeft. */
+	gebruikersnaam: string | null;
+
+	/** Altijd als +316…; zie telefoon.ts. Null als het nummer niet bekend is. */
+	telefoon: string | null;
 };
 
 export type Post = {

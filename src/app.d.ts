@@ -17,7 +17,7 @@ declare global {
 		interface PageData {
 			ingelogd: boolean;
 			/** Wie je bent volgens `personen`. Null als de login nog niet gekoppeld is. */
-			ik: { id: string; naam: string; rol: 'medewerker' | 'beheerder' } | null;
+			ik: import('$lib/server/wie').Ik | null;
 			/** Heb je zelf diensten? Bepaalt of het bezorgertabblad er staat. */
 			bezorger: boolean;
 			/** Datum en tijd in Nederland, gelezen op de server. */
