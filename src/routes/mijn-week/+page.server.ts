@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { Dienst } from '$lib/model';
-import { isHalfUur, korteTijden, maandagVan, minuten, nuInNederland, plusDagen } from '$lib/tijd';
+import { isHalfUur, korteTijd, korteTijden, maandagVan, minuten, nuInNederland, plusDagen } from '$lib/tijd';
 import { wieBenIk } from '$lib/server/wie';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -71,9 +71,32 @@ export const actions: Actions = {
 			return fail(400, { fout: 'De eindtijd moet na de begintijd liggen.' });
 		}
 
+		// Wijken de tijden af, dan hoort er een reden bij. Anders staat er straks
+		// "+30 min" op het scherm van de baas zonder uitleg en gaat hij bellen --
+		// precies het telefoontje dat deze app moet uitsparen.
+		const opmerking = String(formulier.get('opmerking') ?? '').trim();
+		const { data: gepland } = await locals
+			.supabase!.from('diensten')
+			.select('gepland_begin, gepland_eind')
+			.eq('id', id)
+			.maybeSingle();
+
+		const afwijkend =
+			gepland !== null &&
+			(korteTijd(gepland.gepland_begin) !== begin || korteTijd(gepland.gepland_eind) !== eind);
+
+		if (afwijkend && opmerking === '') {
+			return fail(400, { fout: 'Zet er even bij wat er anders was — dan hoeft de baas niet te bellen.' });
+		}
+
 		const { data, error } = await locals
 			.supabase!.from('diensten')
-			.update({ werkelijk_begin: begin, werkelijk_eind: eind, status: 'gemeld' })
+			.update({
+				werkelijk_begin: begin,
+				werkelijk_eind: eind,
+				status: 'gemeld',
+				opmerking: opmerking === '' ? null : opmerking
+			})
 			.eq('id', id)
 			.eq('persoon_id', ik.id)
 			.select('id');

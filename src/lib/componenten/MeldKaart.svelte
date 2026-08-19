@@ -52,12 +52,50 @@
 	let bijBegin = $state(0);
 	let bijEind = $state(0);
 	let bezig = $state(false);
+	// Bij corrigeren staat er misschien al een opmerking; die wil je zien en niet
+	// opnieuw hoeven typen. $state met een beginwaarde uit props kijkt maar één
+	// keer, dus die zetten we bij het wisselen van dienst zelf om.
+	let opmerking = $state('');
+	let gezienVoor = '';
+	$effect(() => {
+		if (gezienVoor !== dienst.id) {
+			gezienVoor = dienst.id;
+			opmerking = dienst.opmerking ?? '';
+		}
+	});
+
+	// De grenzen van een avonddienst. Bij Tjon begint er niets voor 15:00 en is
+	// alles voor middernacht klaar, dus buiten dit venster hoeft de stapper niet
+	// te kunnen komen -- dan tik je alleen maar mis.
+	//
+	// Dit zijn twee getallen op één plek. Bij een bedrijf dat 's ochtends open
+	// gaat horen ze in het instellingenbestand van fase 8; zolang dat er niet is,
+	// verander je ze hier.
+	const VROEGSTE = '15:00';
+	const LAATSTE = '22:00';
 
 	let begin = $derived(verschuif(basisBegin, bijBegin));
 	let eind = $derived(verschuif(basisEind, bijEind));
 	let gewijzigd = $derived(bijBegin !== 0 || bijEind !== 0);
+
+	/** Anders dan gepland -- ongeacht of je nu aan het melden of corrigeren bent. */
+	let afwijkt = $derived(begin !== dienst.gepland_begin || eind !== dienst.gepland_eind);
+
 	let verschil = $derived(
 		minuten(eind) - minuten(begin) - (minuten(dienst.gepland_eind) - minuten(dienst.gepland_begin))
+	);
+
+	/**
+	 * Het voorbeeld in het veld hangt af van welke kant je op gaat. Stond er bij
+	 * minder uren "liep uit", dan legt het zichzelf tegen -- en dan gaat iemand
+	 * dat overtypen omdat het er stond.
+	 */
+	let hint = $derived(
+		verschil > 0
+			? 'laatste rit liep uit'
+			: verschil < 0
+				? 'eerder klaar, niets meer te bezorgen'
+				: 'later begonnen, even lang doorgereden'
 	);
 
 	/**
@@ -69,7 +107,7 @@
 	function stap(veld: 'begin' | 'eind', delta: number) {
 		const nieuwBegin = minuten(basisBegin) + (veld === 'begin' ? bijBegin + delta : bijBegin);
 		const nieuwEind = minuten(basisEind) + (veld === 'eind' ? bijEind + delta : bijEind);
-		if (nieuwBegin < 0 || nieuwEind > 23 * 60 + 30) return;
+		if (nieuwBegin < minuten(VROEGSTE) || nieuwEind > minuten(LAATSTE)) return;
 		if (nieuwEind - nieuwBegin < 30) return;
 		if (veld === 'begin') bijBegin += delta;
 		else bijEind += delta;
@@ -96,6 +134,10 @@
 	<TijdStapper label="Begin" stappen={[-30, 30]} stap={(d) => stap('begin', d)} />
 	<TijdStapper label="Einde" stappen={[-30, 30, 60]} stap={(d) => stap('eind', d)} />
 
+	<p class="detail" style="margin:0.5rem 0 0">
+		Vroegste begintijd {VROEGSTE}, laatste eindtijd {LAATSTE}.
+	</p>
+
 	<form
 		method="post"
 		action="?/melden"
@@ -111,6 +153,18 @@
 		<input type="hidden" name="id" value={dienst.id} />
 		<input type="hidden" name="begin" value={begin} />
 		<input type="hidden" name="eind" value={eind} />
+
+		<!--
+			Wijken je tijden af, dan wil de baas weten waarom. Zonder die regel
+			staat er straks "+30 min" op zijn scherm zonder enige uitleg en moet hij
+			bellen -- en dat is precies het telefoontje dat deze app moet uitsparen.
+		-->
+		{#if afwijkt}
+			<label class="veld" style="margin-top:0.6rem">
+				<span>Wat was er anders?</span>
+				<input name="opmerking" bind:value={opmerking} placeholder={hint} required />
+			</label>
+		{/if}
 		<div class="knoppen">
 			{#if corrigeren}
 				<button type="button" onclick={() => sluit?.()} disabled={bezig}>Laat maar</button>
