@@ -6,6 +6,57 @@ een fase in `bouwplan.md` wordt, gaat het gebeuren.
 
 ---
 
+## Inloggen met een gebruikersnaam, en een eigen profielpagina
+
+Dit is geen los idee meer maar een besloten model; het staat hier tot het een
+fase in `bouwplan.md` wordt.
+
+**Vier gegevens per persoon:**
+
+| Veld | Waarvoor | Wie mag het wijzigen |
+|---|---|---|
+| Naam | "Daan B." — staat in rooster, overzicht en export | de baas |
+| Gebruikersnaam | `daanb` — alleen om in te loggen | de baas |
+| Telefoon | herstel per sms, later ruilverzoeken | hij zelf, en de baas |
+| Wachtwoord | — | hij zelf |
+
+De naam en de gebruikersnaam zijn met opzet niet van de persoon zelf. Kan
+iedereen zijn eigen naam wijzigen, dan staat er morgen iets anders in het
+rooster dan gisteren en klopt geen enkel oud overzicht meer. En bij
+gebruikersnamen gaat het om herkenbaarheid: de baas moet weten wie `daanb` is.
+
+**De gebruikersnaam wordt nergens getoond.** Niet in het rooster, niet op het
+bazenscherm. Alleen de persoon zelf ziet hem, en de baas in het beheerscherm.
+Daarmee is het tweede-Daan-probleem ook weg: twee mensen mogen allebei "Daan"
+heten, want dat is een label. Alleen de gebruikersnaam moet uniek zijn.
+
+**Onder water blijft het een e-mailadres.** Supabase Auth kent alleen adressen
+en telefoonnummers, geen gebruikersnamen. De app maakt er dus zelf een adres
+van: jij typt `daanb`, de app logt in als `daanb@<domein>`. Dat adres bestaat
+nergens en er gaat nooit post heen. Uitzoeken vóór je dit bouwt: of Supabase een
+verzonnen domein accepteert, of dat je een domein moet gebruiken dat de baas
+echt bezit.
+
+### De profielpagina
+
+`/ik` bestaat al als controlescherm uit fase 2. Dit maakt er een eigen
+instellingenpagina van: je ziet je eigen gegevens en verandert wat van jou is.
+Niemand ziet die van een ander — ook de baas niet, behalve via beheer.
+
+Twee dingen om goed te doen:
+
+- **Wachtwoord wijzigen kan zonder beheersleutel.** Dat gaat met je eigen
+  sessie, dus met de gewone publieke sleutel. Vraag wel het huidige wachtwoord
+  opnieuw: anders is een telefoon die iemand even open laat liggen genoeg om
+  hem buiten te sluiten.
+- **Je eigen telefoonnummer wijzigen vraagt een trigger.** De policy op
+  `personen` laat nu alleen een beheerder wijzigen, en "je mag je eigen rij
+  aanpassen maar alleen dit ene veld" past niet in een policy — die ziet de rij
+  zoals hij was óf zoals hij wordt, nooit allebei. Zelfde oplossing als bij
+  `rol`: uitbreiden van `persoon_wijziging_bewaken()`.
+
+---
+
 ## Superadmin
 
 **Het idee.** Een rol boven eigenaar, voor de bouwer. Kan overal bij, in elke
