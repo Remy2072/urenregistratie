@@ -409,3 +409,21 @@ textarea {
 	font-family: inherit;
 	font-size: 0.9rem;
 }
+
+/* ── Wachtwoordveld met een oogje ──────────────────────────────────── */
+.metoog {
+	display: flex;
+	gap: 0.4rem;
+	align-items: stretch;
+}
+
+.metoog input {
+	flex: 1;
+	min-width: 0;
+}
+
+button.oog {
+	flex: 0 0 auto;
+	font-size: 0.85rem;
+	padding: 0 0.7rem;
+}

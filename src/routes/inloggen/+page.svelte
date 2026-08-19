@@ -5,6 +5,11 @@
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 	let bezig = $state(false);
+
+	// Wachtwoorden die de app uitdeelt zien eruit als 9rgzs-ywb4e-fyr9p, en die
+	// typt iedereen van een briefje over. Zonder oogje weet je bij een misser
+	// niet of je verkeerd getypt hebt of het verkeerde wachtwoord hebt.
+	let toon = $state(false);
 </script>
 
 {#if page.url.searchParams.has('weg')}
@@ -51,7 +56,23 @@
 
 		<label class="veld">
 			<span>Wachtwoord</span>
-			<input name="wachtwoord" type="password" autocomplete="current-password" required />
+			<span class="metoog">
+				<input
+					name="wachtwoord"
+					type={toon ? 'text' : 'password'}
+					autocomplete="current-password"
+					required
+				/>
+				<button
+					type="button"
+					class="oog"
+					onclick={() => (toon = !toon)}
+					aria-label={toon ? 'Wachtwoord verbergen' : 'Wachtwoord tonen'}
+					aria-pressed={toon}
+				>
+					{toon ? 'verberg' : 'toon'}
+				</button>
+			</span>
 		</label>
 
 		{#if form?.fout}
