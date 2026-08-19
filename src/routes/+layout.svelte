@@ -16,7 +16,7 @@
 		'/overzicht': 'Weekoverzicht',
 		'/export': 'Export',
 		'/inloggen': 'Inloggen',
-		'/ik': 'Ingelogd'
+		'/ik': 'Mijn gegevens'
 	};
 
 	let pad = $derived(page.url.pathname);

@@ -3,6 +3,8 @@ import type { Actions, PageServerLoad } from './$types';
 import { magBeheren, wieBenIk } from '$lib/server/wie';
 import { beheerClient, verzinWachtwoord } from '$lib/server/beheersleutel';
 import { isHalfUur, korteTijd, nuInNederland } from '$lib/tijd';
+import { isGebruikersnaam, verzinAdres } from '$lib/server/login';
+import { alsTelefoon } from '$lib/telefoon';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const nu = nuInNederland();
@@ -26,6 +28,16 @@ export const load: PageServerLoad = async ({ locals }) => {
 		for (const u of data?.users ?? []) if (u.email) adressen[u.id] = u.email;
 	}
 
+	const personenLijst = (personen.data ?? []) as {
+		id: string;
+		naam: string;
+		rol: string;
+		actief: boolean;
+		auth_user_id: string | null;
+		gebruikersnaam: string | null;
+		telefoon: string | null;
+	}[];
+
 	return {
 		nu,
 		beheerder: true,
@@ -40,13 +52,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 			eindtijd: string;
 			actief: boolean;
 		}[]).map((d) => ({ ...d, begintijd: korteTijd(d.begintijd)!, eindtijd: korteTijd(d.eindtijd)! })),
-		personen: (personen.data ?? []) as {
-			id: string;
-			naam: string;
-			rol: string;
-			actief: boolean;
-			auth_user_id: string | null;
-		}[]
+		personen: personenLijst,
+
+		// Wat de app voorstelt als adres bij "Login aanmaken". Het adres doet
+		// verder niets -- er gaat nooit post heen -- maar Supabase Auth kan niet
+		// zonder. Het voorstel wordt hier gemaakt en niet in het scherm, zodat het
+		// domein op één plek staat: zie verzinAdres() en LOGIN_DOMEIN in .env.
+		adresVoorstel: Object.fromEntries(
+			personenLijst
+				.filter((p) => !p.auth_user_id && p.gebruikersnaam)
+				.map((p) => [p.id, verzinAdres(p.gebruikersnaam!)])
+		) as Record<string, string>
 	};
 };
 
@@ -61,8 +77,48 @@ function vertaal(fout: { code?: string; message: string }, wat: string): string 
 	if (fout.code === '23503') {
 		return `Deze ${wat} is in gebruik — er hangen nog diensten of sjabloonregels aan. Zet hem op non-actief in plaats van weg te gooien; dan blijft de geschiedenis kloppen.`;
 	}
-	if (fout.code === '23505') return `Die naam bestaat al.`;
+	if (fout.code === '23505') {
+		return fout.message.includes('gebruikersnaam')
+			? 'Die gebruikersnaam is al van iemand anders. Verzin er een met een letter erbij.'
+			: 'Die naam bestaat al.';
+	}
+	// Een check constraint. De app toetst dezelfde regels vooraf, dus hier komt
+	// alleen wat er langs het formulier heen is gekomen.
+	if (fout.code === '23514') {
+		if (fout.message.includes('gebruikersnaam')) return 'Die gebruikersnaam kan niet.';
+		if (fout.message.includes('telefoon')) return 'Dat telefoonnummer kan niet.';
+	}
 	return fout.message;
+}
+
+/**
+ * Een gebruikersnaam uit een formulier. Leeg mag: iemand die nooit inlogt heeft
+ * er geen nodig, en dan blijft hij gewoon in het rooster staan.
+ *
+ * Kleine letters, want zo staat hij in de database en zo wordt hij opgezocht.
+ * Typt de baas 'DaanB', dan is dat dezelfde persoon en geen tweede.
+ */
+function gebruikersnaamUit(f: FormData): { waarde: string | null; fout?: string } {
+	const g = tekst(f, 'gebruikersnaam').toLowerCase();
+	if (g === '') return { waarde: null };
+	if (!isGebruikersnaam(g)) {
+		return {
+			waarde: null,
+			fout: 'Een gebruikersnaam is twee tot 32 tekens: kleine letters, cijfers, punt of streepje. Geen apenstaartje — daaraan ziet het inlogscherm het verschil met een e-mailadres.'
+		};
+	}
+	return { waarde: g };
+}
+
+/** Hetzelfde voor een telefoonnummer. Zie telefoon.ts voor de vorm. */
+function telefoonUit(f: FormData): { waarde: string | null; fout?: string } {
+	const ingevoerd = tekst(f, 'telefoon');
+	if (ingevoerd === '') return { waarde: null };
+	const nummer = alsTelefoon(ingevoerd);
+	if (nummer === null) {
+		return { waarde: null, fout: 'Een Nederlands nummer heeft tien cijfers: 06 12345678. Uit een ander land met landnummer erbij, zoals +32470123456.' };
+	}
+	return { waarde: nummer };
 }
 
 async function alleenBeheerder(locals: App.Locals) {
@@ -171,7 +227,14 @@ export const actions: Actions = {
 		// eigenaar. Staat ook in de policy, zie rollen.sql.
 		const rol = ik.rol === 'eigenaar' ? alsRol(f.get('rol')) : 'medewerker';
 
-		const { error } = await locals.supabase!.from('personen').insert({ naam, rol });
+		const gebruikersnaam = gebruikersnaamUit(f);
+		if (gebruikersnaam.fout) return fail(400, { fout: gebruikersnaam.fout });
+		const telefoon = telefoonUit(f);
+		if (telefoon.fout) return fail(400, { fout: telefoon.fout });
+
+		const { error } = await locals
+			.supabase!.from('personen')
+			.insert({ naam, rol, gebruikersnaam: gebruikersnaam.waarde, telefoon: telefoon.waarde });
 		if (error) return fail(400, { fout: vertaal(error, 'persoon') });
 		return {
 			gedaan: 'toegevoegd',
@@ -197,8 +260,6 @@ export const actions: Actions = {
 
 		const f = await request.formData();
 		const id = tekst(f, 'id');
-		const email = tekst(f, 'email').toLowerCase();
-		if (!email.includes('@')) return fail(400, { fout: 'Geef een geldig e-mailadres.' });
 
 		const admin = beheerClient();
 		if (!admin) {
@@ -209,11 +270,30 @@ export const actions: Actions = {
 
 		const { data: persoon } = await locals
 			.supabase!.from('personen')
-			.select('naam, auth_user_id')
+			.select('naam, auth_user_id, gebruikersnaam')
 			.eq('id', id)
 			.maybeSingle();
 		if (!persoon) return fail(404, { fout: 'Die persoon bestaat niet.' });
 		if (persoon.auth_user_id) return fail(409, { fout: `${persoon.naam} heeft al een login.` });
+
+		// Het adres maakt de app zelf, uit de gebruikersnaam. Het doet verder
+		// niets -- er gaat nooit post heen -- en het is dus niets om iemand over
+		// te laten nadenken. Wat de baas invult is de gebruikersnaam; daarom staat
+		// die hier ook als voorwaarde en niet het adres.
+		//
+		// Het veld is er nog voor één geval: weigert Supabase het verzonnen
+		// domein, dan typ je er een adres in dat wel mag. Inloggen verandert daar
+		// niet van, want dat gaat op de gebruikersnaam.
+		const ingevuld = tekst(f, 'email').toLowerCase();
+		if (ingevuld !== '' && !ingevuld.includes('@')) {
+			return fail(400, { fout: 'Dat is geen geldig e-mailadres.' });
+		}
+		if (ingevuld === '' && !persoon.gebruikersnaam) {
+			return fail(400, {
+				fout: `Zet eerst een gebruikersnaam bij ${persoon.naam} — daar maakt de app het adres van waarmee Supabase hem kent.`
+			});
+		}
+		const email = ingevuld || verzinAdres(persoon.gebruikersnaam!);
 
 		const wachtwoord = verzinWachtwoord();
 		const { data: nieuw, error } = await admin.auth.admin.createUser({
@@ -237,7 +317,18 @@ export const actions: Actions = {
 			return fail(400, { fout: vertaal(koppelen, 'persoon') });
 		}
 
-		return { login: { naam: persoon.naam, email, wachtwoord, opnieuw: false } };
+		return {
+			login: {
+				naam: persoon.naam,
+				// Waarmee hij intypt wat hij is: de gebruikersnaam als die er staat,
+				// anders het adres. Zonder gebruikersnaam werkt inloggen ook, maar dan
+				// moet hij dat adres onthouden -- en dat is precies wat fase 10 wegneemt.
+				waarmee: persoon.gebruikersnaam ?? email,
+				email,
+				wachtwoord,
+				opnieuw: false
+			}
+		};
 	},
 
 	/**
@@ -249,9 +340,24 @@ export const actions: Actions = {
 	 * terug meer binnen de app.
 	 */
 	nieuwWachtwoord: async ({ request, locals }) => {
-		if (!(await alleenBeheerder(locals))) return fail(403, { fout: 'Alleen een beheerder.' });
+		const ik = await alleenBeheerder(locals);
+		if (!ik) return fail(403, { fout: 'Alleen een beheerder.' });
 
 		const id = tekst(await request.formData(), 'id');
+
+		// Niet op jezelf. Dit is de duurste knop van de app als je hem op je eigen
+		// account gebruikt: Supabase gooit bij een nieuw wachtwoord je sessies weg,
+		// dus je wordt uitgelogd terwijl het nieuwe wachtwoord op een scherm staat
+		// dat je op dat moment niet meer mag zien. Dan is de SQL-editor de enige
+		// weg terug.
+		//
+		// Voor je eigen wachtwoord is er /ik: daar vul je het oude erbij in en
+		// stuurt de app je daarna zelf naar het inlogscherm.
+		if (id === ik.id) {
+			return fail(400, {
+				fout: 'Je eigen wachtwoord zet je op "Mijn gegevens" — daar hoort het oude erbij, en dan weet je zeker dat je weer binnenkomt. Deze knop gooit je eruit voordat je het nieuwe hebt kunnen lezen.'
+			});
+		}
 		const admin = beheerClient();
 		if (!admin) {
 			return fail(503, {
@@ -261,7 +367,7 @@ export const actions: Actions = {
 
 		const { data: persoon } = await locals
 			.supabase!.from('personen')
-			.select('naam, auth_user_id')
+			.select('naam, auth_user_id, gebruikersnaam')
 			.eq('id', id)
 			.maybeSingle();
 		if (!persoon?.auth_user_id) return fail(404, { fout: 'Die persoon heeft nog geen login.' });
@@ -276,6 +382,7 @@ export const actions: Actions = {
 		return {
 			login: {
 				naam: persoon.naam,
+				waarmee: persoon.gebruikersnaam ?? bijgewerkt?.user?.email ?? '',
 				email: bijgewerkt?.user?.email ?? '',
 				wachtwoord,
 				opnieuw: true
@@ -360,9 +467,20 @@ export const actions: Actions = {
 		}
 		const nieuweRol = ik.rol === 'eigenaar' ? rol : was.rol;
 
+		const gebruikersnaam = gebruikersnaamUit(f);
+		if (gebruikersnaam.fout) return fail(400, { fout: gebruikersnaam.fout });
+		const telefoon = telefoonUit(f);
+		if (telefoon.fout) return fail(400, { fout: telefoon.fout });
+
 		const { error } = await locals
 			.supabase!.from('personen')
-			.update({ naam: tekst(f, 'naam'), rol: nieuweRol, actief })
+			.update({
+				naam: tekst(f, 'naam'),
+				rol: nieuweRol,
+				actief,
+				gebruikersnaam: gebruikersnaam.waarde,
+				telefoon: telefoon.waarde
+			})
 			.eq('id', id);
 		if (error) return fail(400, { fout: vertaal(error, 'persoon') });
 		return { gedaan: 'opgeslagen' };
