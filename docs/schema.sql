@@ -47,10 +47,47 @@ create table personen (
                              check (rol in ('medewerker', 'manager', 'eigenaar')),
   actief         boolean     not null default true,
   auth_user_id   uuid        unique references auth.users(id) on delete set null,
-  aangemaakt_op  timestamptz not null default now()
+
+  -- Waarmee je inlogt, en waarop je gebeld of ge-sms't wordt. Allebei
+  -- mogen leeg: iemand die nooit inlogt hoeft geen gebruikersnaam, en
+  -- een nummer is pas nodig als er ook echt iets verstuurd wordt.
+  --
+  -- Het adres waarmee iemand inlogt staat hier NIET. Dat zit in
+  -- auth.users; de app zoekt bij een gebruikersnaam het adres op. Zie
+  -- fase 10 in bouwplan.md voor waarom niet andersom.
+  gebruikersnaam text,
+  telefoon       text,
+
+  aangemaakt_op  timestamptz not null default now(),
+
+  -- Geen apenstaartje in een gebruikersnaam, en dat is geen netheid: het
+  -- inlogscherm accepteert een gebruikersnaam of een adres, en het
+  -- verschil daartussen is precies dat teken.
+  constraint personen_gebruikersnaam_vorm
+    check (gebruikersnaam is null
+       or  gebruikersnaam ~ '^[a-z0-9][a-z0-9._-]{1,31}$'),
+
+  -- Eén vorm en geen zeven. Anders staat hetzelfde nummer er als
+  -- 06-12345678, 0612345678 en +31 6 12345678 in, en dan is "heeft deze
+  -- persoon een nummer" nog te beantwoorden maar "is dit hetzelfde
+  -- nummer" niet. De app rekent het om; dit is het slot erachter.
+  -- Een Nederlands nummer is precies tien cijfers: +31 en dan negen, want de
+  -- nul vooraan valt weg tegen het landnummer. Voor een buitenlands nummer
+  -- weten we de lengte niet en gelden alleen de grenzen van E.164.
+  constraint personen_telefoon_vorm
+    check (telefoon is null
+       or (telefoon ~ '^\+[1-9][0-9]{7,14}$'
+           and (telefoon !~ '^\+31' or telefoon ~ '^\+31[1-9][0-9]{8}$')))
 );
 
 create index on personen (actief);
+
+-- Twee keer 'daanb' kan niet, want dan weet het inlogscherm niet wie je
+-- bent. Namen mogen wel dubbel -- twee mensen mogen allebei Daan heten,
+-- want dat is een label en geen sleutel.
+create unique index personen_gebruikersnaam_uniek
+  on personen (gebruikersnaam)
+  where gebruikersnaam is not null;
 
 
 -- ---------------------------------------------------------------------
@@ -487,6 +524,16 @@ create policy personen_wijzigen on personen
   using      (is_eigenaar() or (is_beheerder() and rol <> 'eigenaar'))
   with check (is_eigenaar() or (is_beheerder() and rol <> 'eigenaar'));
 
+-- En aan je eigen rij mag je zelf komen. Policies zijn een 'of', dus deze
+-- komt naast de regel hierboven te staan. Wat je er mag veranderen bepaalt
+-- persoon_wijziging_bewaken(): alleen je telefoonnummer. Dat kan niet in een
+-- policy, want die ziet de rij zoals hij was of zoals hij wordt, nooit
+-- allebei tegelijk.
+create policy personen_eigen_gegevens on personen
+  for update to authenticated
+  using      (auth_user_id = auth.uid())
+  with check (auth_user_id = auth.uid());
+
 -- posten en dienstsoorten: geen persoonsgegevens, iedereen mag lezen
 create policy posten_lezen on posten
   for select to authenticated using (true);
@@ -558,8 +605,31 @@ security definer
 set search_path = public, auth
 as $$
 begin
-  -- service role (migraties, scripts) en de eigenaar mogen alles
-  if auth.uid() is null or is_eigenaar() then
+  -- service role (migraties, scripts) mag alles
+  if auth.uid() is null then
+    return new;
+  end if;
+
+  -- Je eigen rij, en je bent geen beheerder: alleen je telefoonnummer. Zonder
+  -- deze regel is je eigen rij het gat in het hele rechtenmodel -- dan zet je
+  -- jezelf op eigenaar en ben je klaar.
+  if not is_beheerder() and old.auth_user_id = auth.uid() then
+    if (new.naam, new.rol, new.actief, new.gebruikersnaam, new.auth_user_id)
+       is distinct from
+       (old.naam, old.rol, old.actief, old.gebruikersnaam, old.auth_user_id) then
+      raise exception 'Van je eigen gegevens kun je alleen je telefoonnummer wijzigen';
+    end if;
+    return new;
+  end if;
+
+  -- Niet je eigen rij en geen beheerder: dan heb je hier niets te zoeken. De
+  -- policies laten dit al niet toe; dit is het tweede slot.
+  if not is_beheerder() then
+    raise exception 'Alleen een beheerder wijzigt iemand anders';
+  end if;
+
+  -- de eigenaar mag alles
+  if is_eigenaar() then
     return new;
   end if;
 
@@ -623,6 +693,36 @@ grant select, insert, update, delete on sjabloon_regels to authenticated;
 grant select, insert, update         on diensten        to authenticated;
 grant select                         on mutaties        to authenticated;
 grant select                         on uren_export     to authenticated;
+
+-- ---------------------------------------------------------------------
+-- De beheersleutel mag bij personen. Alleen lezen, alleen deze tabel.
+--
+-- Dit was de verrassing bij het bouwen van fase 10: "de beheersleutel gaat
+-- langs alle rechten heen" is hier niet waar. De grants in schema.sql staan
+-- op `authenticated`, en dit Supabase-project is aangemaakt met
+-- "automatically expose new tables" uit -- dus de rol achter die sleutel
+-- (`service_role`) heeft op geen enkele tabel iets. Dat viel niet op zolang
+-- die sleutel alleen voor de Auth-API werd gebruikt: accounts aanmaken en
+-- wachtwoorden zetten gaan langs auth.users en niet langs een grant.
+--
+-- Het opzoeken van een adres bij een gebruikersnaam is de eerste keer dat
+-- de server met die sleutel een tabel leest. Zonder de regels hieronder
+-- krijgt hij 'permission denied for table personen' en zegt het inlogscherm
+-- alleen dat het niet klopt.
+--
+-- Bewust zo klein mogelijk: lezen, en alleen deze tabel. Wat de sleutel
+-- verder nodig heeft, geef je er dan ook bewust bij.
+--
+-- In een do-blok, want `service_role` bestaat alleen op Supabase. Draai je
+-- dit schema op een gewone Postgres, dan slaat hij deze regels over.
+-- ---------------------------------------------------------------------
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    execute 'grant usage on schema public to service_role';
+    execute 'grant select on personen to service_role';
+  end if;
+end $$;
 
 -- =====================================================================
 -- Beschikbaarheid (fase 9)

@@ -150,6 +150,13 @@ create policy personen_wijzigen on personen
 -- non-actief zetten. Wat hij niet mag: van iemand een manager maken, of van
 -- zichzelf een eigenaar.
 -- ---------------------------------------------------------------------
+-- LET OP -- profiel.sql (fase 10) zet hier een uitgebreidere versie van deze
+-- functie neer: die laat iemand zijn eigen telefoonnummer wijzigen en niets
+-- anders van zijn eigen rij. Draai dit bestand dus VOOR profiel.sql.
+--
+-- Draai je rollen.sql later nog eens opnieuw, dan overschrijf je die regel
+-- zonder dat er iets van omvalt -- en dan mag iedereen weer zijn eigen naam en
+-- rol zetten. Draai in dat geval profiel.sql er direct achteraan.
 create or replace function persoon_wijziging_bewaken()
 returns trigger
 language plpgsql
