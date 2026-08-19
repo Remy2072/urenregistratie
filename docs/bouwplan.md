@@ -612,6 +612,61 @@ De afstand is klein, want het schema was al generiek: er staat `post` en geen
   met kwartieren. Dat is één functie en één regel tekst — maar wel op twee
   plekken, dus schrijf op dat ze bij elkaar horen.
 
+### Wat je per bedrijf nodig hebt
+
+*Opgeschreven toen de vraag kwam wat er eigenlijk aan diensten onder deze app
+hangt. Drie dingen, en een vierde alleen als de sms-ideeën er komen.*
+
+| Wat | Per bedrijf? | Kost | Op wiens account |
+|---|---|---|---|
+| **Deze repo** | Nee, één voor allemaal | — | Jij, en na de verkoop de baas |
+| **Vercel** | Ja, één project | Hobby is niet voor commercieel gebruik; reken op het betaalde plan | De baas |
+| **Supabase** | Ja, één project | Gratis werkt; betaald geeft backups | De baas |
+| **Bird** | Alleen mét de sms-ideeën | Per bericht | De baas |
+
+**Alles op zijn account, niet op jouw.** Voor Supabase stond dat er al; het geldt
+net zo voor Vercel en Bird. Anders ben je na je vertrek nog steeds de beheerder
+van de loongegevens van een bedrijf waar je niet meer werkt — precies het bezwaar
+dat bij het superadmin-idee in `ideeen.md` staat.
+
+**Backups zijn de reden om voor Supabase te betalen.** Hier staan de uren waarop
+mensen worden uitbetaald. Dat is een ander soort verlies dan een website die een
+dag uit de lucht is.
+
+### Eén repo, vier installaties
+
+Vercel kan dezelfde repository naar meerdere projecten uitrollen, elk met zijn
+eigen omgevingsvariabelen. Vier bedrijven zijn dan vier Vercel-projecten en vier
+Supabase-projecten, met één keer code.
+
+Wat dat betekent:
+
+- **Eén push en ze zijn allemaal bij.** Elke installatie bouwt zichzelf opnieuw.
+  Eén verbetering komt overal terecht — en één fout ook, dus dit is precies de
+  reden dat je niet op vrijdagavond deployt.
+- **De databases blijven gescheiden.** Eigen namen, eigen uren, eigen logins,
+  eigen sleutels. Twee bedrijven kennen elkaars bestaan niet, en dat blijft zo:
+  dit is geen multi-tenancy en dat is bewust.
+- **Maar elke migratie draai je vier keer.** Dat is de prijs van dit model en die
+  loopt op met het aantal bedrijven. Houd de `.sql`-bestanden dus op één plek en
+  in volgorde, en zet per bedrijf af wat je gedraaid hebt. Bij meer dan twee
+  installaties is de Supabase CLI (`supabase db push`) het moment waard.
+- **Migratie eerst, deploy daarna.** Altijd in die volgorde. Code die een nieuwe
+  kolom nodig heeft valt om op een database waar die kolom nog niet staat, en dan
+  krijgt de hele ploeg "nog niet gekoppeld" te zien. Dat is bij fase 10 één keer
+  bijna gebeurd; nu staat het hier als regel.
+- **Laat de versies niet uit elkaar lopen.** Eén repo betekent dat alle
+  installaties dezelfde code draaien. Blijft één bedrijf achter met zijn schema,
+  dan moet je code schrijven die met twee schema's overweg kan, en dat is precies
+  het soort last waar je hier niet aan wil beginnen.
+
+**Wat er dus per bedrijf verschilt** is geen code maar instelling: de vulling van
+`startdata.sql`, en de omgevingsvariabelen in Vercel — de Supabase-sleutels, het
+domein voor de verzonnen adressen, en straks de bedrijfsnaam en de kleur. Dat is
+ook het argument om die naam in een variabele te zetten en niet in een bestand
+dat je commit: een bestand per bedrijf betekent een tak per bedrijf, en dan is
+het "één repo" weg.
+
 **Klaar als:** je een tweede bedrijf hebt opgezet en de enige bestanden die je
 hebt aangeraakt `startdata.sql` en het configuratiebestand zijn.
 
