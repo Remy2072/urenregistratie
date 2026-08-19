@@ -6,57 +6,6 @@ een fase in `bouwplan.md` wordt, gaat het gebeuren.
 
 ---
 
-## Inloggen met een gebruikersnaam, en een eigen profielpagina
-
-Dit is geen los idee meer maar een besloten model; het staat hier tot het een
-fase in `bouwplan.md` wordt.
-
-**Vier gegevens per persoon:**
-
-| Veld | Waarvoor | Wie mag het wijzigen |
-|---|---|---|
-| Naam | "Daan B." — staat in rooster, overzicht en export | de baas |
-| Gebruikersnaam | `daanb` — alleen om in te loggen | de baas |
-| Telefoon | herstel per sms, later ruilverzoeken | hij zelf, en de baas |
-| Wachtwoord | — | hij zelf |
-
-De naam en de gebruikersnaam zijn met opzet niet van de persoon zelf. Kan
-iedereen zijn eigen naam wijzigen, dan staat er morgen iets anders in het
-rooster dan gisteren en klopt geen enkel oud overzicht meer. En bij
-gebruikersnamen gaat het om herkenbaarheid: de baas moet weten wie `daanb` is.
-
-**De gebruikersnaam wordt nergens getoond.** Niet in het rooster, niet op het
-bazenscherm. Alleen de persoon zelf ziet hem, en de baas in het beheerscherm.
-Daarmee is het tweede-Daan-probleem ook weg: twee mensen mogen allebei "Daan"
-heten, want dat is een label. Alleen de gebruikersnaam moet uniek zijn.
-
-**Onder water blijft het een e-mailadres.** Supabase Auth kent alleen adressen
-en telefoonnummers, geen gebruikersnamen. De app maakt er dus zelf een adres
-van: jij typt `daanb`, de app logt in als `daanb@<domein>`. Dat adres bestaat
-nergens en er gaat nooit post heen. Uitzoeken vóór je dit bouwt: of Supabase een
-verzonnen domein accepteert, of dat je een domein moet gebruiken dat de baas
-echt bezit.
-
-### De profielpagina
-
-`/ik` bestaat al als controlescherm uit fase 2. Dit maakt er een eigen
-instellingenpagina van: je ziet je eigen gegevens en verandert wat van jou is.
-Niemand ziet die van een ander — ook de baas niet, behalve via beheer.
-
-Twee dingen om goed te doen:
-
-- **Wachtwoord wijzigen kan zonder beheersleutel.** Dat gaat met je eigen
-  sessie, dus met de gewone publieke sleutel. Vraag wel het huidige wachtwoord
-  opnieuw: anders is een telefoon die iemand even open laat liggen genoeg om
-  hem buiten te sluiten.
-- **Je eigen telefoonnummer wijzigen vraagt een trigger.** De policy op
-  `personen` laat nu alleen een beheerder wijzigen, en "je mag je eigen rij
-  aanpassen maar alleen dit ene veld" past niet in een policy — die ziet de rij
-  zoals hij was óf zoals hij wordt, nooit allebei. Zelfde oplossing als bij
-  `rol`: uitbreiden van `persoon_wijziging_bewaken()`.
-
----
-
 ## Niet elke keer opnieuw inloggen
 
 **Het idee.** Inloggen is één keer per persoon en daarna nooit meer. Nu moeten ze
@@ -109,9 +58,10 @@ Waar het schuurt:
   logt iemand twee keer per jaar in. Een passkey maakt die twee keer prettiger —
   het is dus de tweede stap, en het uitzoekwerk hierboven is de echte oplossing.
 
-**Hangt samen met** het inlogidee hierboven: een gebruikersnaam in plaats van een
-verzonnen e-mailadres, en een telefoonnummer voor herstel per sms. Doe die drie
-samen, dan is er één moment waarop je aan Auth zit in plaats van drie.
+**Wat hiervoor al gedaan is:** fase 10 in `bouwplan.md`. Inloggen gaat op een
+gebruikersnaam en het telefoonnummer staat in `personen` — dat was het deel van
+dit onderwerp dat wél nodig was. Wat hier overblijft is de sessie die blijft
+staan, en de passkey.
 
 **Volgorde.** Het uitzoekwerk mag altijd. De passkey pas als daaruit blijkt dat
 mensen er alsnog uit vliegen, of als het wachtwoord op een briefje echt in de weg
@@ -155,6 +105,30 @@ superadmin in de app is dus geen extra macht — het is een nette voordeur voor
 iets wat via de achterdeur toch al kan. Dat is meteen het argument om hem
 zichtbaar en uitzetbaar te maken in plaats van stilzwijgend.
 
+### En tot die tijd: de achterdeur zelf
+
+Dit is één keer echt gebeurd, tijdens fase 10, en dan wil je niet gaan zoeken.
+Sluit je jezelf buiten, dan zet je in de SQL-editor een nieuw wachtwoord:
+
+```sql
+select p.naam, p.gebruikersnaam, u.email
+  from personen p join auth.users u on u.id = p.auth_user_id
+ order by p.naam;
+
+update auth.users
+   set encrypted_password = extensions.crypt('tijdelijk', extensions.gen_salt('bf'))
+ where email = 'het adres uit de regel hierboven';
+```
+
+Werkt `extensions.crypt` niet, dan staat pgcrypto in `public` en kan het zonder
+dat voorvoegsel. Log daarna in met dat tijdelijke wachtwoord en zet op `/ik`
+meteen een echte — daar hoort het oude erbij.
+
+*Wat het veroorzaakte staat er niet meer:* "Nieuw wachtwoord" op je eigen account
+gooide je eruit terwijl het nieuwe wachtwoord op een scherm stond dat je op dat
+moment niet meer mocht zien. Die knop weigert dat nu, in het scherm en op de
+server.
+
 ---
 
 ## Diensten ruilen via sms
@@ -192,8 +166,10 @@ De ruil zelf is dus het kleinste deel.
 
 ### Wat er nog niet is
 
-- **Een telefoonnummer per persoon.** Staat al in de tabel bovenaan dit bestand,
-  bij het inlogidee. Dit is de tweede reden om dat veld te bouwen; doe ze samen.
+- **Nummers die echt ingevuld zijn.** De kolom staat er sinds fase 10, en de
+  bezorger mag hem zelf zetten op `/ik`. Maar leeg is leeg: vóór dit iets kan
+  doen moet je één keer de ploeg langs. Een verzoek aan iemand zonder nummer moet
+  trouwens ook een nette zin geven en geen stille mislukking.
 - **Een tabel `ruilverzoeken`:** van wie, aan wie, welke dienst, de status,
   wanneer het verzoek vervalt, en de *hash* van de sleutel — niet de sleutel
   zelf. Een databasedump mag geen werkende links opleveren. Laat Postgres hashen
@@ -306,8 +282,8 @@ anders vertrouwt iemand zijn agenda op een avond dat het net veranderd is.
 staat er meteen in. Maar je doet het per dienst, en een ruil volgt niet mee. Als
 opstapje is het prima; als eindpunt gaat iedereen het na twee weken vergeten.
 
-**Waar de link komt te staan.** Op `/ik`, bij de profielpagina uit het inlogidee
-hierboven: één knop om hem te kopiëren en één om een nieuwe te maken — waarmee de
+**Waar de link komt te staan.** Op `/ik`, dat sinds fase 10 een profielpagina is:
+één knop om hem te kopiëren en één om een nieuwe te maken — waarmee de
 oude vervalt, net als bij "Nieuw wachtwoord". Op een iPhone opent zo'n link
 meteen de vraag of je je wil abonneren; bij Google Agenda moet het via "agenda
 toevoegen → via url", en dat gaat op een telefoon niet. Reken erop dat je het

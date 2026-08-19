@@ -66,6 +66,7 @@ voren omdat er nu iets van afhangt.
 | 7 | Installatie en overgang | Eerste echte draai, dan mag het bonnetje weg | 3 weken doorlooptijd |
 | 8 | Boilerplate | Een tweede bedrijf zonder codewijziging | 1 weekend |
 | 9 | Rooster en beheer | Beschikbaarheid, het rooster in de app, en de baas die zelf kan instellen | 2 weekenden |
+| 10 | Gebruikersnaam en profiel ✅ | Inloggen zonder e-mailadres, en iedereen beheert wat van hem is | 1 avond |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
 dus reken op twee tot drie maanden doorlooptijd. Dat is prima: er is geen
@@ -758,6 +759,134 @@ drukt, en dat bericht in de groepsapp zet zonder er iets aan te veranderen.
 
 ---
 
+## Fase 10 — Gebruikersnaam en profielpagina ✅
+
+**Doel:** inloggen zonder dat er een e-mailadres bij komt kijken, en iedereen
+beheert zelf wat van hem is.
+
+Dit was het eerste idee in `ideeen.md` en het stond daar als besloten model. Wat
+het oplost: nu logt iemand in met een adres dat hij nooit gebruikt en dat de baas
+voor hem verzonnen heeft. Dat is één ding te veel om te onthouden op een telefoon
+in de kou, en het is meteen de reden dat er een wachtwoord op een briefje staat.
+
+### Wat erin zit
+
+1. **Een gebruikersnaam per persoon** — `daanb`, uniek, en van de baas. Alleen om
+   in te loggen; hij wordt nergens getoond behalve op `/ik` en in het beheerscherm.
+2. **Een telefoonnummer per persoon** — van hem zelf en van de baas. Er gaat nog
+   niets heen; het veld is de voorwaarde voor herstel per sms en voor ruilen.
+3. **`/inloggen` op gebruikersnaam** in plaats van op adres.
+4. **`/ik` wordt een profielpagina.** Je eigen gegevens, je telefoonnummer
+   wijzigen, en je wachtwoord wijzigen met het huidige erbij.
+5. **`/beheer` krijgt die twee velden**, en bij het aanmaken van een login staat
+   het adres al voorgesteld.
+
+### Het verzonnen domein hoefde niet
+
+In het idee stond dat de app er zelf een adres van maakt: jij typt `daanb`, de app
+logt in als `daanb@<domein>`. Daar hing een blokkerende vraag aan — accepteert
+Supabase een domein dat niet bestaat? — en die vraag is nu weg, want het kan
+zonder.
+
+De server zoekt het adres op bij de gebruikersnaam en logt daarmee in. Drie dingen
+gaan daarmee voor niets meer stuk: het maakt niet uit wat voor adressen er in Auth
+staan, de accounts die er al zijn hoeven niet om, en de baas kan een adres in
+`/beheer` wijzigen zonder dat er iemand buiten staat.
+
+Wat het kost: opzoeken gaat langs de beheersleutel, want in `auth.users` komt de
+gewone sleutel niet. Staat die sleutel niet in `.env`, dan log je in met je
+adres — het inlogscherm zegt dat dan ook. Dat is dezelfde sleutel die al nodig is
+om een login aan te maken, dus er komt geen voorwaarde bij die er niet al was.
+
+**En niet via de database.** Een functie die voor iedereen een gebruikersnaam naar
+een adres omzet zou dit zonder beheersleutel kunnen, maar dat is precies een
+lijst van je collega's die je zonder in te loggen kunt aflopen. Het inlogscherm
+zegt met opzet niet of een adres bestaat; dat zou je daar aan de achterkant weer
+weggeven.
+
+### Wat de database moet weten
+
+Twee kolommen op `personen`, een uniciteitsindex op de gebruikersnaam in kleine
+letters, en één regel erbij in `persoon_wijziging_bewaken()`: **van je eigen rij
+mag je alleen je telefoonnummer wijzigen.** Dat kan niet in een policy, want die
+ziet de rij zoals hij was óf zoals hij wordt, nooit allebei — dezelfde reden als
+bij `rol`. De policy erbij zegt alleen dát je aan je eigen rij mag komen; de
+trigger zegt waaraan.
+
+Je naam en je gebruikersnaam blijven van de baas. Kan iedereen zijn eigen naam
+wijzigen, dan staat er morgen iets anders in het rooster dan gisteren en klopt
+geen enkel oud overzicht meer.
+
+**Niet doen:** passkeys, en wachtwoord vergeten per sms. Dat zijn de twee ideeën
+die hierop wachten en ze wachten met een reden — eerst dit veld en dit scherm,
+dan pas een kanaal erbij.
+
+**Klaar als:** je als Daan inlogt met `daanb` en zijn wachtwoord, op `/ik` je
+telefoonnummer wijzigt en je wachtwoord verandert met het oude erbij, en de baas
+in `/beheer` voor iemand anders een gebruikersnaam en een nummer kan zetten —
+terwijl jij bij die van je collega niet komt, ook niet met een nagemaakt
+formulier.
+
+> **Gebouwd, database bij.** `/inloggen` gaat op gebruikersnaam, `/ik` is een
+> profielpagina, en `/beheer` heeft de twee velden erbij. `rollen.sql` en
+> `profiel.sql` zijn op 19 augustus 2026 gedraaid, in die volgorde, en de drie
+> controles erna — kolommen, trigger, policy — staan op true.
+>
+> **Die volgorde is geen detail.** `rollen.sql` zet zijn eigen versie van
+> `persoon_wijziging_bewaken()` neer, zonder de regel over je eigen rij. Draai je
+> hem als laatste, dan mag iedereen weer zijn eigen naam en rol zetten en valt er
+> niets om — je merkt het niet. De waarschuwing staat nu in beide bestanden.
+>
+> **Getoetst en het loopt:** inloggen op gebruikersnaam, het telefoonnummer op
+> `/ik`, en het wachtwoord wijzigen met het oude erbij. De gebruikersnamen staan
+> erin. Wie er nog geen heeft logt in met het adres dat hij al had — dat blijft
+> met opzet werken, want anders staat iemand buiten op het moment dat je uitrolt.
+>
+> Twee dingen kwamen uit het gebruiken zelf en zijn meteen recht gezet: **een
+> Nederlands nummer is precies tien cijfers** (een cijfer te veel of te weinig
+> merk je anders pas als er iemand niet gebeld wordt — de app rekent het om, de
+> database toetst het na), en **na een nieuw wachtwoord stuurt de app je naar het
+> inlogscherm**. Dat laatste hing eerst af van wat Supabase met je bestaande
+> sessie doet; dan staat er "gewijzigd" op een scherm dat bij de volgende klik
+> alsnog wegvalt.
+>
+> ### De beheersleutel mag niks
+>
+> Dit kostte de eerste inlogpoging, en het is het soort ding dat je één keer
+> tegenkomt: *"de beheersleutel gaat langs alle rechten heen"* is in dit project
+> niet waar. De grants in `schema.sql` staan alleen op `authenticated`, en het
+> Supabase-project is aangemaakt met "automatically expose new tables" uit — dus
+> `service_role` heeft op geen enkele tabel iets.
+>
+> Dat viel drie fases lang niet op, omdat die sleutel tot nu toe alleen de
+> **Auth**-API aanraakte: accounts aanmaken en wachtwoorden zetten gaan langs
+> `auth.users` en niet langs een grant. Het opzoeken van een adres bij een
+> gebruikersnaam is de eerste keer dat de server met die sleutel een gewone tabel
+> leest, en het antwoord was `permission denied for table personen`.
+>
+> Vandaar één grant in `profiel.sql`: **lezen, en alleen `personen`.** Bouw je
+> straks iets waar die sleutel meer nodig heeft — ruilen via sms, een
+> agenda-abonnement — dan geef je dat er bewust bij en zie je dat ook in het
+> schema staan.
+>
+> Bijkomend: het inlogscherm zegt bij elke mislukte poging hetzelfde, want het
+> verschil verklapt welke namen bestaan. De echte reden gaat naar de serverlog.
+> Zonder die regel was dit een middag zoeken geweest in plaats van één blik.
+>
+> ### En het e-mailveld is weg
+>
+> Bij "Login aanmaken" typte de baas een adres. Dat hoeft niet meer: de app maakt
+> het adres uit de gebruikersnaam. Supabase Auth kan niet zonder adres, maar er
+> gaat nooit post heen en niemand logt er meer mee in — dus het is
+> loodgieterswerk en geen invoer.
+>
+> Het veld staat er nog wel, dichtgeklapt, voor precies één geval: weigert
+> Supabase het verzonnen domein, dan typ je er een adres in dat wel mag. En
+> zonder gebruikersnaam kun je geen login meer aanmaken. Dat is geen drempel maar
+> de bedoeling: zo krijgt iedereen er een.
+
+---
+
 ## Open vragen, gekoppeld aan hun fase
 
 | Vraag | Blokkeert | Aan wie |
@@ -799,7 +928,8 @@ waar hij staat.
 
 | Wat | Wanneer | Waarom |
 |---|---|---|
-| **`rollen.sql` opnieuw draaien op Supabase** | eerstvolgende keer dat je het project opent | Er is een stuk bij gekomen dat `huidige_persoon_id()` naar `actief` laat kijken. Zolang dat niet gedraaid is, kan iemand die op non-actief staat technisch nog bij zijn eigen diensten. Het bestand is veilig om twee keer te draaien |
+| ~~`rollen.sql` opnieuw draaien op Supabase~~ | **gedaan, 19 augustus 2026** | Samen met `profiel.sql` en in die volgorde. `huidige_persoon_id()` kijkt nu naar `actief`, dus iemand op non-actief komt ook technisch nergens meer bij |
+| ~~`profiel.sql` draaien op Supabase~~ | **gedaan, 19 augustus 2026** | Twee kolommen op `personen`, de uniciteitsindex, de policy op je eigen rij en de trigger erover. Draai je ooit `rollen.sql` opnieuw, dan moet dit bestand er direct achteraan — anders is de regel over je eigen rij weer weg |
 | `pg_cron` op de weekuitrol | na een paar handmatige weken | Draait nu met de hand. De regel staat klaar onderaan `weekgeneratie.sql` |
 | `drop function test_schema();` en `test_weekgeneratie();` | wanneer je eraan denkt | Testfuncties uit fase 1 en 3, staan nog in de database |
 | Vercel-deploy | vóór fase 7, en het eerste wat er nu ligt | Dubbel bijhouden werkt niet als de app alleen op jouw laptop draait — en je kunt het de baas pas op zijn eigen telefoon laten zien als het ergens staat |
