@@ -342,3 +342,63 @@ voor de helft van de ploeg één keer moet voordoen.
 **Volgorde.** Na het rooster (fase 9 staat er) en niet vóór het sleutelmechanisme
 waar ruilen ook op leunt. Dit is het soort feature dat een app aardig maakt in
 plaats van nodig, dus hij hoort achter de dingen die nodig zijn.
+
+---
+
+## Eén antwoord voor alles wat je niet mag zien
+
+**Hoe het heet.** 404 masking, ook wel cloaking: in plaats van een eerlijke
+403 Forbidden geef je 404 Not Found, zodat je niet verklapt dát iets bestaat.
+Formeel is het **CWE-204, Observable Response Discrepancy**; bij OWASP valt het
+onder Broken Access Control. Het blokkeert *resource enumeration*, en de variant
+die we hier al toepassen is *user enumeration* — "wachtwoord onjuist" versus
+"onbekend account" is precies zo'n verschil. GitHub doet het letterlijk zo: geen
+toegang tot een private repo betekent dat de repo niet bestaat.
+
+**Wat deze app al zo doet.** Het inlogscherm zegt bij een onbekende
+gebruikersnaam, een onbekend adres en een verkeerd wachtwoord hetzelfde: *"klopt
+niet."* De echte reden gaat naar de serverlog. Datzelfde staat in het idee voor
+wachtwoord vergeten: *"als dat account bestaat, komt er een sms."* Die keuzes
+hadden alleen nog geen naam, en nu wel.
+
+### Waarom de rolschermen zo blijven
+
+`/overzicht`, `/beheer` en `/export` zeggen nu "alleen voor de baas" met een
+gewone 200. Dat lijkt het geval waar dit voor bedoeld is, en toch is het het
+niet:
+
+- **De routes zitten in de clientbundel.** SvelteKit levert zijn routelijst mee
+  aan de browser, dus die adressen zijn uit de JavaScript te halen wat de server
+  ook antwoordt. Een 404 verbergt daar niets — hij liegt alleen, en niet eens
+  overtuigend.
+- **Het is geen geheim.** Er werken tien mensen en ze weten allemaal dat er een
+  bazenscherm is. Verbergen dat iets bestaat werkt alleen als het bestaan zelf
+  informatie is.
+- **Het slot zit elders.** Komt een bezorger op `/overzicht`, dan geeft row level
+  security hem zijn eigen rijen en niets meer. Dat is de beveiliging; het scherm
+  is opruiming.
+- **En het kost iets.** De baas die zich vertypt krijgt "bestaat niet" in plaats
+  van een zin die hem verder helpt.
+
+### Waar het wél moet, en daar is het geen luxe
+
+De twee ideeën met een sleutel in het adres: **een ruilverzoek**
+(`/ruil/<sleutel>`) en **een agenda-abonnement** (`/agenda/<sleutel>.ics`). Daar
+is het adres wél te raden, en daar is elk verschil in het antwoord een gratis
+hint. Eén antwoord dus voor: sleutel bestaat niet, sleutel is verlopen, verzoek
+is al beantwoord, dienst is niet meer van die persoon.
+
+Drie dingen om het echt gelijk te houden:
+
+- **Dezelfde statuscode en dezelfde body.** Niet "verlopen" op het ene scherm en
+  "onbekend" op het andere.
+- **Hetzelfde werk.** Een vroege `return` die de database niet eens raakt is
+  meetbaar sneller dan een antwoord dat wel een query doet. Doe de opzoeking dus
+  altijd, ook als je al weet dat je nee gaat zeggen. Om microseconden hoef je je
+  niet te bekommeren; om een ontbrekende databasevraag wel.
+- **De echte reden in de serverlog**, zoals bij het inloggen. Anders is dit
+  onderhoudbaar noch te debuggen.
+
+**Volgorde.** Geen los werk. Dit is een regel die meegaat op het moment dat die
+twee ideeën gebouwd worden — en tot die tijd staat hij hier zodat hij niet
+opnieuw bedacht hoeft te worden.
