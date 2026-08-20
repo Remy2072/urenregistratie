@@ -68,98 +68,6 @@ server.
 
 ---
 
-## Diensten ruilen via sms
-
-**Het idee.** Kan iemand een dienst niet, dan stuurt hij een verzoek naar één
-collega: _"Neem jij vrijdag Bus 3 over, 16:00–21:00?"_ Die krijgt een sms met een
-link. Tikt hij erop en accepteert hij, dan is de dienst weg bij de eerste en
-staat hij bij hem in Mijn week. Er hoeft niemand tussen te zitten.
-
-**Gericht, niet rondgestuurd.** Hier stond eerst het omgekeerde: een berichtje
-naar iedereen die die dag kan, en wie het eerst reageert krijgt de dienst. Dat is
-duurder en rommeliger — acht man appen is acht keer betalen en zeven keer voor
-niets, en twee mensen die tegelijk op de link tikken moet je ook nog uitleggen.
-In de groepsapp vraag je het ook aan de één van wie je denkt dat hij kan.
-Reageert hij niet, dan vraag je de volgende.
-
-Via [Bird](https://bird.com/nl-nl), en dat is sinds fase 13 geen nieuwe koppeling
-meer: het versturen staat al in `src/lib/server/bird.ts`, met de sleutels in
-`.env`. Wat dit idee er nog bij nodig heeft is dus geen kanaal maar een tekst en
-een reden om te versturen.
-
-### De vier stappen
-
-1. **Vragen.** In Mijn week zit bij een dienst die nog moet komen een knop
-   "Ruilen". Je kiest een collega uit een lijstje en verstuurt.
-2. **De sms.** Eén berichtje: wie het vraagt, welke dag, welke bus, hoe laat, en
-   een link met een geheim erin.
-3. **Accepteren.** Die link opent een scherm zonder inloggen — de sms ís de
-   sleutel — met één knop: "Ik neem hem over".
-4. **Verplaatsen.** `persoon_id` op de dienst gaat om. Weg bij de een, zichtbaar
-   bij de ander, en `mutaties` legt vast wie er oorspronkelijk stond.
-
-**Wat er al voor klaarligt.** Beschikbaarheid weet wie er die dag kan.
-`persoon_id` op de dienst verzetten is één veld, `mutaties` schrijft zichzelf, en
-`diensten_persoon_bezet` vangt dat iemand na de ruil niet op twee bussen staat.
-De ruil zelf is dus het kleinste deel.
-
-### Wat er nog niet is
-
-- **Nummers die echt ingevuld zijn.** De kolom staat er sinds fase 10, en de
-  bezorger mag hem zelf zetten op `/ik`. Maar leeg is leeg: vóór dit iets kan
-  doen moet je één keer de ploeg langs. Een verzoek aan iemand zonder nummer moet
-  trouwens ook een nette zin geven en geen stille mislukking.
-- **Een tabel `ruilverzoeken`:** van wie, aan wie, welke dienst, de status,
-  wanneer het verzoek vervalt, en de _hash_ van de sleutel — niet de sleutel
-  zelf. Een databasedump mag geen werkende links opleveren. Laat Postgres hashen
-  (`sha256()` zit in de kern), dan is er één plek waar dat gebeurt.
-- **Een weg langs de policies.** Op `diensten_melden` staat bewust `with check
-(persoon_id = huidige_persoon_id())`: een bezorger kan een dienst niet op een
-  ander zetten. Dat slot moet blijven staan. De ruil hoort dus in een `security
-definer`-functie die zelf controleert of de dienst van de vrager is, nog op
-  'verwacht' staat, of de sleutel geldig en niet verlopen is, en of de ontvanger
-  die dag vrij is. Zelfde patroon als `huidige_persoon_id()` en de triggers.
-- **Eén openbaar scherm.** `/ruil/<sleutel>` moet werken zonder login. Dat wordt
-  de tweede uitzondering in `openbaar` in `hooks.server.ts` naast `/inloggen`, en
-  die lijst is met opzet kort — het gaat van een exacte vergelijking naar een
-  vergelijking op begin van het pad, dus zorgvuldig doen.
-- **De namen van je collega's.** Een bezorger mag via `personen` alleen zichzelf
-  zien, dus voor dat keuzelijstje is iets als `ruilkandidaten(dienst)` nodig:
-  naam, kan hij die dag, staat hij al ingeroosterd. En of er een nummer bekend is
-  als ja of nee — het nummer zelf hoeft nooit in de browser te staan.
-
-### Waar het lastig wordt
-
-Niet in de techniek maar in de regels:
-
-- **Moet de baas erlangs?** Dit voorstel zegt nee: twee bezorgers regelen het,
-  zoals nu in de groepsapp. Maar hij moet het wél zien — openstaande verzoeken op
-  zijn scherm, en een geruilde dienst die opvalt in het weekoverzicht. Wil hij
-  het laatste woord, dan is dat één statusstap extra: geaccepteerd wacht op zijn
-  tik. Vraag hem dat vóór je bouwt, want het gaat over wie verantwoordelijk is
-  als er niemand komt opdagen.
-- **Wat als niemand accepteert?** Dan blijft de dienst van de eerste persoon, en
-  dat moet op zijn scherm staan: _"verzoek verstuurd naar Omar, nog geen
-  antwoord"_. Anders denkt hij dat hij ervan af is. Een verzoek dat vervalt op
-  het moment dat de dienst begint is daar duidelijk over.
-- **Wie de link doorstuurt.** Wie de sms heeft kan accepteren, ook zijn broer.
-  Dat is dezelfde afweging als bij elke herstel-link: kort geldig en één keer
-  bruikbaar is het antwoord, geen tweede slot erop.
-- **Alleen vooraf.** Ruilen kan voor een dienst die nog moet komen. Een dienst
-  die al gemeld of bevestigd is verzetten is een correctie, en die is van de baas.
-- **Wat het kost.** Eén verzoek is één sms, en dat is de goedkoopste vorm die er
-  is. Geen herinneringen. Uitzoeken vóór je begint: wat Bird per bericht rekent,
-  en of de afzender aangemeld moet worden voordat een Nederlands nummer hem
-  binnenkrijgt.
-
-**Volgorde.** Pas nadat het rooster een paar weken echt draait, en niet vóór het
-telefoonnummerveld. Dit lost iets op dat nu in de groepsapp gebeurt en daar
-werkt. De winst zit ook niet in het ruilen zelf maar erin dat het rooster meteen
-klopt: geen bericht meer in de groep waarin twee mensen iets afspreken dat
-niemand doorvoert.
-
----
-
 ## Je diensten in je eigen agenda (ics-abonnement)
 
 **Het idee.** Eén keer op een link tikken en daarna staan je diensten in de agenda
@@ -177,11 +85,14 @@ erin — `/agenda/<sleutel>.ics` — dat teruggeeft wat er in de agenda hoort en
 meer: dag, geplande tijden, welke bus. Geen werkelijke tijden, geen opmerkingen,
 om dezelfde reden als bij de view `rooster`.
 
-Dat is de tweede plek waar een link-met-een-sleutel opduikt; ruilen via sms is de
-eerste. Bouw je ze los, dan staat hetzelfde mechanisme twee keer in de app op
-twee manieren. **Eén tabel voor sleutels**, met bij elke sleutel waar hij voor is
-en van wie, is dan waarschijnlijk de betere ruil — en bewaar alleen de hash,
-zodat een databasedump geen abonnementen weggeeft.
+Dit is de enige plek in de app waar een link écht een sleutel moet zijn, en dat
+is bij het bouwen van fase 14 duidelijk geworden: ruilen leek er ook een nodig te
+hebben, maar daar kon het zonder. Accepteren gebeurt daar ingelogd, dus is de link
+een adres. Een agenda-app kan niet inloggen, en daarom kan het hier niet zonder.
+
+Reken er dus niet op dat er al een sleutelmechanisme ligt om op te leunen — dat
+komt met dit idee zelf. Bewaar alleen de hash, zodat een databasedump geen
+abonnementen weggeeft.
 
 En dan langs de rechten heen op dezelfde manier: een verzoek zonder login komt
 via de policies nergens, dus dit wordt een `security definer`-functie die zelf de
@@ -228,9 +139,10 @@ meteen de vraag of je je wil abonneren; bij Google Agenda moet het via "agenda
 toevoegen → via url", en dat gaat op een telefoon niet. Reken erop dat je het
 voor de helft van de ploeg één keer moet voordoen.
 
-**Volgorde.** Na het rooster (fase 9 staat er) en niet vóór het sleutelmechanisme
-waar ruilen ook op leunt. Dit is het soort feature dat een app aardig maakt in
-plaats van nodig, dus hij hoort achter de dingen die nodig zijn.
+**Volgorde.** Dit is het soort feature dat een app aardig maakt in plaats van
+nodig, dus hij hoort achter de dingen die nodig zijn. En hij staat er alleen voor:
+het sleutelmechanisme dat hij nodig heeft bestaat nog niet en komt niet ergens
+anders vandaan.
 
 ---
 
@@ -277,11 +189,15 @@ niet:
 
 ### Waar het wél moet, en daar is het geen luxe
 
-De twee ideeën met een sleutel in het adres: **een ruilverzoek**
-(`/ruil/<sleutel>`) en **een agenda-abonnement** (`/agenda/<sleutel>.ics`). Daar
-is het adres wél te raden, en daar is elk verschil in het antwoord een gratis
-hint. Eén antwoord dus voor: sleutel bestaat niet, sleutel is verlopen, verzoek
-is al beantwoord, dienst is niet meer van die persoon.
+Het idee met een sleutel in het adres: **een agenda-abonnement**
+(`/agenda/<sleutel>.ics`). Daar is het adres wél te raden, en daar is elk verschil
+in het antwoord een gratis hint. Eén antwoord dus voor: sleutel bestaat niet,
+sleutel is verlopen, abonnement is opgezegd.
+
+*Ruilen leek hier ook bij te horen en hoort er niet bij.* `/ruil/<id>` vraagt een
+login, dus is dat id geen geheim — en wie mag accepteren wordt in de database
+bepaald en niet door het kennen van een adres. Dat is de betere oplossing van
+hetzelfde probleem: geen geheim dat je moet beschermen.
 
 Drie dingen om het echt gelijk te houden:
 

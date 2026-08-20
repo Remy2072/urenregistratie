@@ -70,6 +70,7 @@ voren omdat er nu iets van afhangt.
 | 11 | Ingelogd blijven ✅ | Een storing is geen uitlog, en de app hoort op je beginscherm | 1 avond |
 | 12 | Passkey ✅ | Inloggen met gezicht of vinger, zonder token in de browser | 1 avond |
 | 13 | Wachtwoord vergeten ✅ | Zelf weer binnen komen, met een code per sms | 1 weekend |
+| 14 | Diensten ruilen ✅ | Gericht per sms, of open in de groepsapp | 1 weekend |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
 dus reken op twee tot drie maanden doorlooptijd. Dat is prima: er is geen
@@ -1284,6 +1285,117 @@ iemand zonder telefoonnummer een melding krijgt die hem naar de baas stuurt.
 > dat fase 12 en 13 elkaar niet in de weg zitten: een wachtwoordwijziging trekt je
 > sessies in, maar raakt je passkeys niet. Opnieuw aanmelden hoeft alleen als het
 > domein verandert — dus bij de deploy.
+
+---
+
+## Fase 14 — Diensten ruilen ✅
+
+**Doel:** kan iemand een dienst niet, dan regelt hij het zelf — en het rooster in
+de app is daarna meteen waar.
+
+Nu gebeurt dat in de groepsapp: *"iemand vrijdag?"*, iemand zegt ja, en dan moet
+de baas het nog omzetten. Dat laatste blijft liggen of gaat mis, en dan staat er
+in de app iemand anders dan er die avond rijdt.
+
+### Twee soorten verzoek
+
+**Gericht.** Je kiest één collega. Die krijgt een sms met een tekst en een link.
+Tikt hij erop, dan logt hij in (of hij is al ingelogd) en krijgt hij de dienst te
+zien met ja en nee.
+
+**Open.** Je krijgt een link en zet die zelf in de groepsapp. Wie het eerst
+accepteert, krijgt de dienst. Nul sms'jes, en de groep doet het werk.
+
+Dat tweede is de vondst van dit ontwerp. Hier stond eerst een berichtje naar
+iedereen die die dag kan — acht man appen is acht keer betalen en zeven keer voor
+niets. Nu bedient de app de groepsapp, net zoals fase 9 dat met het rooster doet.
+
+### De link is geen sleutel
+
+Accepteren kan alleen ingelogd. Daarmee is de link een adres en geen geheim:
+iedereen in de groep kan erop tikken, maar alleen wie kan inloggen — een collega —
+kan accepteren. Doorgestuurd naar buiten levert niets op dan een inlogscherm.
+
+Dat scheelt een hoop: geen geheim in een URL, geen hash in de database, en geen
+derde openbaar scherm. En het volgt uit de regel hieronder: **wie die dag vrij is
+mag een open verzoek accepteren.** Er valt met die link dus niets af te schermen
+wat niet al mag.
+
+Wél nodig: **onthouden waar je heen wilde.** De deurcontrole stuurt je naar
+`/inloggen` en vergeet daarna waarvoor je kwam. Dat wordt `?verder=`, met de
+controle dat het een pad binnen deze app is — anders is het een open omleiding.
+
+### De regels
+
+- **Alleen een dienst die nog moet komen**, en alleen met status 'verwacht'. Al
+  gemeld of bevestigd verzetten is een correctie, en die is van de baas.
+- **Eén verzoek per dienst tegelijk.** Gericht óf open. Wel opeenvolgend: zegt
+  Omar nee, dan gooi je hem open.
+- **Wie die dag vrij is mag accepteren.** Beschikbaarheid is een kleuring en geen
+  slot — "ik had weggezet maar ik doe het wel" moet kunnen. Wie die dag al ergens
+  staat kan niet, en dat weigert `diensten_persoon_bezet` sowieso.
+- **De baas kijkt alleen mee.** Hij hoeft niet te tikken; hij ziet openstaande
+  verzoeken en een geruilde dienst valt op in zijn weekoverzicht. Dat is bewust
+  zo besloten: twee bezorgers regelen dit, zoals nu in de groep.
+- **Intrekken kan**, en dat is geen luxe: die link blijft in de groepsapp staan.
+  Vind je iemand in het echt, dan sluit je het verzoek. Verder vervalt hij als de
+  dienst begint.
+- **Twee mensen die tegelijk tikken** worden in de database beslist, in één
+  update. De winnaar ziet zijn week; de verliezer leest *"Omar was je net voor"*
+  en geen constraint-fout.
+
+### Wat de database erbij krijgt
+
+Eén tabel `ruilverzoeken` en een handvol `security definer`-functies, om dezelfde
+reden als altijd: op `diensten` staat bewust `with check (persoon_id =
+huidige_persoon_id())`, dus een bezorger kan een dienst niet op een ander zetten.
+Dat slot blijft staan. De functies doen de ruil en controleren zelf alles.
+
+Eén ervan is er alleen omdat de rechten kloppen: **`ruilkandidaten()`**. Een
+bezorger mag via `personen` alleen zichzelf zien, dus zonder die functie is er
+geen keuzelijstje. Hij geeft naam, kan-die-dag en staat-al-ingeroosterd — geen
+telefoonnummers.
+
+En anders dan bij fase 13 komt hier **geen beheersleutel** aan te pas: degene die
+accepteert is ingelogd, dus alles gaat met zijn eigen sessie en langs de policies.
+
+**Klaar als:** je een dienst gericht wegvraagt en de ander hem overneemt, en je
+een open verzoek in de groepsapp zet waar de eerste die tikt hem krijgt — en in
+beide gevallen staat het rooster meteen goed.
+
+> **Gedaan.** Allebei getest: de open link en het gerichte verzoek. Twee dingen
+> kwamen pas boven door het te gebruiken.
+>
+> ### `security definer` gaat niet langs een trigger
+>
+> Dit kostte de eerste ruil. De functie draait als eigenaar en komt dus langs de
+> policies — maar `dienst_wijziging_bewaken()` staat er nog, en die zegt *"alleen
+> een beheerder mag het rooster van een dienst wijzigen"* zodra `persoon_id`
+> verandert. Precies wat een ruil doet.
+>
+> Dat slot moest blijven: het is wat verhindert dat een bezorger via de API een
+> dienst op een ander zet. De uitweg is een vlag (`app.ruil`) die alleen
+> `ruil_accepteren()` zet en die één transactie meegaat. Een client kan hem niet
+> zetten — `set_config()` zit in `pg_catalog` en is via de API niet te bereiken.
+>
+> Bijeffect dat juist goed is: door die deur gaat ook de stempel
+> `gemeld_op`/`gemeld_door` niet mee. Een ruil is geen melding; wie hem overneemt
+> meldt hem later zelf.
+>
+> ### De link hoort bij het verzoek, niet bij het scherm
+>
+> Eerst hield het scherm de link vast na het aanmaken. Die verdween meteen weer,
+> want zodra het verzoek bestond sprong de kaart naar de andere tak — en daar
+> stond hij niet. Nu wordt hij afgeleid uit het verzoek zelf (`/ruil/<id>`), dus
+> hij is er ook nog als je de app morgen opnieuw opent en hem nog eens in de groep
+> wil zetten. De link zelf staat niet in beeld; er is alleen een kopieerknop.
+>
+> ### Wat er nog niet getoetst is
+>
+> **De wedloop.** Twee mensen die tegelijk op dezelfde open link tikken — de
+> tweede hoort *"Iemand was je net voor"* te krijgen. Dat is één update met een
+> where-clause op de dienst zoals hij was, dus het hoort te kloppen, maar het is
+> niet met twee echte vingers geprobeerd.
 
 ---
 

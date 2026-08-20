@@ -14,6 +14,7 @@ Achtergrond en beslissingen staan in `docs/`:
 | `docs/weekgeneratie.sql` | De wekelijkse uitrol van het sjabloon naar diensten |
 | `docs/profiel.sql` | Gebruikersnaam en telefoon op `personen` (fase 10). Draai hem altijd ná `rollen.sql` |
 | `docs/herstel.sql` | Herstelcodes voor "wachtwoord vergeten" (fase 13) |
+| `docs/ruilen.sql` | Ruilverzoeken: gericht of open in de groepsapp (fase 14) |
 
 ## Draaien
 
@@ -24,7 +25,7 @@ npm run dev
 
 ## Waar we nu staan
 
-**Fase 0 tot en met 6 af, plus 9 tot en met 13.** De hele keten draait op de database: de
+**Fase 0 tot en met 6 af, plus 9 tot en met 14.** De hele keten draait op de database: de
 bezorger meldt zijn dienst, de baas bevestigt, en er komt een bestand uit voor de
 boekhouder. Er zit geen nepdata meer in — het prototype uit fase 0 staat nog in
 de branch `fase-0-prototype`.
@@ -44,10 +45,13 @@ Wat je ziet hangt af van wie je bent — de tabbladen volgen je rol.
 
 - `/mijn-week` — de bezorger. Eén tik voor "gedraaid", knoppen voor afwijken,
   een vergeten dienst kun je achteraf alsnog invullen, en een melding die nog
-  niet bevestigd is kun je aanpassen.
+  niet bevestigd is kun je aanpassen. Ruilen zit hier ook: gericht aan een
+  collega, of een link voor de groepsapp.
 - `/overzicht` — de baas. Bovenaan alleen afwijkingen, achteraf gemelde en
   niet-gemelde diensten. Bevestigen los of in bulk, en een dienst verzetten.
 - `/export` — de boekhouder. Alleen bevestigde diensten, alleen uren, als CSV.
+- `/ruil/<id>` — een ruilverzoek: overnemen of niet. Vraagt een login, en dáárom
+  is die link geen geheim.
 - `/herstel` — wachtwoord vergeten. Gebruikersnaam invullen, code per sms, zelf
   een nieuw wachtwoord kiezen. Openbaar, want wie hier komt kan niet inloggen.
 - `/ik` — je eigen gegevens. Je gebruikersnaam en je naam zijn van de baas; je
