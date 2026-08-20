@@ -68,6 +68,7 @@ voren omdat er nu iets van afhangt.
 | 9 | Rooster en beheer | Beschikbaarheid, het rooster in de app, en de baas die zelf kan instellen | 2 weekenden |
 | 10 | Gebruikersnaam en profiel ✅ | Inloggen zonder e-mailadres, en iedereen beheert wat van hem is | 1 avond |
 | 11 | Ingelogd blijven ✅ | Een storing is geen uitlog, en de app hoort op je beginscherm | 1 avond |
+| 12 | Passkey ✅ | Inloggen met gezicht of vinger, zonder token in de browser | 1 avond |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
 dus reken op twee tot drie maanden doorlooptijd. Dat is prima: er is geen
@@ -1023,6 +1024,96 @@ oplossing voor een probleem dat we net hebben weggehaald.
 
 **Klaar als:** je een week lang niet opnieuw hebt hoeven inloggen, en een korte
 storing je geen inlogscherm meer geeft.
+
+---
+
+## Fase 12 — Inloggen met een passkey ✅
+
+**Doel:** inloggen met het gezicht, de vinger of de pincode van je eigen
+telefoon. Geen wachtwoord meer om over te typen van een briefje.
+
+Dit stond in `ideeen.md` met een aanname eronder die fout was: *"Supabase Auth
+kan dit niet uit zichzelf, dus bouw je WebAuthn zelf om Auth heen."* Er zit wel
+een passkey-API in — in `@supabase/supabase-js` 2.112.3, die we al hadden, achter
+een vlag `auth.experimental.passkey`. Daarmee viel het duurste deel weg voordat
+het begon.
+
+### De tweetraps-API is wat dit ontwerp mogelijk maakt
+
+Naast `signInWithPasskey()`, dat de hele dans in de browser doet, zit er een
+lagere laag onder: `passkey.startAuthentication()` en `verifyAuthentication()`,
+en hetzelfde paar voor aanmelden. Dat is precies wat deze app nodig had.
+
+Want de eerste ingeving is een browserclient neerzetten, en dan loop je meteen
+tegen fase 11 aan: de sessiecookie staat op `httpOnly`, dus JavaScript kan er
+niet bij — en een sessie die in de browser ontstaat, komt daar dus nooit in.
+
+Met de tweetraps-API hoeft dat niet:
+
+1. **De server** vraagt de opdracht op bij Supabase (dat vraagt bij aanmelden een
+   sessie, en die zit in de cookie).
+2. **De browser** doet het enige stukje dat alleen daar kán:
+   `navigator.credentials` opent het venster van de telefoon.
+3. **De server** laat het antwoord controleren. Bij inloggen ontstaat de sessie
+   daar, en `hooks.server.ts` schrijft hem in de cookie — dezelfde weg als bij
+   een wachtwoord.
+
+Er komt dus **geen Supabase-client en geen token in de browser.** Dat is niet
+alleen netter, het is ook de reden dat fase 11 z'n `httpOnly` mag houden.
+
+### Wat er in de browser staat
+
+`src/lib/passkey.ts`, en verder niets. Het zet de opdracht om van JSON naar
+ArrayBuffers en het antwoord weer terug, want WebAuthn werkt met buffers en JSON
+kan die niet aan. Nieuwe browsers doen dat zelf — `parseCreationOptionsFromJSON`
+en `toJSON` uit WebAuthn niveau 3 — en het handwerk eronder is het vangnet voor
+de rest.
+
+Eén ding daarin is geen techniek maar toon: **een weggeklikt venster is geen
+fout.** WebAuthn gooit dan `NotAllowedError`, en dat is negen van de tien keer
+iemand die op "annuleer" tikt. Daar hoort geen rode balk bij.
+
+### Twee dingen die je alleen merkt door het te doen
+
+**SvelteKit staat geen naamloze actie naast benoemde acties toe.** Het
+inlogscherm had een `default`-actie voor het wachtwoord, en de passkey heeft er
+twee nodig. Die heet nu `wachtwoord`, en het formulier wijst er expliciet naar.
+`svelte-check` ziet dat niet — je merkt het pas op het scherm.
+
+**Het dashboard heeft drie velden, en de poort is de valkuil.** Authentication →
+Passkeys vraagt naast de schakelaar om een *Relying Party ID* (`localhost`) en om
+*Relying Party Origins*, en die laatste moet exact overeenkomen met de adresbalk,
+**poort inbegrepen**: `http://localhost:5173`. Staat daar een andere poort, dan
+weigert Supabase zonder dat je ziet waarom.
+
+Wat er terugkomt is trouwens beter dan gehoopt: er zit geen `allowCredentials` in
+de opdracht, dus de passkey is *discoverable*. Je hoeft dus **geen gebruikersnaam
+te typen** — knop, gezicht, binnen.
+
+### Wat dit betekent voor de installatie
+
+De Relying Party ID is het domein waar passkeys bij horen, en die staat per
+Supabase-project. Dat past precies bij hoe dit verkocht wordt: elk bedrijf heeft
+zijn eigen project, dus elk project wijst naar zijn eigen domein.
+
+**Maar wat je op `localhost` aanmeldt, werkt niet op het echte domein.** Dat is
+geen fout maar de kern van WebAuthn. Bij de deploy in fase 7 zet je hier het
+echte domein en `https://…` bij origins, en meldt iedereen zich daar opnieuw aan.
+Doe dat dus ná de deploy en niet ervoor.
+
+### Het wachtwoord blijft
+
+Een passkey zit op één toestel. Telefoon kwijt is opnieuw aanmelden, dus het
+wachtwoord blijft de weg terug — en de baas kan er nog altijd een nieuw voor je
+zetten. Dat staat ook zo op `/ik`, naast de knop. En het is beta: goed genoeg om
+te gebruiken, niet om je enige deur te maken.
+
+**Klaar als:** je op `/ik` een passkey aanmeldt en daarna inlogt zonder je
+wachtwoord in te tikken.
+
+> **Gedaan.** Aangemeld en ingelogd zonder wachtwoord. Op `/ik` staat een lijst
+> van je passkeys met naam en datum, je kunt er een weghalen, en de knop op het
+> inlogscherm verschijnt alleen op een toestel dat het kan.
 
 ---
 

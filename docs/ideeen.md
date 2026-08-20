@@ -6,60 +6,6 @@ een fase in `bouwplan.md` wordt, gaat het gebeuren.
 
 ---
 
-## Een passkey in plaats van een wachtwoord
-
-**Het idee.** Inloggen met het gezicht of de vinger van de telefoon zelf. Geen
-wachtwoord meer om over te typen van een briefje, en de zwakste plek van het
-beheerscherm gaat weg: nu leest de baas een wachtwoord voor en typt de bezorger
-het over.
-
-**Wat hier eerst stond is gebeurd.** Dit idee begon als "niet elke keer opnieuw
-inloggen", met het uitzoekwerk vooraan en de passkey als tweede stap. Dat
-uitzoekwerk is fase 11 geworden: de cookie was het niet, maar een storing en een
-uitlog waren hetzelfde antwoord — één hik in het netwerk zette je op het
-inlogscherm. Dat is weg, en de app hoort nu op je beginscherm.
-
-**Dus wacht deze op een antwoord.** Blijkt na een paar weken dat mensen er nog
-steeds uit vliegen, dan is er een echte reden. Zo niet, dan zou dit een oplossing
-zijn voor een probleem dat net is weggehaald — en dan is het alleen nog "prettiger
-inloggen", twee keer per jaar.
-
-**Supabase kan het zelf, en dat was de grote onbekende.** Hier stond eerst dat er
-geen WebAuthn in Auth zit en dat je het er dus zelf omheen moest bouwen — met een
-eenmalige link die je met de beheersleutel genereert, om alsnog aan een sessie te
-komen. Dat is niet waar: er zit een schakelaar in **Authentication → Passkeys**
-(beta). Daarmee valt het moeilijkste en onzekerste deel weg.
-
-Wat er dan overblijft is niet niks, en het zit op een onverwachte plek:
-
-- **WebAuthn gebeurt in de browser.** Een passkey aanmaken en gebruiken loopt via
-  `navigator.credentials`, en dat is JavaScript op de telefoon. Deze app heeft
-  geen browserclient: alles gaat server-side, en dat is met opzet zo. Dit wordt
-  dus de eerste plek waar daar een uitzondering op komt.
-- **En dan moet die sessie alsnog in een cookie.** Fase 11 heeft de sessiecookie
-  net op `httpOnly` gezet, precies omdat geen enkele regel browserscript hem hoeft
-  te lezen. Een sessie die in de browser ontstaat, moet je dus doorgeven aan de
-  server om hem daar in een cookie te laten zetten. Dat is het echte werk van dit
-  idee — niet de passkey zelf.
-- **Een passkey zit op één toestel**, of in de sleutelhanger van Apple of Google.
-  Telefoon kwijt is opnieuw aanmelden, dus er moet een tweede weg blijven: het
-  wachtwoord dat de baas opnieuw kan zetten, of herstel per sms — het idee
-  hieronder.
-- **Beta.** Dat is geen bezwaar om het te proberen, wel om het als enige manier
-  van inloggen neer te zetten. Wachtwoord blijft ernaast staan.
-
-**Wat het nu kost:** eerder een weekend dan drie, en de onzekerheid is verhuisd —
-van "kan dit eigenlijk" naar "hoe krijgen we die sessie netjes van de browser
-naar het cookie".
-
-**Volgorde.** Nog steeds achteraan, en om dezelfde reden als eerst: het lost een
-probleem op dat fase 11 misschien al weggenomen heeft. Vliegen mensen er over een
-paar weken niet meer uit, dan is dit alleen nog "prettiger inloggen" — twee keer
-per jaar. Blijft het wel gebeuren, dan is dit nu een stuk aantrekkelijker dan het
-gisteren was.
-
----
-
 ## Wachtwoord vergeten, met een sms
 
 **Het idee.** Een knop op het inlogscherm. Je vult je gebruikersnaam in, je krijgt
@@ -80,8 +26,8 @@ vervangen, hij komt er niet meer in en snapt niet waarom. Precies wat er tijdens
 fase 10 één keer echt gebeurde met "Nieuw wachtwoord" op je eigen account — zie
 het resultaatblok daar.
 
-**Wat het scherm zegt is altijd hetzelfde:** *"als dat account bestaat, komt er
-een sms."* Nooit of die gebruikersnaam bestaat en nooit of er een nummer bij
+**Wat het scherm zegt is altijd hetzelfde:** _"als dat account bestaat, komt er
+een sms."_ Nooit of die gebruikersnaam bestaat en nooit of er een nummer bij
 staat. Dat is dezelfde regel als bij het inloggen zelf, en om dezelfde reden: de
 namen waar het over gaat zijn die van je collega's.
 
@@ -174,7 +120,7 @@ Werkt `extensions.crypt` niet, dan staat pgcrypto in `public` en kan het zonder
 dat voorvoegsel. Log daarna in met dat tijdelijke wachtwoord en zet op `/ik`
 meteen een echte — daar hoort het oude erbij.
 
-*Wat het veroorzaakte staat er niet meer:* "Nieuw wachtwoord" op je eigen account
+_Wat het veroorzaakte staat er niet meer:_ "Nieuw wachtwoord" op je eigen account
 gooide je eruit terwijl het nieuwe wachtwoord op een scherm stond dat je op dat
 moment niet meer mocht zien. Die knop weigert dat nu, in het scherm en op de
 server.
@@ -184,7 +130,7 @@ server.
 ## Diensten ruilen via sms
 
 **Het idee.** Kan iemand een dienst niet, dan stuurt hij een verzoek naar één
-collega: *"Neem jij vrijdag Bus 3 over, 16:00–21:00?"* Die krijgt een sms met een
+collega: _"Neem jij vrijdag Bus 3 over, 16:00–21:00?"_ Die krijgt een sms met een
 link. Tikt hij erop en accepteert hij, dan is de dienst weg bij de eerste en
 staat hij bij hem in Mijn week. Er hoeft niemand tussen te zitten.
 
@@ -221,13 +167,13 @@ De ruil zelf is dus het kleinste deel.
   doen moet je één keer de ploeg langs. Een verzoek aan iemand zonder nummer moet
   trouwens ook een nette zin geven en geen stille mislukking.
 - **Een tabel `ruilverzoeken`:** van wie, aan wie, welke dienst, de status,
-  wanneer het verzoek vervalt, en de *hash* van de sleutel — niet de sleutel
+  wanneer het verzoek vervalt, en de _hash_ van de sleutel — niet de sleutel
   zelf. Een databasedump mag geen werkende links opleveren. Laat Postgres hashen
   (`sha256()` zit in de kern), dan is er één plek waar dat gebeurt.
 - **Een weg langs de policies.** Op `diensten_melden` staat bewust `with check
-  (persoon_id = huidige_persoon_id())`: een bezorger kan een dienst niet op een
+(persoon_id = huidige_persoon_id())`: een bezorger kan een dienst niet op een
   ander zetten. Dat slot moet blijven staan. De ruil hoort dus in een `security
-  definer`-functie die zelf controleert of de dienst van de vrager is, nog op
+definer`-functie die zelf controleert of de dienst van de vrager is, nog op
   'verwacht' staat, of de sleutel geldig en niet verlopen is, en of de ontvanger
   die dag vrij is. Zelfde patroon als `huidige_persoon_id()` en de triggers.
 - **Eén openbaar scherm.** `/ruil/<sleutel>` moet werken zonder login. Dat wordt
@@ -250,8 +196,8 @@ Niet in de techniek maar in de regels:
   tik. Vraag hem dat vóór je bouwt, want het gaat over wie verantwoordelijk is
   als er niemand komt opdagen.
 - **Wat als niemand accepteert?** Dan blijft de dienst van de eerste persoon, en
-  dat moet op zijn scherm staan: *"verzoek verstuurd naar Omar, nog geen
-  antwoord"*. Anders denkt hij dat hij ervan af is. Een verzoek dat vervalt op
+  dat moet op zijn scherm staan: _"verzoek verstuurd naar Omar, nog geen
+  antwoord"_. Anders denkt hij dat hij ervan af is. Een verzoek dat vervalt op
   het moment dat de dienst begint is daar duidelijk over.
 - **Wie de link doorstuurt.** Wie de sms heeft kan accepteren, ook zijn broer.
   Dat is dezelfde afweging als bij elke herstel-link: kort geldig en één keer
@@ -350,15 +296,15 @@ plaats van nodig, dus hij hoort achter de dingen die nodig zijn.
 **Hoe het heet.** 404 masking, ook wel cloaking: in plaats van een eerlijke
 403 Forbidden geef je 404 Not Found, zodat je niet verklapt dát iets bestaat.
 Formeel is het **CWE-204, Observable Response Discrepancy**; bij OWASP valt het
-onder Broken Access Control. Het blokkeert *resource enumeration*, en de variant
-die we hier al toepassen is *user enumeration* — "wachtwoord onjuist" versus
+onder Broken Access Control. Het blokkeert _resource enumeration_, en de variant
+die we hier al toepassen is _user enumeration_ — "wachtwoord onjuist" versus
 "onbekend account" is precies zo'n verschil. GitHub doet het letterlijk zo: geen
 toegang tot een private repo betekent dat de repo niet bestaat.
 
 **Wat deze app al zo doet.** Het inlogscherm zegt bij een onbekende
-gebruikersnaam, een onbekend adres en een verkeerd wachtwoord hetzelfde: *"klopt
-niet."* De echte reden gaat naar de serverlog. Datzelfde staat in het idee voor
-wachtwoord vergeten: *"als dat account bestaat, komt er een sms."* Die keuzes
+gebruikersnaam, een onbekend adres en een verkeerd wachtwoord hetzelfde: _"klopt
+niet."_ De echte reden gaat naar de serverlog. Datzelfde staat in het idee voor
+wachtwoord vergeten: _"als dat account bestaat, komt er een sms."_ Die keuzes
 hadden alleen nog geen naam, en nu wel.
 
 ### Waarom de rolschermen zo blijven
