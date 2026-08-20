@@ -67,6 +67,7 @@ voren omdat er nu iets van afhangt.
 | 8 | Boilerplate | Een tweede bedrijf zonder codewijziging | 1 weekend |
 | 9 | Rooster en beheer | Beschikbaarheid, het rooster in de app, en de baas die zelf kan instellen | 2 weekenden |
 | 10 | Gebruikersnaam en profiel ✅ | Inloggen zonder e-mailadres, en iedereen beheert wat van hem is | 1 avond |
+| 11 | Ingelogd blijven ✅ | Een storing is geen uitlog, en de app hoort op je beginscherm | 1 avond |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
 dus reken op twee tot drie maanden doorlooptijd. Dat is prima: er is geen
@@ -939,6 +940,89 @@ formulier.
 > Supabase het verzonnen domein, dan typ je er een adres in dat wel mag. En
 > zonder gebruikersnaam kun je geen login meer aanmaken. Dat is geen drempel maar
 > de bedoeling: zo krijgt iedereen er een.
+
+---
+
+## Fase 11 — Ingelogd blijven ✅
+
+**Doel:** de belofte uit fase 2 waarmaken. Eén keer inloggen en daarna nooit
+meer.
+
+Dat stond er als aanname — *"sessie lang laten leven, telefoon onthoudt hem"* —
+en de klacht was dat het niet zo werkt. Dus eerst uitzoeken en pas daarna
+bouwen; een passkey erop zetten zonder te weten waarom mensen eruit vliegen is
+een oplossing zoeken bij een symptoom.
+
+### Wat het uitzoeken opleverde
+
+**De cookie was het niet.** `@supabase/ssr` zet hem op 400 dagen, het maximum
+dat browsers aanhouden. Dat is nu wel expliciet in `hooks.server.ts` neergezet
+in plaats van overgelaten aan een standaard die met een volgende versie kan
+veranderen — en meteen op `httpOnly`, wat hij niet was. Dat kan hier omdat deze
+app geen browserclient heeft: alles gaat server-side, dus geen enkele regel
+JavaScript hoeft die cookie te lezen. Een cookie die scripts niet kunnen lezen,
+kunnen ze ook niet stelen.
+
+**Wat het wél was: een storing en een uitlog waren hetzelfde antwoord.**
+`veiligeSessie()` gaf bij elke fout van `getUser()` "niet ingelogd" terug, en de
+deurcontrole stuurde je dan naar `/inloggen`. Eén hik in het netwerk, één trage
+seconde bij Supabase, en je stond op het inlogscherm — terwijl je sessie prima
+was. Dat is precies hoe een app de naam krijgt dat je er steeds uit ligt.
+
+Nu zijn het drie antwoorden: ingelogd, uitgelogd, en niet na te gaan. Dat laatste
+geeft een 503 met de zin dat je *niet* bent uitgelogd, en dus geen inlogscherm
+waar iemand zijn wachtwoord voor gaat opzoeken.
+
+Let op de kant die je makkelijk verkeerd om denkt: **een verlopen refresh token
+komt terug als 400, en dat is wél een antwoord.** Zou je alleen 401 en 403 als
+antwoord aanmerken, dan krijgt precies degene die echt opnieuw moet inloggen
+eindeloos "even geen verbinding". Een storing is wat Supabase zelf niet kon
+beantwoorden: geen netwerk, te veel verzoeken, of iets aan hun kant.
+
+**En er kwamen twee foutpagina's bij**, want die waren er niet. `+error.svelte`
+voor fouten tijdens het laden van een pagina, en `src/error.html` voor fouten in
+`hooks.server.ts` — daar bestaat er nog geen Svelte-app om iets in te tonen, en
+juist daar komt die 503 uit. Zonder dat bestand is de vriendelijkste zin van de
+app een kale zwart-witte melding.
+
+### De goedkoopste oplossing staat niet in de code
+
+**De app op je beginscherm.** `manifest.webmanifest` lag er al, dus dit kon
+altijd al: als icoon geopend heeft de app zijn eigen omgeving en zijn eigen
+koekjes, buiten de schoonmaak van de browser om. Dat is nu uitleg op `/ik` — die
+zichzelf weghaalt zodra de app al zo geopend is — en dichtgeklapt op het
+inlogscherm, waar iemand staat die daar niet wilde zijn.
+
+### En de instellingen zijn nagekeken
+
+Het enige stuk van deze fase dat niet in code te zetten is: **Authentication →
+Sessions** in Supabase. Nagekeken en het stond goed, dus de oorzaak zat
+werkelijk in onze eigen code:
+
+| Instelling | Stand |
+|---|---|
+| Enforce single session per user | uit |
+| Time-box user sessions | 0 — nooit |
+| Inactivity timeout | 0 — nooit |
+| Access token expiry | 3600 seconden, de aanbeveling |
+| Detect and revoke compromised refresh tokens | aan |
+| Refresh token reuse interval | 10 seconden, de aanbeveling |
+
+Die laatste twee zo laten. Dat hergebruikvenster van tien seconden is er precies
+voor twee verzoeken die tegelijk aankomen met een net verlopen token — en dat
+gebeurt hier, want `app.html` haalt bij hoveren al data op. Zonder dat venster
+zou het tweede verzoek de hele reeks tokens laten intrekken en lig je eruit.
+
+De eerste drie staan trouwens op Pro en niet op de gratis tier, dus die konden
+het ook niet zijn. Gezien hebben is beter dan aangenomen.
+
+**Niet gedaan: de passkey.** Die staat nog in `ideeen.md` en hij wacht op wat
+hierboven opgeleverd wordt: blijkt na deze fase dat mensen er nog steeds uit
+vliegen, dan is er een echte reden om hem te bouwen. Zo niet, dan was het een
+oplossing voor een probleem dat we net hebben weggehaald.
+
+**Klaar als:** je een week lang niet opnieuw hebt hoeven inloggen, en een korte
+storing je geen inlogscherm meer geeft.
 
 ---
 

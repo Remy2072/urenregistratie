@@ -6,67 +6,57 @@ een fase in `bouwplan.md` wordt, gaat het gebeuren.
 
 ---
 
-## Niet elke keer opnieuw inloggen
+## Een passkey in plaats van een wachtwoord
 
-**Het idee.** Inloggen is één keer per persoon en daarna nooit meer. Nu moeten ze
-het er te vaak weer bij pakken, en een wachtwoord dat je twee keer per jaar typt
-ben je kwijt — dan gaat de baas een nieuw wachtwoord voorlezen en is dat precies
-de moeite die deze app zou wegnemen. Twee richtingen, in deze volgorde: eerst
-zorgen dat de sessie écht blijft staan, en daarna pas een passkey (het gezicht of
-de vinger van de telefoon zelf).
+**Het idee.** Inloggen met het gezicht of de vinger van de telefoon zelf. Geen
+wachtwoord meer om over te typen van een briefje, en de zwakste plek van het
+beheerscherm gaat weg: nu leest de baas een wachtwoord voor en typt de bezorger
+het over.
 
-### Eerst uitzoeken waaróm ze eruit vliegen
+**Wat hier eerst stond is gebeurd.** Dit idee begon als "niet elke keer opnieuw
+inloggen", met het uitzoekwerk vooraan en de passkey als tweede stap. Dat
+uitzoekwerk is fase 11 geworden: de cookie was het niet, maar een storing en een
+uitlog waren hetzelfde antwoord — één hik in het netwerk zette je op het
+inlogscherm. Dat is weg, en de app hoort nu op je beginscherm.
 
-Fase 2 belooft "sessie lang laten leven, telefoon onthoudt hem". Gebeurt dat toch
-niet, dan is er iets wat we niet weten — en dat is een middag uitzoekwerk dat een
-hele feature kan uitsparen. Kandidaten:
+**Dus wacht deze op een antwoord.** Blijkt na een paar weken dat mensen er nog
+steeds uit vliegen, dan is er een echte reden. Zo niet, dan zou dit een oplossing
+zijn voor een probleem dat net is weggehaald — en dan is het alleen nog "prettiger
+inloggen", twee keer per jaar.
 
-- **De cookie.** `hooks.server.ts` zet wat `@supabase/ssr` meegeeft en vult zelf
-  alleen het pad aan. Hoe lang hij geldig is komt dus uit die bibliotheek en niet
-  uit onze code. Kijk na wat er echt in de browser staat, en vooral of het een
-  sessiecookie is die bij het afsluiten verdwijnt.
-- **De instellingen in Supabase Auth.** Time-box user sessions en inactivity
-  timeout. Standaard uit, maar dat wil je gezien hebben en niet aangenomen.
-- **Het verversen.** Een access token leeft een uur; daarna haalt het refresh
-  token een nieuw op. Gaat dat mis, dan ziet het eruit als uitgelogd worden.
-- **De browser zelf.** Privémodus, "geschiedenis wissen bij afsluiten", of een
-  telefoon die een app die weken stil ligt opruimt. Vraag ze ook gewoon hoe ze de
-  app openen — dat is sneller dan het uitzoeken.
-- **Op het beginscherm zetten.** `manifest.webmanifest` staat er al, dus dit kan
-  vandaag: als icoon geopend heeft de app zijn eigen omgeving en zijn eigen
-  koekjes, buiten de browserschoonmaak om. Lost dat het op, dan is het antwoord
-  een instructie en geen feature.
+**Supabase kan het zelf, en dat was de grote onbekende.** Hier stond eerst dat er
+geen WebAuthn in Auth zit en dat je het er dus zelf omheen moest bouwen — met een
+eenmalige link die je met de beheersleutel genereert, om alsnog aan een sessie te
+komen. Dat is niet waar: er zit een schakelaar in **Authentication → Passkeys**
+(beta). Daarmee valt het moeilijkste en onzekerste deel weg.
 
-### Dan de passkey
+Wat er dan overblijft is niet niks, en het zit op een onverwachte plek:
 
-Wat het echt beter maakt: er is geen wachtwoord meer om over te typen van een
-briefje, en inloggen is een blik op de telefoon. Het haalt en passant de zwakste
-plek uit het beheerscherm weg — nu leest de baas een wachtwoord voor en typt de
-bezorger het over.
-
-Waar het schuurt:
-
-- **Supabase Auth kan dit niet uit zichzelf.** Voor zover ik weet zit er geen
-  WebAuthn in; wat je dan bouwt is zelf de passkey afhandelen op de server en
-  daarna alsnog een Supabase-sessie laten ontstaan — bijvoorbeeld met een
-  eenmalige link die je met de beheersleutel genereert en meteen inwisselt. Kijk
-  dit na vóór je iets belooft, want hier hangt de haalbaarheid aan.
+- **WebAuthn gebeurt in de browser.** Een passkey aanmaken en gebruiken loopt via
+  `navigator.credentials`, en dat is JavaScript op de telefoon. Deze app heeft
+  geen browserclient: alles gaat server-side, en dat is met opzet zo. Dit wordt
+  dus de eerste plek waar daar een uitzondering op komt.
+- **En dan moet die sessie alsnog in een cookie.** Fase 11 heeft de sessiecookie
+  net op `httpOnly` gezet, precies omdat geen enkele regel browserscript hem hoeft
+  te lezen. Een sessie die in de browser ontstaat, moet je dus doorgeven aan de
+  server om hem daar in een cookie te laten zetten. Dat is het echte werk van dit
+  idee — niet de passkey zelf.
 - **Een passkey zit op één toestel**, of in de sleutelhanger van Apple of Google.
   Telefoon kwijt is opnieuw aanmelden, dus er moet een tweede weg blijven: het
   wachtwoord dat de baas opnieuw kan zetten, of herstel per sms — het idee
   hieronder.
-- **Het gaat over de eerste keer, niet de tiende.** Blijft de sessie staan, dan
-  logt iemand twee keer per jaar in. Een passkey maakt die twee keer prettiger —
-  het is dus de tweede stap, en het uitzoekwerk hierboven is de echte oplossing.
+- **Beta.** Dat is geen bezwaar om het te proberen, wel om het als enige manier
+  van inloggen neer te zetten. Wachtwoord blijft ernaast staan.
 
-**Wat hiervoor al gedaan is:** fase 10 in `bouwplan.md`. Inloggen gaat op een
-gebruikersnaam en het telefoonnummer staat in `personen` — dat was het deel van
-dit onderwerp dat wél nodig was. Wat hier overblijft is de sessie die blijft
-staan, en de passkey.
+**Wat het nu kost:** eerder een weekend dan drie, en de onzekerheid is verhuisd —
+van "kan dit eigenlijk" naar "hoe krijgen we die sessie netjes van de browser
+naar het cookie".
 
-**Volgorde.** Het uitzoekwerk mag altijd. De passkey pas als daaruit blijkt dat
-mensen er alsnog uit vliegen, of als het wachtwoord op een briefje echt in de weg
-zit.
+**Volgorde.** Nog steeds achteraan, en om dezelfde reden als eerst: het lost een
+probleem op dat fase 11 misschien al weggenomen heeft. Vliegen mensen er over een
+paar weken niet meer uit, dan is dit alleen nog "prettiger inloggen" — twee keer
+per jaar. Blijft het wel gebeuren, dan is dit nu een stuk aantrekkelijker dan het
+gisteren was.
 
 ---
 
