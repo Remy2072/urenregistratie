@@ -9,8 +9,17 @@ declare global {
 			 * dan het inlogscherm, en dat zegt er iets over.
 			 */
 			supabase: SupabaseClient | null;
-			/** Sessie én gebruiker, allebei geverifieerd bij Supabase. */
-			veiligeSessie: () => Promise<{ session: Session | null; user: User | null }>;
+			/**
+			 * Sessie én gebruiker, allebei geverifieerd bij Supabase.
+			 *
+			 * `onzeker` is waar als het nagaan zelf mislukte -- geen netwerk, Supabase
+			 * even plat. Dan ben je niet uitgelogd, het is alleen niet vast te stellen.
+			 */
+			veiligeSessie: () => Promise<{
+				session: Session | null;
+				user: User | null;
+				onzeker: boolean;
+			}>;
 			/** Wie je bent volgens `personen`. Per verzoek onthouden. */
 			ik: () => Promise<import('$lib/server/wie').Ik | null>;
 		}

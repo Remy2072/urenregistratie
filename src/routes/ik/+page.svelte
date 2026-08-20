@@ -13,6 +13,21 @@
 	// nog niet kent uit je hoofd.
 	let toon = $state(false);
 	let bezig = $state(false);
+
+	/**
+	 * Staat de app al op het beginscherm? Dan is de uitleg eronder onzin.
+	 *
+	 * Dit mag in de browser, want het gaat over de browser: hoe deze pagina
+	 * geopend is, weet de server niet. Begint op false, zodat er bij iemand
+	 * zonder JavaScript uitleg staat in plaats van niets.
+	 */
+	let alsApp = $state(false);
+	$effect(() => {
+		alsApp =
+			window.matchMedia('(display-mode: standalone)').matches ||
+			// Safari op iOS doet display-mode niet en zet dit in plaats daarvan.
+			(navigator as { standalone?: boolean }).standalone === true;
+	});
 </script>
 
 {#if form?.fout}
@@ -54,6 +69,27 @@
 		</div>
 	{/if}
 </div>
+
+{#if !alsApp}
+	<!--
+		De goedkoopste oplossing voor "ik moet steeds opnieuw inloggen": de app
+		als icoon openen. Dan heeft hij zijn eigen omgeving en zijn eigen
+		koekjes, buiten de schoonmaak van de browser om -- en je bent van de
+		adresbalk af.
+	-->
+	<div class="blok">
+		<h2>Zet de app op je beginscherm</h2>
+		<p class="detail">
+			Dan opent hij als een app en blijf je ingelogd. Je hoeft niets te installeren; het is
+			dezelfde app met een icoon ervoor.
+		</p>
+		<p class="notitie">
+			<strong>iPhone:</strong> in Safari op het deelknopje onderaan, dan "Zet op beginscherm".<br />
+			<strong>Android:</strong> in Chrome op de drie puntjes rechtsboven, dan "Toevoegen aan
+			startscherm".
+		</p>
+	</div>
+{/if}
 
 {#if data.persoon}
 	<!-- ── Telefoonnummer ─────────────────────────────────────────────── -->

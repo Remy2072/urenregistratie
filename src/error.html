@@ -1,0 +1,85 @@
+<!doctype html>
+<!--
+	De laatste vangnetpagina.
+
+	Dit is niet dezelfde als +error.svelte. Die geldt voor fouten tijdens het
+	laden van een pagina; deze geldt voor fouten in `hooks.server.ts`, en dan is
+	er nog geen Svelte-app om iets in te tonen. Precies daar komt de 503 uit de
+	deurcontrole vandaan -- "even geen verbinding, je bent niet uitgelogd" -- en
+	zonder dit bestand is dat een kale zwart-witte melding die leest alsof er
+	iets stuk is.
+
+	Alle stijl staat hier los in het bestand. Er is op dit moment geen app.css,
+	dus de kleuren staan hier voor de tweede keer. Dat is de prijs van een
+	vangnet dat altijd werkt.
+-->
+<html lang="nl">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>%sveltekit.status% — Urenregistratie</title>
+		<style>
+			:root {
+				--achtergrond: #f6f6f4;
+				--vlak: #ffffff;
+				--rand: #e2e2dd;
+				--tekst: #1b1b18;
+				--gedempt: #6b6b63;
+				--amber: #9a6414;
+			}
+			@media (prefers-color-scheme: dark) {
+				:root {
+					--achtergrond: #16161a;
+					--vlak: #1f1f24;
+					--rand: #32323a;
+					--tekst: #ececf0;
+					--gedempt: #9a9aa4;
+					--amber: #e0b269;
+				}
+			}
+			body {
+				margin: 0;
+				padding: 1rem;
+				background: var(--achtergrond);
+				color: var(--tekst);
+				font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+				font-size: 16px;
+				line-height: 1.5;
+			}
+			.kaart {
+				max-width: 32rem;
+				margin: 2rem auto;
+				background: var(--vlak);
+				border: 1px solid var(--rand);
+				border-left: 3px solid var(--amber);
+				border-radius: 12px;
+				padding: 1rem;
+			}
+			h1 {
+				font-size: 1.15rem;
+				margin: 0 0 0.4rem;
+			}
+			p {
+				margin: 0.4rem 0 0;
+				color: var(--gedempt);
+			}
+			a {
+				display: inline-block;
+				margin-top: 1rem;
+				color: inherit;
+			}
+			code {
+				color: var(--gedempt);
+				font-size: 0.85rem;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="kaart">
+			<h1>Even niet gelukt</h1>
+			<p>%sveltekit.error.message%</p>
+			<p><code>foutcode %sveltekit.status%</code></p>
+			<a href="/mijn-week">Opnieuw proberen</a>
+		</div>
+	</body>
+</html>

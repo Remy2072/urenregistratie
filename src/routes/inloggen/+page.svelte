@@ -117,6 +117,24 @@
 	</div>
 
 <div class="blok">
+	<!--
+		Wie hier staat terwijl hij dat niet verwachtte, heeft precies deze vraag.
+		Dichtgeklapt, want voor de meeste mensen is het inlogscherm het enige dat
+		ze hier komen doen.
+	-->
+	<details>
+		<summary>Moet je hier vaker inloggen dan je wil?</summary>
+		<p class="notitie">
+			Zet de app op je beginscherm, dan opent hij als een app en blijf je ingelogd. Op een
+			<strong>iPhone</strong> via het deelknopje onderaan in Safari → "Zet op beginscherm". Op
+			<strong>Android</strong> via de drie puntjes in Chrome → "Toevoegen aan startscherm".
+		</p>
+		<p class="notitie">
+			Kwam je hier na een storing? Dan was je niet uitgelogd en werkt je oude wachtwoord nog
+			gewoon.
+		</p>
+	</details>
+
 	<p class="notitie">
 		Geen account aanmaken hier. Je krijgt je inlog van de baas — tien mensen, dat regel je niet met
 		een registratieformulier dat iedereen kan vinden.
