@@ -190,8 +190,9 @@
 		{/if}
 
 		<p class="notitie">
-			Wachtwoord kwijt? Vraag je baas — die zet er in een minuut een nieuwe voor je klaar. Er komt
-			geen mail aan te pas, dus je hoeft nergens anders in te loggen om erbij te kunnen.
+			<a href="/herstel">Wachtwoord vergeten?</a> Staat er een telefoonnummer bij je account, dan
+			krijg je een code per sms en stel je zelf een nieuw wachtwoord in. Zo niet, dan zet je baas er
+			in een minuut een nieuwe voor je klaar — er komt geen mail aan te pas.
 		</p>
 	</div>
 

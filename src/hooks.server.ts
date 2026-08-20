@@ -19,7 +19,7 @@ import { dev } from '$app/environment';
  * scherm is toch niet gevoelig" is precies het soort uitzondering dat je later
  * vergeet, dus die is er niet.
  */
-const openbaar = ['/inloggen'];
+const openbaar = ['/inloggen', '/herstel'];
 
 /**
  * Hoe de sessiecookie eruitziet. Expliciet, en niet zoals `@supabase/ssr` hem
