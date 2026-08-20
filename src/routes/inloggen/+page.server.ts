@@ -2,15 +2,35 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { adresBijGebruikersnaam, kanMetGebruikersnaam } from '$lib/server/login';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.supabase) return { ingesteld: false, gebruikersnaam: false };
+/**
+ * Waar iemand heen wilde voordat de deur hem hierheen stuurde.
+ *
+ * Alleen een pad binnen deze app. Zonder die controle is dit een open
+ * omleiding: dan zet iemand `?verder=https://ergensanders` in een link, en na
+ * het inloggen sta je op een nagemaakt inlogscherm dat om je wachtwoord vraagt.
+ * Twee slashes zijn daarom ook verboden -- `//ergens.nl` is voor een browser een
+ * volledig adres.
+ */
+function veiligeBestemming(waarde: string | null): string {
+	if (!waarde || !waarde.startsWith('/') || waarde.startsWith('//')) return '/mijn-week';
+	return waarde;
+}
+
+export const load: PageServerLoad = async ({ locals, url }) => {
+	if (!locals.supabase) {
+		return { ingesteld: false, gebruikersnaam: false, verder: '/mijn-week' };
+	}
 	const { user } = await locals.veiligeSessie();
 	if (user) redirect(303, '/mijn-week');
 
 	// Zonder beheersleutel kan de app een gebruikersnaam niet omzetten naar het
 	// adres waarmee Supabase iemand kent. Dan is inloggen met je adres de enige
 	// weg, en dat hoort het scherm te zeggen in plaats van "klopt niet".
-	return { ingesteld: true, gebruikersnaam: kanMetGebruikersnaam() };
+	return {
+		ingesteld: true,
+		gebruikersnaam: kanMetGebruikersnaam(),
+		verder: veiligeBestemming(url.searchParams.get('verder'))
+	};
 };
 
 /**
@@ -80,7 +100,7 @@ export const actions: Actions = {
 		});
 		if (error) return fail(400, { fout: passkeyUit(error) });
 
-		redirect(303, '/mijn-week');
+		redirect(303, veiligeBestemming(String(formulier.get('verder') ?? '')));
 	},
 
 	/**
@@ -132,6 +152,6 @@ export const actions: Actions = {
 
 		if (error) return fail(400, { wie, fout: KLOPT_NIET });
 
-		redirect(303, '/mijn-week');
+		redirect(303, veiligeBestemming(String(formulier.get('verder') ?? '')));
 	}
 };

@@ -50,6 +50,7 @@
 			const klaar = new FormData();
 			klaar.set('challengeId', challengeId);
 			klaar.set('antwoord', JSON.stringify(antwoord));
+			klaar.set('verder', data.verder);
 
 			const uitkomst = await stuur('?/passkeyKlaar', klaar);
 			if (uitkomst.type === 'redirect') {
@@ -117,6 +118,10 @@
 			};
 		}}
 	>
+		<!-- Waar je heen wilde. Als verborgen veld en niet in de actie-URL, want
+		     die wordt door `?/wachtwoord` overschreven. -->
+		<input type="hidden" name="verder" value={data.verder} />
+
 		<label class="veld">
 			<span>{data.gebruikersnaam ? 'Gebruikersnaam' : 'E-mailadres'}</span>
 			<!--

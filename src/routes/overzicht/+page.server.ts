@@ -4,6 +4,7 @@ import type { Dienst, Persoon } from '$lib/model';
 import {
 	achterafGemeld,
 	afwijkend,
+	korteTijd,
 	korteTijden,
 	maandagVan,
 	nuInNederland,
@@ -47,9 +48,31 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.order('datum', { ascending: false })
 		.limit(50);
 
+	// Ruilverzoeken die openstaan. De baas hoeft er niets mee -- dat is bewust zo
+	// besloten, twee bezorgers regelen het -- maar hij moet wel kunnen zien dat er
+	// een dienst op de markt ligt.
+	const { data: verzoeken } = await supabase.rpc('mijn_ruilverzoeken');
+
 	return {
 		nu,
 		beheerder: true,
+		verzoeken: ((verzoeken ?? []) as {
+			id: string;
+			datum: string;
+			post: string;
+			gepland_begin: string;
+			gepland_eind: string;
+			van_naam: string;
+			naar_naam: string | null;
+			open_verzoek: boolean;
+			status: string;
+		}[])
+			.filter((r) => r.status === 'open')
+			.map((r) => ({
+				...r,
+				gepland_begin: korteTijd(r.gepland_begin)!,
+				gepland_eind: korteTijd(r.gepland_eind)!
+			})),
 		maandag,
 		zondag,
 		vorige: plusDagen(maandag, -7),

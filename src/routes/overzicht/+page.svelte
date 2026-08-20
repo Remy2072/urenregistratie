@@ -123,6 +123,30 @@
 		</p>
 	</div>
 {:else}
+
+	{#if (data.verzoeken ?? []).length > 0}
+		<!-- Alleen kijken. Ruilen doen de bezorgers zelf; dit staat er zodat je
+		     niet verrast wordt door een andere naam op een bus. -->
+		<div class="blok">
+			<h2>Ruilverzoeken die openstaan</h2>
+			{#each data.verzoeken as r (r.id)}
+				<div class="kaart">
+					<div class="regel">
+						<span class="dag">{dagKort(r.datum)} {datumKort(r.datum)}</span>
+						<span class="detail tijden">{r.gepland_begin} – {r.gepland_eind}</span>
+					</div>
+					<p class="detail" style="margin:0.3rem 0 0">
+						{r.van_naam} · {r.post} ·
+						{#if r.open_verzoek}open in de groep{:else}gevraagd aan {r.naar_naam}{/if}
+					</p>
+				</div>
+			{/each}
+			<p class="notitie">
+				Je hoeft hier niets te doen: wie ja zegt, krijgt de dienst en het rooster gaat mee. Zodra
+				dat gebeurd is staat de nieuwe naam gewoon in het weekoverzicht.
+			</p>
+		</div>
+	{/if}
 	{#if form?.fout}
 		<p class="fout">{form.fout}</p>
 	{/if}

@@ -182,7 +182,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 		if (!user && onzeker) {
 			error(503, 'Even geen verbinding met de database. Je bent niet uitgelogd — probeer het opnieuw.');
 		}
-		if (!user) redirect(303, '/inloggen');
+		// Onthoud waarvoor je kwam. Zonder dit belandt iemand die op een link naar
+		// een ruilverzoek tikt na het inloggen op zijn eigen week, en moet hij die
+		// link opnieuw zoeken in een groepsapp met honderd berichten.
+		if (!user) {
+			const verder = event.url.pathname + event.url.search;
+			redirect(303, `/inloggen?verder=${encodeURIComponent(verder)}`);
+		}
 
 		// Wie hier niet meer werkt komt er niet meer in. Zijn login blijft
 		// bestaan -- die gooien we niet weg, want dan verdwijnt de koppeling met
