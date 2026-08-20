@@ -13,6 +13,7 @@ Achtergrond en beslissingen staan in `docs/`:
 | `docs/startdata.sql` | Posten, diensten en het weekrooster. Het enige dat per bedrijf verschilt |
 | `docs/weekgeneratie.sql` | De wekelijkse uitrol van het sjabloon naar diensten |
 | `docs/profiel.sql` | Gebruikersnaam en telefoon op `personen` (fase 10). Draai hem altijd ná `rollen.sql` |
+| `docs/herstel.sql` | Herstelcodes voor "wachtwoord vergeten" (fase 13) |
 
 ## Draaien
 
@@ -23,7 +24,7 @@ npm run dev
 
 ## Waar we nu staan
 
-**Fase 0 tot en met 6 af, plus 9 tot en met 12.** De hele keten draait op de database: de
+**Fase 0 tot en met 6 af, plus 9 tot en met 13.** De hele keten draait op de database: de
 bezorger meldt zijn dienst, de baas bevestigt, en er komt een bestand uit voor de
 boekhouder. Er zit geen nepdata meer in — het prototype uit fase 0 staat nog in
 de branch `fase-0-prototype`.
@@ -47,6 +48,8 @@ Wat je ziet hangt af van wie je bent — de tabbladen volgen je rol.
 - `/overzicht` — de baas. Bovenaan alleen afwijkingen, achteraf gemelde en
   niet-gemelde diensten. Bevestigen los of in bulk, en een dienst verzetten.
 - `/export` — de boekhouder. Alleen bevestigde diensten, alleen uren, als CSV.
+- `/herstel` — wachtwoord vergeten. Gebruikersnaam invullen, code per sms, zelf
+  een nieuw wachtwoord kiezen. Openbaar, want wie hier komt kan niet inloggen.
 - `/ik` — je eigen gegevens. Je gebruikersnaam en je naam zijn van de baas; je
   telefoonnummer, je wachtwoord en je passkeys zet je zelf.
 
@@ -64,6 +67,8 @@ eerste dat er nu ligt.
 | `src/lib/server/login.ts` | Van een gebruikersnaam naar het adres waarmee Supabase iemand kent |
 | `src/lib/telefoon.ts` | Alles met telefoonnummers. Eén vorm in de database, een leesbare op het scherm |
 | `src/lib/passkey.ts` | Het enige stuk dat in de browser draait: het passkey-venster van de telefoon |
+| `src/lib/server/bird.ts` | Sms versturen. De enige plek die iets naar buiten stuurt, en de enige met een rekening eraan |
+| `src/lib/server/herstel.ts` | Codes verzinnen en narekenen voor "wachtwoord vergeten" |
 | `src/lib/server/uren.ts` | Wat de boekhouder krijgt. Het enige bestand dat je aanpast voor een ander formaat |
 | `src/lib/componenten/` | Meldkaart, tijdstappers, statusmerkjes |
 

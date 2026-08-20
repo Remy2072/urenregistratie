@@ -6,65 +6,6 @@ een fase in `bouwplan.md` wordt, gaat het gebeuren.
 
 ---
 
-## Wachtwoord vergeten, met een sms
-
-**Het idee.** Een knop op het inlogscherm. Je vult je gebruikersnaam in, je krijgt
-een code per sms, en met die code stel je zelf een nieuw wachtwoord in. De baas
-hoeft er niet aan te pas te komen — en dat is de winst, want nu is hij de enige
-weg terug en moet iemand wachten tot hij tijd heeft.
-
-**Een code, geen wachtwoord.** De eerste ingeving is een nieuw wachtwoord
-sms'en. Doe dat niet: dat blijft voor altijd in je berichten staan, en op de
-iPad die meekijkt. Een code van zes cijfers die vijf minuten geldig is, is één
-keer bruikbaar en daarna waardeloos. Een link met een sleutel erin kan ook — dan
-is het hetzelfde mechanisme als bij ruilen en het agenda-abonnement.
-
-**Het oude wachtwoord blijft werken tot die code gebruikt is.** Dit is het punt
-waar zo'n knop gevaarlijk wordt: zet je het wachtwoord meteen om, dan is dit een
-knop waarmee je een collega buitensluit. Naam intikken, zijn wachtwoord is
-vervangen, hij komt er niet meer in en snapt niet waarom. Precies wat er tijdens
-fase 10 één keer echt gebeurde met "Nieuw wachtwoord" op je eigen account — zie
-het resultaatblok daar.
-
-**Wat het scherm zegt is altijd hetzelfde:** _"als dat account bestaat, komt er
-een sms."_ Nooit of die gebruikersnaam bestaat en nooit of er een nummer bij
-staat. Dat is dezelfde regel als bij het inloggen zelf, en om dezelfde reden: de
-namen waar het over gaat zijn die van je collega's.
-
-### Wat er nog niet is
-
-- **Nummers die echt ingevuld zijn.** De kolom staat er sinds fase 10, maar leeg
-  is leeg. Zonder nummer bestaat deze deur niet, en dan blijft de baas de weg
-  terug. Zijn knop moet dus blijven staan.
-- **Een sms-kanaal.** Zelfde Bird-account als ruilen. Eén gesprek met de baas
-  over kosten en over wie dat account beheert als jij weg bent, niet twee.
-- **Een plek voor die codes:** van wie, wanneer verlopen, hoeveel pogingen. Alleen
-  de hash bewaren, net als bij een ruilverzoek. En een limiet per persoon per dag,
-  want elke poging is geld en een knop die iedereen kan indrukken is een rekening
-  die iemand anders betaalt.
-- **Een openbaar scherm.** Dit wordt de derde plek die zonder login moet werken,
-  na een ruilverzoek en een agenda-adres. Nog een reden om dat één mechanisme te
-  maken in plaats van drie.
-
-### Misschien hoef je het niet zelf te bouwen
-
-Supabase kan inloggen met een sms-code, met een sms-provider erachter. Dan is dit
-geen "wachtwoord vergeten" meer maar een tweede manier om in te loggen, en bouw
-je bijna niets — een code invullen en je bent binnen, zonder dat er ooit een
-wachtwoord aan te pas komt.
-
-Uitzoeken vóór je iets belooft: of Bird daar als provider kan, of dat naast
-inloggen met e-mail en wachtwoord kan bestaan, en hoe de gebruikersnaam erin past
-— want een sms-code gaat naar een nummer en niet naar een naam, en de app weet
-dat nummer alleen als hij eerst weet wie je bent.
-
-**Volgorde.** Samen met ruilen via sms, want dat is hetzelfde kanaal en hetzelfde
-gesprek. Moet je van die twee kiezen, dan deze eerst: iemand die niet in kan
-melden zijn uren niet, en iemand die niet kan ruilen doet dat gewoon weer even in
-de groepsapp.
-
----
-
 ## Superadmin
 
 **Het idee.** Een rol boven eigenaar, voor de bouwer. Kan overal bij, in elke
@@ -141,8 +82,10 @@ niets, en twee mensen die tegelijk op de link tikken moet je ook nog uitleggen.
 In de groepsapp vraag je het ook aan de één van wie je denkt dat hij kan.
 Reageert hij niet, dan vraag je de volgende.
 
-Via [Bird](https://bird.com/nl-nl), dat ook het herstel per sms zou doen — dan
-is er één sms-kanaal en niet twee.
+Via [Bird](https://bird.com/nl-nl), en dat is sinds fase 13 geen nieuwe koppeling
+meer: het versturen staat al in `src/lib/server/bird.ts`, met de sleutels in
+`.env`. Wat dit idee er nog bij nodig heeft is dus geen kanaal maar een tekst en
+een reden om te versturen.
 
 ### De vier stappen
 
@@ -303,9 +246,15 @@ toegang tot een private repo betekent dat de repo niet bestaat.
 
 **Wat deze app al zo doet.** Het inlogscherm zegt bij een onbekende
 gebruikersnaam, een onbekend adres en een verkeerd wachtwoord hetzelfde: _"klopt
-niet."_ De echte reden gaat naar de serverlog. Datzelfde staat in het idee voor
-wachtwoord vergeten: _"als dat account bestaat, komt er een sms."_ Die keuzes
-hadden alleen nog geen naam, en nu wel.
+niet."_ De echte reden gaat naar de serverlog. Die keuze had alleen nog geen naam,
+en nu wel.
+
+**En het herstelscherm uit fase 13 doet het ook.** Daar leidt elke uitkomst naar
+hetzelfde volgende scherm — naam bestaat niet, geen telefoonnummer, limiet
+bereikt, of gelukt — met op dat scherm de zin wat je moet doen als er geen sms
+komt. Dat was er eerst een eerlijke melding, en het omdraaien kostte niets: wat
+iemand nodig heeft is niet weten wélke van de drie het was, maar weten dat hij
+naar de baas moet.
 
 ### Waarom de rolschermen zo blijven
 

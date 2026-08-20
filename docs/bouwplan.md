@@ -69,6 +69,7 @@ voren omdat er nu iets van afhangt.
 | 10 | Gebruikersnaam en profiel ✅ | Inloggen zonder e-mailadres, en iedereen beheert wat van hem is | 1 avond |
 | 11 | Ingelogd blijven ✅ | Een storing is geen uitlog, en de app hoort op je beginscherm | 1 avond |
 | 12 | Passkey ✅ | Inloggen met gezicht of vinger, zonder token in de browser | 1 avond |
+| 13 | Wachtwoord vergeten ✅ | Zelf weer binnen komen, met een code per sms | 1 weekend |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
 dus reken op twee tot drie maanden doorlooptijd. Dat is prima: er is geen
@@ -1114,6 +1115,110 @@ wachtwoord in te tikken.
 > **Gedaan.** Aangemeld en ingelogd zonder wachtwoord. Op `/ik` staat een lijst
 > van je passkeys met naam en datum, je kunt er een weghalen, en de knop op het
 > inlogscherm verschijnt alleen op een toestel dat het kan.
+
+---
+
+## Fase 13 — Wachtwoord vergeten, met een sms ✅
+
+**Doel:** wie zijn wachtwoord kwijt is, komt er zelf weer in. Zonder de baas, en
+zonder in zijn mail te hoeven.
+
+Tot nu toe was er precies één weg terug: de baas drukt op "Nieuw wachtwoord" en
+leest het voor. Dat werkt, maar het wacht op hem — en op een zaterdagavond is dat
+een bezorger die zijn uren niet kan melden.
+
+### De flow
+
+1. **Op het inlogscherm:** een link *"Wachtwoord vergeten?"* naar `/herstel`.
+2. **Je tikt je gebruikersnaam in.** Drie mogelijke uitkomsten:
+   - **Bestaat niet** → *"Die gebruikersnaam bestaat niet."*
+   - **Bestaat, geen telefoonnummer** → *"Vraag een nieuw wachtwoord aan bij je
+     werkgever."*
+   - **Bestaat mét nummer** → een sms met een eenmalige code en een link.
+3. **De link opent hetzelfde scherm**, waar je je gebruikersnaam en de code
+   invult. De link is een snelkoppeling, geen sleutel: er zit niets geheims in.
+4. **Daarna het volgende scherm:** je nieuwe wachtwoord, twee keer.
+5. **En dan word je uitgelogd** en log je één keer opnieuw in. Dat is wat `/ik`
+   ook doet na een wachtwoordwijziging, en zo weet je zeker dat het nieuwe
+   wachtwoord werkt.
+
+### Eén afloop voor alle gevallen, en hoe we daar kwamen
+
+Dit ging heen en weer, en het is de moeite waard om te weten waarom.
+
+**Eerst zo gebouwd:** een eerlijke melding. Bestaat die gebruikersnaam niet, dan
+staat dat er — want de bezorger die `daan` typt in plaats van `daanb` kan er dan
+zelf op komen, en dat is de veel waarschijnlijkere gebeurtenis. Een melding die
+hem voor een typefout naar de baas stuurt kost twee mensen tijd.
+
+**Daarna omgedraaid**, omdat het beter kan zonder dat je dat verliest. Het
+probleem met die eerlijke melding is dat je met namen intikken kunt uitvissen wie
+er werkt — precies de enumeratie uit idee 6 in `ideeen.md`. Maar wat je écht wil
+is niet een fóutmelding, het is dat iemand *weet wat hij moet doen*. En dat kan
+op het volgende scherm staan.
+
+Dus gaat nu **elke uitkomst naar hetzelfde codescherm** — naam bestaat niet, geen
+telefoonnummer, vandaag al drie keer gevraagd, sms mislukt, of gewoon gelukt — en
+staat daar: *"Komt er geen sms? Dan bestaat die gebruikersnaam niet, staat er
+geen nummer bij, of zijn er vandaag al drie codes aangevraagd. Vraag in dat geval
+je werkgever."*
+
+Daarmee is er geen verschil meer te meten, en hoeft niemand te wachten op een sms
+zonder te weten waarom hij niet komt. De echte reden gaat naar de serverlog.
+
+De enige uitzondering is een storing aan onze kant — geen beheersleutel, database
+onbereikbaar. Die zegt het wel, want die gaat niet over dit account.
+
+En de limiet op het aantal pogingen blijft, met een andere reden dan eerst: niet
+tegen het aflopen van namen, maar tegen de rekening. Elke poging kan een sms zijn.
+
+### Wat het dicht houdt
+
+- **De code is tien minuten geldig**, en er is er één per persoon: een nieuwe
+  aanvraag maakt de vorige ongeldig.
+- **Drie pogingen per code.** Zes cijfers zonder limiet is te raden.
+- **Drie aanvragen per persoon per dag**, en een limiet per bezoeker op het
+  opzoeken van namen. Elke sms is geld.
+- **In de database staat alleen de hash** van de code, nooit de code zelf. Een
+  databasedump levert dus geen werkende codes op.
+- **Tussen scherm 2 en 3 zit een kortlopend koekje.** Anders opent iemand het
+  wachtwoordscherm rechtstreeks en zet hij een wachtwoord zonder ooit een code te
+  hebben gehad.
+- **Je oude wachtwoord blijft werken** tot het nieuwe gezet is. Anders is dit een
+  knop waarmee je een collega buitensluit.
+
+### Wat er nieuw is aan de buitenkant
+
+Het versturen zelf zit achter één module. Staan er geen Bird-sleutels in `.env`,
+dan zet de app de code in de serverlog en werkt de rest gewoon — dezelfde
+opzet als de beheersleutel. Zo is de hele flow te bouwen en te testen voordat er
+een sms-account bestaat, en is aansluiten later drie waarden in `.env`.
+
+`/herstel` is het tweede openbare scherm naast `/inloggen`. Dat lijstje is met
+opzet kort.
+
+**Klaar als:** je met een vergeten wachtwoord via een sms weer binnen bent, en
+iemand zonder telefoonnummer een melding krijgt die hem naar de baas stuurt.
+
+> **Gedaan.** `herstel.sql` is op 21 augustus 2026 gedraaid; de drie controles —
+> tabel, functies, en géén policy op die tabel — staan op true. De hele flow is
+> doorlopen: gebruikersnaam, code, nieuw wachtwoord, uitgelogd, opnieuw naar
+> binnen.
+>
+> **Zonder Bird werkt het al.** Staan er geen sleutels in `.env`, dan komt het
+> bericht in de serverlog. Dat is niet alleen handig om te testen: het betekent
+> dat het gesprek met de baas over dat account niet in de weg staat van het
+> bouwen. Aansluiten is later drie waarden in `.env`, en de aanroep zelf staat in
+> één bestand — `src/lib/server/bird.ts`.
+>
+> **Wat níét getest is:** die aanroep naar Bird. Er is geen account, dus die vorm
+> is op hun documentatie gebaseerd en niet op een geslaagd verzoek. Reken erop dat
+> daar bij het aansluiten nog een correctie op moet.
+>
+> **En een passkey blijft staan na een nieuw wachtwoord.** Meegenomen als controle
+> dat fase 12 en 13 elkaar niet in de weg zitten: een wachtwoordwijziging trekt je
+> sessies in, maar raakt je passkeys niet. Opnieuw aanmelden hoeft alleen als het
+> domein verandert — dus bij de deploy.
 
 ---
 
