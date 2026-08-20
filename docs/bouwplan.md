@@ -670,6 +670,71 @@ ook het argument om die naam in een variabele te zetten en niet in een bestand
 dat je commit: een bestand per bedrijf betekent een tak per bedrijf, en dan is
 het "één repo" weg.
 
+
+### Als dit een SaaS wordt
+
+*Opgeschreven toen de vraag kwam wat er gebeurt bij drie klanten, en daarna bij
+zestien. Het antwoord verschilt per aantal, en dat is precies het punt.*
+
+Eerst een misverstand uit de weg: **SaaS betekent dat de klant nergens een account
+hoeft aan te maken, niet dat er één database is.** Die twee worden vaak
+verwisseld, en de keuze eronder is een andere.
+
+| | Wat het is | Wat het kost |
+|---|---|---|
+| **A. Eén project per klant** | Zoals nu, maar op jouw account. De klant ziet Supabase nooit | Nul codewijziging. Wel per project betalen, en elke migratie zo vaak als er klanten zijn |
+| **B. Eén database voor iedereen** | `bedrijf_id` op elke tabel, en in elke policy | Het hele rechtenmodel opnieuw. Eén fout in één policy legt de loongegevens van alle klanten open |
+| **C. Schema per klant, één database** | Klinkt als het midden | Slechtste van twee: de migratielast van A én de blast radius van B |
+
+**Bij een handvol klanten is A het antwoord.** Je klant merkt geen verschil, je
+code verandert niet, en een fout bij de één kan de ander niet raken — de scheiding
+is een aparte database en niet een kolom die iemand kan vergeten.
+
+**Bij een stuk of zestien kantelt het naar B**, en niet omdat zestien veel is maar
+omdat de rekening dan gaat praten: zestien betaalde projecten (en backups wil je,
+want dit zijn de uren waarop mensen worden uitbetaald) tegenover één. Migreren is
+niet het argument — dat is met de Supabase CLI een lus en tien minuten.
+
+**Wat je vóór B geregeld moet hebben**, niet erna:
+
+- **Eén plek waar `bedrijf_id` wordt afgedwongen.** Niet dertig policies die het
+  allemaal zelf goed moeten doen.
+- **Tests op je policies** die falen zodra iemand data van een ander bedrijf kan
+  zien. Bij A is zo'n test aardig; bij B is hij het enige dat tussen jou en een
+  datalek staat.
+
+Zonder die twee is B geen kostenbesparing maar een tijdbom onder een
+loonadministratie.
+
+### En één klant met vijf zaken is een schemavraag
+
+Vijf aparte platforms voor één eigenaar kan gewoon, met model A. Maar de vraag
+eronder is een andere: **wil die eigenaar ooit één overzicht over al zijn zaken?**
+
+Zo ja, dan is dat geen hostingkeuze maar een dimensie die het schema mist: een
+*vestiging* naast `posten`, en rollen die per vestiging gelden. Vraag hem dat vóór
+je zijn tweede zaak inricht — bouw je het één keer in, dan is het een kolom; kom
+je er later achter, dan zit je vijf databases aan elkaar te praten.
+
+### Bird hoeft niet per klant
+
+Sms gaat één kant op en de afzender is jouw platform, dus één Bird-account voor
+alle klanten werkt en is de normale vorm. Twee dingen om te weten: het tegoed is
+gedeeld — een klant met een drukke ploeg drukt op jouw rekening — en de afzender
+is jouw naam en niet die van de klant.
+
+### Wat het met de overdracht doet
+
+Dit staat hier omdat het de rest van dit plan omdraait. Overal elders geldt:
+alles op de account van de baas, want de bouwer vertrekt. Bij een SaaS ben jíj de
+eigenaar van de database met hun uren — en daarmee de verwerker van hun
+personeelsgegevens. Dan hoort er per klant een verwerkersovereenkomst te liggen,
+en dan kun je niet meer weglopen zonder overdracht.
+
+Dat is geen technisch punt en het staat hier ook niet om je tegen te houden. Het
+is een ander product dan "geïnstalleerd en verkocht", en dat wil je weten voordat
+de eerste klant belt.
+
 **Klaar als:** je een tweede bedrijf hebt opgezet en de enige bestanden die je
 hebt aangeraakt `startdata.sql` en het configuratiebestand zijn.
 
