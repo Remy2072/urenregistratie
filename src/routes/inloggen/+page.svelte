@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { enhance } from '$app/forms';
+	import { enhance, deserialize } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import { gebruikPasskey, kanPasskey, passkeyFout } from '$lib/passkey';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -10,6 +12,67 @@
 	// typt iedereen van een briefje over. Zonder oogje weet je bij een misser
 	// niet of je verkeerd getypt hebt of het verkeerde wachtwoord hebt.
 	let toon = $state(false);
+
+	// Kan dit toestel passkeys? Pas na het laden te zeggen, want de server weet
+	// het niet -- dus staat de knop er eerst niet en verschijnt hij daarna.
+	let passkeyKan = $state(false);
+	$effect(() => {
+		passkeyKan = kanPasskey();
+	});
+
+	let passkeyBezig = $state(false);
+	let passkeyMelding = $state<string | null>(null);
+
+	/**
+	 * Inloggen met een passkey: drie stappen, en de middelste is de enige die
+	 * hier hoort.
+	 *
+	 * 1. De server vraagt de opdracht op bij Supabase.
+	 * 2. De telefoon laat zijn venster zien en ondertekent -- dat kan alleen hier.
+	 * 3. De server laat het antwoord controleren en zet de sessie in de cookie.
+	 *
+	 * Er komt dus geen sleutel en geen sessie in deze browser. Dat is waarom
+	 * fase 11 z'n httpOnly-cookie kan houden.
+	 */
+	async function metPasskey() {
+		passkeyBezig = true;
+		passkeyMelding = null;
+		try {
+			const start = await stuur('?/passkeyStart', new FormData());
+			if (start.type !== 'success' || !start.data?.opdracht) {
+				passkeyMelding = start.data?.fout ?? 'Passkey inloggen kan hier niet.';
+				return;
+			}
+
+			const { challengeId, opties } = start.data.opdracht;
+			const antwoord = await gebruikPasskey(opties);
+
+			const klaar = new FormData();
+			klaar.set('challengeId', challengeId);
+			klaar.set('antwoord', JSON.stringify(antwoord));
+
+			const uitkomst = await stuur('?/passkeyKlaar', klaar);
+			if (uitkomst.type === 'redirect') {
+				// De cookie staat er; nu pas mag de app opnieuw laden.
+				await invalidateAll();
+				window.location.href = uitkomst.location;
+				return;
+			}
+			passkeyMelding = uitkomst.data?.fout ?? 'Inloggen met je passkey lukte niet.';
+		} catch (fout) {
+			// Weggeklikt is geen fout, dus dan blijft het stil. Zie passkeyFout().
+			passkeyMelding = passkeyFout(fout);
+		} finally {
+			passkeyBezig = false;
+		}
+	}
+
+	/** Een actie aanroepen zonder formulier. Dit is de manier die SvelteKit ervoor heeft. */
+	async function stuur(actie: string, body: FormData) {
+		const antwoord = await fetch(actie, { method: 'POST', body });
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return deserialize(await antwoord.text()) as any;
+	}
 </script>
 
 {#if page.url.searchParams.has('nieuw')}
@@ -45,6 +108,7 @@
 <div class="blok">
 	<form
 		method="POST"
+		action="?/wachtwoord"
 		use:enhance={() => {
 			bezig = true;
 			return async ({ update }) => {
@@ -102,6 +166,21 @@
 			</button>
 		</div>
 	</form>
+
+	{#if passkeyKan}
+		<!--
+			Onder het wachtwoord en niet erboven: wie hier voor het eerst komt heeft
+			nog geen passkey, en dan is een knop die niets doet het verkeerde begin.
+		-->
+		<div class="knoppen" style="margin-top:0.8rem">
+			<button type="button" class="groot" onclick={metPasskey} disabled={passkeyBezig}>
+				{passkeyBezig ? 'Bezig…' : 'Inloggen met gezicht of vinger'}
+			</button>
+		</div>
+		{#if passkeyMelding}
+			<p class="fout">{passkeyMelding}</p>
+		{/if}
+	{/if}
 
 		{#if data.gebruikersnaam}
 			<p class="notitie">

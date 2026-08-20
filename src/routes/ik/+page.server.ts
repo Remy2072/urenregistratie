@@ -29,9 +29,16 @@ export const load: PageServerLoad = async ({ locals }) => {
 		return count ?? 0;
 	}
 
+	// Welke passkeys heeft dit account? Staat de schakelaar in Supabase uit, dan
+	// geeft dit een fout en blijft het scherm gewoon werken -- vandaar de lege
+	// lijst en geen throw.
+	const { data: passkeys, error: passkeyFout } = await supabase.auth.passkey.list();
+
 	return {
 		email: user.email ?? '',
 		persoon: ik,
+		passkeys: passkeys ?? [],
+		passkeysKan: !passkeyFout,
 		zichtbaar: {
 			personen: await tel('personen'),
 			diensten: await tel('diensten'),
@@ -121,6 +128,69 @@ export const actions: Actions = {
 
 		await locals.supabase!.auth.signOut();
 		redirect(303, '/inloggen?nieuw=1');
+	},
+
+	/**
+	 * Stap 1 van een passkey aanmelden: de opdracht ophalen.
+	 *
+	 * Dit vraagt een sessie, en die zit hier -- in een cookie die de browser niet
+	 * kan lezen. Daarom doet de server deze stap en niet de telefoon.
+	 */
+	passkeyStart: async ({ locals }) => {
+		const { user } = await locals.veiligeSessie();
+		if (!user) return fail(403, { fout: 'Je bent niet ingelogd.' });
+
+		const { data, error } = await locals.supabase!.auth.passkey.startRegistration();
+		if (error || !data) {
+			return fail(400, {
+				fout: /disabled|experimental|not enabled|404|not found/i.test(error?.message ?? '')
+					? 'Passkeys staan nog uit in Supabase (Authentication → Passkeys).'
+					: (error?.message ?? 'Het is niet gelukt.')
+			});
+		}
+
+		return { opdracht: { challengeId: data.challenge_id, opties: data.options } };
+	},
+
+	/** Stap 2: het antwoord van de telefoon laten controleren en vastleggen. */
+	passkeyKlaar: async ({ request, locals }) => {
+		const { user } = await locals.veiligeSessie();
+		if (!user) return fail(403, { fout: 'Je bent niet ingelogd.' });
+
+		const f = await request.formData();
+		const challengeId = String(f.get('challengeId') ?? '');
+		const antwoord = String(f.get('antwoord') ?? '');
+		const naam = String(f.get('naam') ?? '').trim();
+		if (!challengeId || !antwoord) return fail(400, { fout: 'Er ging iets mis met de passkey.' });
+
+		const { data, error } = await locals.supabase!.auth.passkey.verifyRegistration({
+			challengeId,
+			credential: JSON.parse(antwoord)
+		});
+		if (error) return fail(400, { fout: error.message });
+
+		// Een naam is prettig zodra er twee staan: "iPhone" en "laptop" zeggen
+		// meer dan twee datums. Lukt het niet, dan is de passkey er nog steeds --
+		// dus dit mag geen fout worden.
+		if (naam && data?.id) {
+			await locals.supabase!.auth.passkey.update({ passkeyId: data.id, friendlyName: naam });
+		}
+
+		return { gedaan: 'Je kunt nu inloggen met je gezicht of vinger.' };
+	},
+
+	/** Een passkey weghalen. Van een toestel dat je niet meer hebt, bijvoorbeeld. */
+	passkeyWeg: async ({ request, locals }) => {
+		const { user } = await locals.veiligeSessie();
+		if (!user) return fail(403, { fout: 'Je bent niet ingelogd.' });
+
+		const id = String((await request.formData()).get('id') ?? '');
+		if (!id) return fail(400, { fout: 'Welke passkey?' });
+
+		const { error } = await locals.supabase!.auth.passkey.delete({ passkeyId: id });
+		if (error) return fail(400, { fout: error.message });
+
+		return { gedaan: 'Die passkey is weg. Je wachtwoord werkt nog gewoon.' };
 	},
 
 	uitloggen: async ({ locals }) => {

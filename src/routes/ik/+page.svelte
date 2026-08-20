@@ -1,6 +1,9 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { enhance, deserialize } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import { telefoonTekst } from '$lib/telefoon';
+	import { kanPasskey, maakPasskey, passkeyFout } from '$lib/passkey';
+	import { datumKort } from '$lib/tijd';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -28,6 +31,64 @@
 			// Safari op iOS doet display-mode niet en zet dit in plaats daarvan.
 			(navigator as { standalone?: boolean }).standalone === true;
 	});
+
+	// Kan dit toestel passkeys? Dat weet alleen de browser, dus staat de knop er
+	// pas na het laden.
+	let passkeyKan = $state(false);
+	$effect(() => {
+		passkeyKan = kanPasskey();
+	});
+
+	let passkeyBezig = $state(false);
+	let passkeyMelding = $state<string | null>(null);
+	let toestelnaam = $state('');
+
+	/**
+	 * Een passkey aanmelden voor dit toestel.
+	 *
+	 * De server haalt de opdracht op en controleert het antwoord; hier gebeurt
+	 * alleen het stukje dat alleen hier kán -- het venster van de telefoon. Zo
+	 * blijft de sessie in de cookie die scripts niet kunnen lezen.
+	 */
+	async function passkeyAanmelden() {
+		passkeyBezig = true;
+		passkeyMelding = null;
+		try {
+			const start = await stuur('?/passkeyStart', new FormData());
+			if (start.type !== 'success' || !start.data?.opdracht) {
+				passkeyMelding = start.data?.fout ?? 'Dat lukte niet.';
+				return;
+			}
+
+			const { challengeId, opties } = start.data.opdracht;
+			const antwoord = await maakPasskey(opties);
+
+			const klaar = new FormData();
+			klaar.set('challengeId', challengeId);
+			klaar.set('antwoord', JSON.stringify(antwoord));
+			klaar.set('naam', toestelnaam);
+
+			const uitkomst = await stuur('?/passkeyKlaar', klaar);
+			if (uitkomst.type === 'success') {
+				toestelnaam = '';
+				passkeyMelding = uitkomst.data?.gedaan ?? 'Gelukt.';
+				await invalidateAll(); // de lijst hieronder opnieuw ophalen
+				return;
+			}
+			passkeyMelding = uitkomst.data?.fout ?? 'Dat lukte niet.';
+		} catch (fout) {
+			passkeyMelding = passkeyFout(fout);
+		} finally {
+			passkeyBezig = false;
+		}
+	}
+
+	/** Een actie aanroepen zonder formulier. Dit is de manier die SvelteKit ervoor heeft. */
+	async function stuur(actie: string, body: FormData) {
+		const antwoord = await fetch(actie, { method: 'POST', body });
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return deserialize(await antwoord.text()) as any;
+	}
 </script>
 
 {#if form?.fout}
@@ -114,6 +175,64 @@
 			wachtwoord per sms, en een collega vragen of hij een dienst overneemt. Er gaat nu nog niets
 			heen. Laat je het leeg, dan staat er niets en werkt de rest gewoon.
 		</p>
+	</div>
+
+	<!-- ── Passkey ────────────────────────────────────────────────────── -->
+	<div class="blok">
+		<h2>Inloggen met je gezicht of vinger</h2>
+
+		{#if !data.passkeysKan}
+			<p class="detail">
+				Dit staat nog uit in Supabase. Zet het aan bij Authentication → Passkeys, dan verschijnt
+				het hier.
+			</p>
+		{:else}
+			{#each data.passkeys as pk (pk.id)}
+				<div class="kaart">
+					<div class="regel">
+						<span class="dag">{pk.friendly_name || 'Naamloos toestel'}</span>
+						<span class="detail">sinds {datumKort(pk.created_at.slice(0, 10))}</span>
+					</div>
+					{#if pk.last_used_at}
+						<p class="detail" style="margin:0.2rem 0 0">
+							Laatst gebruikt op {datumKort(pk.last_used_at.slice(0, 10))}
+						</p>
+					{/if}
+					<form method="post" action="?/passkeyWeg" use:enhance>
+						<input type="hidden" name="id" value={pk.id} />
+						<div class="knoppen"><button>Weghalen</button></div>
+					</form>
+				</div>
+			{/each}
+
+			{#if passkeyKan}
+				<label class="veld">
+					<span>Hoe heet dit toestel?</span>
+					<input bind:value={toestelnaam} placeholder="iPhone van Daan" />
+				</label>
+				<div class="knoppen">
+					<button type="button" class="primair" onclick={passkeyAanmelden} disabled={passkeyBezig}>
+						{passkeyBezig ? 'Bezig…' : 'Dit toestel toevoegen'}
+					</button>
+				</div>
+				{#if passkeyMelding}
+					<p class="notitie">{passkeyMelding}</p>
+				{/if}
+			{:else}
+				<p class="detail">Dit toestel kan geen passkeys. Op je telefoon werkt het meestal wel.</p>
+			{/if}
+
+			<p class="notitie">
+				Eén keer aanzetten per toestel. Daarna log je in met het gezicht, de vinger of de pincode
+				van je telefoon — er komt geen wachtwoord meer aan te pas, en er is ook niets meer om over
+				te typen van een briefje.
+			</p>
+			<p class="notitie">
+				Je wachtwoord blijft werken en blijft nodig: een passkey zit op dít toestel. Raak je je
+				telefoon kwijt, dan is dat je weg terug — en de baas kan er altijd een nieuw voor je
+				zetten. Nieuwe telefoon? Zet hem daar ook aan en haal de oude hier weg.
+			</p>
+		{/if}
 	</div>
 
 	<!-- ── Wachtwoord ─────────────────────────────────────────────────── -->

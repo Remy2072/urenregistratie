@@ -59,6 +59,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	event.locals.supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_KEY, {
+		// Passkeys zitten in Supabase achter een experimentele vlag, en zonder
+		// deze regel gooit elke passkey-aanroep een fout. Zet hem ook aan in het
+		// dashboard: Authentication -> Passkeys. Zie fase 12 in bouwplan.md.
+		auth: { experimental: { passkey: true } },
 		cookies: {
 			getAll: () => event.cookies.getAll(),
 			setAll: (koekjes) => {
