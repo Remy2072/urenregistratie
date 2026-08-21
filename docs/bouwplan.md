@@ -1390,6 +1390,18 @@ beide gevallen staat het rooster meteen goed.
 > hij is er ook nog als je de app morgen opnieuw opent en hem nog eens in de groep
 > wil zetten. De link zelf staat niet in beeld; er is alleen een kopieerknop.
 >
+> ### En het staat ook in het rooster
+>
+> Erbij gekomen nadat het werkte, en het hoorde er meteen bij: een dienst die
+> aangeboden wordt krijgt op `/rooster` een merkje **"wordt aangeboden"** met een
+> tik erop om hem over te nemen. Dat is het scherm waar de ploeg de week bekijkt,
+> en dus de plek waar iemand denkt *"die kan ik wel"*. Zonder dat moet je in Mijn
+> week zijn of in de groepsapp, en dan blijft een aangeboden dienst hangen omdat
+> niemand ernaar keek.
+>
+> Wie hem niet mag overnemen leest dat op het volgende scherm: de database
+> beslist, niet die link.
+>
 > ### Wat er nog niet getoetst is
 >
 > **De wedloop.** Twee mensen die tegelijk op dezelfde open link tikken — de

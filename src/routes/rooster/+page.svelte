@@ -115,10 +115,27 @@
 				</div>
 				<div class="regel" style="margin-top:0.2rem">
 					<span class="detail tijden">{r.gepland_begin} – {r.gepland_eind}</span>
-					{#if r.status !== 'verwacht'}
-						<Merk soort={r.status} />
-					{/if}
+					<span>
+						{#if data.aangeboden?.[r.id]}
+							<Merk soort="achteraf" tekst="wordt aangeboden" />
+						{/if}
+						{#if r.status !== 'verwacht'}
+							<Merk soort={r.status} />
+						{/if}
+					</span>
 				</div>
+
+				{#if data.aangeboden?.[r.id]}
+					<!-- Deze dienst zoekt iemand. Hier staat hij, want dit is het scherm
+					     waar de ploeg de week bekijkt -- en dus de plek waar iemand denkt
+					     "die kan ik wel". Wie hem niet mag overnemen krijgt dat op het
+					     volgende scherm te horen; de database beslist, niet deze link. -->
+					<div class="knoppen">
+						<a href="/ruil/{data.aangeboden[r.id].id}">
+							{data.aangeboden[r.id].open ? 'Overnemen →' : 'Verzoek bekijken →'}
+						</a>
+					</div>
+				{/if}
 
 				{#if data.beheerder}
 					{#if opent === r.id}

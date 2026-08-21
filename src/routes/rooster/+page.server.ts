@@ -63,10 +63,22 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			])
 		: [{ data: [] }, { data: [] }, { data: [] }];
 
+	// Welke diensten worden aangeboden? Dit is het scherm waar iedereen naar de
+	// week kijkt, dus hier hoort een dienst die iemand niet meer wil op te vallen
+	// -- en aan te tikken. Een gericht verzoek zie je alleen als het jou aangaat;
+	// dat regelt mijn_ruilverzoeken() zelf.
+	const { data: verzoeken } = await supabase.rpc('mijn_ruilverzoeken');
+	const aangeboden = Object.fromEntries(
+		((verzoeken ?? []) as { id: string; dienst_id: string; status: string; open_verzoek: boolean }[])
+			.filter((r) => r.status === 'open')
+			.map((r) => [r.dienst_id, { id: r.id, open: r.open_verzoek }])
+	) as Record<string, { id: string; open: boolean }>;
+
 	return {
 		nu,
 		ik,
 		beheerder,
+		aangeboden,
 		week,
 		zondag,
 		dezeWeek,
