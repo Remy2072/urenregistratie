@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { wieBenIk } from '$lib/server/wie';
 import { alsTelefoon } from '$lib/telefoon';
+import { verzinSleutel } from '$lib/server/herstel';
 
 /**
  * Je eigen gegevens, en wat je ervan mag veranderen.
@@ -34,9 +35,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// lijst en geen throw.
 	const { data: passkeys, error: passkeyFout } = await supabase.auth.passkey.list();
 
+	// Heb je een agendalink? Alleen ja of nee -- de sleutel zelf staat als hash in
+	// de database en is dus niet meer op te halen. Kwijt is nieuwe maken.
+	const { count: agendaLinks } = await supabase
+		.from('agenda_sleutels')
+		.select('*', { count: 'exact', head: true })
+		.is('ingetrokken_op', null);
+
 	return {
 		email: user.email ?? '',
 		persoon: ik,
+		agendaAan: (agendaLinks ?? 0) > 0,
 		passkeys: passkeys ?? [],
 		passkeysKan: !passkeyFout,
 		zichtbaar: {
@@ -191,6 +200,42 @@ export const actions: Actions = {
 		if (error) return fail(400, { fout: error.message });
 
 		return { gedaan: 'Die passkey is weg. Je wachtwoord werkt nog gewoon.' };
+	},
+
+	/**
+	 * Een agendalink maken. Je ziet hem één keer.
+	 *
+	 * De sleutel wordt hier verzonnen en gaat als hash naar de database, dus ook
+	 * wij kunnen hem daarna niet meer opzoeken -- net als bij een wachtwoord. Ben
+	 * je hem kwijt, dan maak je een nieuwe, en daarmee is de oude dood. Dat is
+	 * precies waarom die knop er is: zo'n URL belandt op plekken waar je hem niet
+	 * meer weghaalt.
+	 */
+	agendaLink: async ({ locals, url }) => {
+		const { user } = await locals.veiligeSessie();
+		if (!user) return fail(403, { fout: 'Je bent niet ingelogd.' });
+
+		const sleutel = verzinSleutel();
+		const hash = [...new Uint8Array(
+			await crypto.subtle.digest('SHA-256', new TextEncoder().encode(sleutel))
+		)]
+			.map((b) => b.toString(16).padStart(2, '0'))
+			.join('');
+
+		const { error } = await locals.supabase!.rpc('agenda_sleutel_zetten', { p_hash: hash });
+		if (error) return fail(400, { fout: error.message });
+
+		return { agenda: `${url.origin}/agenda/${sleutel}.ics` };
+	},
+
+	/** En hem weer uitzetten, zonder een nieuwe te maken. */
+	agendaUit: async ({ locals }) => {
+		const { user } = await locals.veiligeSessie();
+		if (!user) return fail(403, { fout: 'Je bent niet ingelogd.' });
+
+		const { error } = await locals.supabase!.rpc('agenda_sleutel_intrekken');
+		if (error) return fail(400, { fout: error.message });
+		return { gedaan: 'Je agendalink werkt niet meer. Je diensten verdwijnen bij de volgende verversing uit die agenda.' };
 	},
 
 	uitloggen: async ({ locals }) => {

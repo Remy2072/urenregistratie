@@ -39,6 +39,19 @@
 		passkeyKan = kanPasskey();
 	});
 
+	// De agendalink zie je één keer, net als een wachtwoord. Daarna staat er
+	// alleen nog dat je er een hebt.
+	let agendaGekopieerd = $state(false);
+	async function kopieerAgenda(link: string) {
+		try {
+			await navigator.clipboard.writeText(link);
+			agendaGekopieerd = true;
+			setTimeout(() => (agendaGekopieerd = false), 2500);
+		} catch {
+			agendaGekopieerd = false;
+		}
+	}
+
 	let passkeyBezig = $state(false);
 	let passkeyMelding = $state<string | null>(null);
 	let toestelnaam = $state('');
@@ -174,6 +187,63 @@
 			Dit is het enige gegeven dat je zelf mag wijzigen, en het is er voor later: een nieuw
 			wachtwoord per sms, en een collega vragen of hij een dienst overneemt. Er gaat nu nog niets
 			heen. Laat je het leeg, dan staat er niets en werkt de rest gewoon.
+		</p>
+	</div>
+
+	<!-- ── Agenda ─────────────────────────────────────────────────────── -->
+	<div class="blok">
+		<h2>Je diensten in je agenda</h2>
+
+		{#if form?.agenda}
+			<div class="kaart nu">
+				<div class="regel"><span class="dag">Je agendalink</span></div>
+				<div class="knoppen">
+					<button type="button" class="primair" onclick={() => kopieerAgenda(form.agenda!)}>
+						{agendaGekopieerd ? 'Gekopieerd' : 'Kopieer de link'}
+					</button>
+				</div>
+				<p class="notitie">
+					Kopieer hem nu — je ziet hem één keer, want in de database staat alleen een versleutelde
+					versie. Kwijt? Maak een nieuwe; de oude werkt dan niet meer.
+				</p>
+			</div>
+
+			<p class="notitie">
+				<strong>Op je iPhone:</strong> Instellingen → Apps → Agenda → Accounts → Account toevoegen
+				→ Anders → Geabonneerde agenda toevoegen, en plak de link.<br />
+				<strong>Op een Mac:</strong> Agenda → Bestand → Nieuw agenda-abonnement.<br />
+				<strong>Google Agenda:</strong> op een computer, via "Andere agenda's" → Van URL.
+			</p>
+		{:else}
+			<p class="detail">
+				{#if data.agendaAan}
+					Je hebt een agendalink. Weet je hem niet meer, maak dan een nieuwe — de oude stopt dan
+					met werken.
+				{:else}
+					Eén link, en je diensten staan in de agenda die je toch al open hebt.
+				{/if}
+			</p>
+			<form method="post" action="?/agendaLink" use:enhance>
+				<div class="knoppen">
+					<button class="primair">{data.agendaAan ? 'Nieuwe link maken' : 'Maak een agendalink'}</button>
+				</div>
+			</form>
+			{#if data.agendaAan}
+				<form method="post" action="?/agendaUit" use:enhance>
+					<div class="knoppen"><button>Zet de agenda uit</button></div>
+				</form>
+			{/if}
+		{/if}
+
+		<p class="notitie">
+			Er staan alleen jouw diensten in: dag, geplande tijden en welke bus. Geen gewerkte uren en
+			geen opmerkingen — dat blijft tussen jou en de baas.
+		</p>
+		<p class="notitie">
+			<strong>Behandel die link als een wachtwoord.</strong> Wie hem heeft, ziet wanneer jij werkt —
+			een agenda kan namelijk niet inloggen, dus die link is het enige bewijs. En reken op enige
+			vertraging: je agenda bepaalt zelf hoe vaak hij kijkt, bij Google kan dat uren duren. De app
+			blijft de plek waar het rooster echt staat.
 		</p>
 	</div>
 

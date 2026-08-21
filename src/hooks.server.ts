@@ -19,7 +19,19 @@ import { dev } from '$app/environment';
  * scherm is toch niet gevoelig" is precies het soort uitzondering dat je later
  * vergeet, dus die is er niet.
  */
-const openbaar = ['/inloggen', '/herstel'];
+const openbaar = ['/inloggen', '/herstel', '/agenda'];
+
+/**
+ * Valt dit pad onder een openbaar scherm?
+ *
+ * Op het pad zelf óf op wat eronder hangt, want `/agenda/<sleutel>.ics` moet
+ * erdoor. Dat was eerst een vergelijking op het hele pad, en dan stuurt de deur
+ * een agenda-app naar het inlogscherm -- en die kan niet inloggen.
+ *
+ * Met een schuine streep erachter en niet met `startsWith` alleen: anders zou
+ * een route als `/agenda-instellingen` er ongemerkt ook onder vallen.
+ */
+const isOpenbaar = (pad: string) => openbaar.some((p) => pad === p || pad.startsWith(`${p}/`));
 
 /**
  * Hoe de sessiecookie eruitziet. Expliciet, en niet zoals `@supabase/ssr` hem
@@ -172,7 +184,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	// De deur. event.route.id is null voor alles wat geen pagina is -- statische
 	// bestanden, de favicon -- en dat hoeft hier niet langs.
-	if (event.route.id && !openbaar.includes(event.url.pathname)) {
+	if (event.route.id && !isOpenbaar(event.url.pathname)) {
 		const { user, onzeker } = await event.locals.veiligeSessie();
 
 		// Kon het niet nagaan? Dan is dit een storing en geen uitlog. Wie hier
