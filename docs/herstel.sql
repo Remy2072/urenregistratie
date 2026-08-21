@@ -11,6 +11,10 @@
 --
 -- Hashen doet Postgres, met sha256() uit de kern. Geen extensie nodig,
 -- en het gebeurt op één plek: zowel bij het maken als bij het narekenen.
+--
+-- FASE 16: je begint dit nu ook met je telefoonnummer, niet alleen met je
+-- gebruikersnaam. Dat zit in herstel_wie() hieronder, en het is de reden
+-- dat er twee `drop function` regels in dit bestand staan.
 -- Dit bestand staat ook in schema.sql, zodat een verse installatie
 -- compleet is met één bestand. Veilig om twee keer te draaien.
 -- =====================================================================
@@ -77,18 +81,86 @@ end $$;
 
 
 -- ---------------------------------------------------------------------
+-- Wie is dit? (fase 16)
+--
+-- Eén plek waar een gebruikersnaam óf een telefoonnummer een persoon
+-- wordt. Het nummer kwam er in fase 16 bij om een simpele reden: wie
+-- zijn wachtwoord vergeet, vergeet ook zijn gebruikersnaam -- en zijn
+-- telefoon heeft hij in zijn hand. Bovendien is dat nummer het enige
+-- van de twee dat hij niet van iemand anders hoeft te horen.
+--
+-- Hoe we de twee uit elkaar houden: een gebruikersnaam kan nooit met een
+-- plus beginnen, want `personen_gebruikersnaam_vorm` staat als eerste
+-- teken alleen a-z en 0-9 toe. De app zet 06-12345678 om naar
+-- +31612345678 vóór het hier aankomt (zie `telefoon.ts`), dus staat er
+-- geen plus, dan is het een gebruikersnaam. Eén teken, en geen gokwerk.
+--
+-- Twee mensen met hetzelfde nummer -- het huisnummer thuis, een broer in
+-- dezelfde ploeg -- levert niets op. Dan weet niemand naar wie er
+-- hersteld moet worden en is kiezen precies de fout die je niet wil
+-- maken: je zet dan het wachtwoord van iemand anders. Die twee gebruiken
+-- hun gebruikersnaam, en dat is één sms minder waard maar geen risico.
+-- ---------------------------------------------------------------------
+create or replace function herstel_wie(p_wie text)
+returns personen
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_persoon personen;
+  v_aantal  integer;
+begin
+  if p_wie like '+%' then
+    select count(*) into v_aantal
+      from personen
+     where telefoon = p_wie
+       and actief;
+
+    if v_aantal <> 1 then
+      return null;
+    end if;
+
+    select * into v_persoon
+      from personen
+     where telefoon = p_wie
+       and actief;
+  else
+    select * into v_persoon
+      from personen
+     where gebruikersnaam = lower(p_wie)
+       and actief;
+  end if;
+
+  -- Niets gevonden? Dan zijn alle velden leeg en is .id null. Dat toetsen
+  -- de aanroepers, en niet `found` -- die staat na een select into ook op
+  -- true als er nul rijen waren.
+  return v_persoon;
+end;
+$$;
+
+
+-- ---------------------------------------------------------------------
 -- Een code aanvragen
 --
 -- Alles in één functie, en met opzet: de limieten en het hashen horen
 -- bij elkaar en niet in een scherm. Hij draait als eigenaar en wordt
 -- alleen door de server aangeroepen.
 --
--- Wat hij teruggeeft is wat de app moet weten en niet meer: bestaat die
--- gebruikersnaam, is er een nummer, en zo ja -- naar welk nummer en met
+-- Wat hij teruggeeft is wat de app moet weten en niet meer: is er iemand
+-- met dit kenmerk, is er een nummer, en zo ja -- naar welk nummer en met
 -- welke code. Die code komt hier één keer naar buiten en staat daarna
 -- alleen nog als hash in de tabel.
+--
+-- p_wie is een gebruikersnaam of een telefoonnummer; herstel_wie() maakt
+-- daar een persoon van. Dat argument heette tot fase 16 p_gebruikersnaam,
+-- en daarom staat er een drop boven: een parameternaam wijzigen kan niet
+-- met `create or replace` alleen. De drop haalt ook de rechten weg -- die
+-- worden onderaan dit bestand opnieuw gegeven.
 -- ---------------------------------------------------------------------
-create or replace function herstel_aanvragen(p_gebruikersnaam text, p_code text)
+drop function if exists herstel_aanvragen(text, text);
+
+create or replace function herstel_aanvragen(p_wie text, p_code text)
 returns table (
   uitkomst    text,   -- 'onbekend' | 'geen_nummer' | 'te_vaak' | 'verstuur'
   persoon_id  uuid,
@@ -103,12 +175,9 @@ declare
   v_persoon personen;
   v_vandaag integer;
 begin
-  select * into v_persoon
-    from personen
-   where gebruikersnaam = lower(p_gebruikersnaam)
-     and actief;
+  v_persoon := herstel_wie(p_wie);
 
-  if not found then
+  if v_persoon.id is null then
     return query select 'onbekend'::text, null::uuid, null::text, null::text;
     return;
   end if;
@@ -161,10 +230,12 @@ $$;
 -- De pogingen worden geteld vóórdat er iets anders gebeurt. Drie keer
 -- mis en de code is dood -- anders zijn zes cijfers te raden.
 -- ---------------------------------------------------------------------
+drop function if exists herstel_code_controleren(text, text, text);
+
 create or replace function herstel_code_controleren(
-  p_gebruikersnaam text,
-  p_code           text,
-  p_sleutel        text
+  p_wie     text,
+  p_code    text,
+  p_sleutel text
 )
 returns text   -- 'ok' | 'fout' | 'verlopen' | 'onbekend'
 language plpgsql
@@ -172,21 +243,21 @@ security definer
 set search_path = public
 as $$
 declare
-  v_persoon_id uuid;
-  v_rij        herstelcodes;
+  v_persoon personen;
+  v_rij     herstelcodes;
 begin
-  select id into v_persoon_id
-    from personen
-   where gebruikersnaam = lower(p_gebruikersnaam)
-     and actief;
+  -- Hetzelfde kenmerk als bij de aanvraag, en dus dezelfde opzoeking. De
+  -- app stuurt in stap 2 terug wat er in stap 1 is ingetikt; hier wordt
+  -- niets van het een naar het ander omgerekend.
+  v_persoon := herstel_wie(p_wie);
 
-  if not found then
+  if v_persoon.id is null then
     return 'onbekend';
   end if;
 
   select * into v_rij
     from herstelcodes
-   where persoon_id = v_persoon_id
+   where persoon_id = v_persoon.id
      and gebruikt_op is null
    order by aangemaakt_op desc
    limit 1;
@@ -258,6 +329,7 @@ $$;
 -- versturen op kosten van de baas -- en de app zit er dan niet meer
 -- tussen om de limieten te bewaken.
 -- ---------------------------------------------------------------------
+revoke all on function herstel_wie(text)                              from public;
 revoke all on function herstel_aanvragen(text, text)                  from public;
 revoke all on function herstel_code_controleren(text, text, text)     from public;
 revoke all on function herstel_sleutel_inwisselen(text)               from public;

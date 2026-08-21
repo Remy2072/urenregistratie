@@ -13,7 +13,7 @@ Achtergrond en beslissingen staan in `docs/`:
 | `docs/startdata.sql` | Posten, diensten en het weekrooster. Het enige dat per bedrijf verschilt |
 | `docs/weekgeneratie.sql` | De wekelijkse uitrol van het sjabloon naar diensten |
 | `docs/profiel.sql` | Gebruikersnaam en telefoon op `personen` (fase 10). Draai hem altijd ná `rollen.sql` |
-| `docs/herstel.sql` | Herstelcodes voor "wachtwoord vergeten" (fase 13) |
+| `docs/herstel.sql` | Herstelcodes voor "wachtwoord vergeten" (fase 13, uitgebreid in 16) |
 | `docs/ruilen.sql` | Ruilverzoeken: gericht of open in de groepsapp (fase 14) |
 | `docs/agenda.sql` | Agendalinks voor het ics-abonnement (fase 15) |
 
@@ -56,8 +56,9 @@ Wat je ziet hangt af van wie je bent — de tabbladen volgen je rol.
   inloggen — daarom is die link wél een geheim.
 - `/ruil/<id>` — een ruilverzoek: overnemen of niet. Vraagt een login, en dáárom
   is die link geen geheim.
-- `/herstel` — wachtwoord vergeten. Gebruikersnaam invullen, code per sms, zelf
-  een nieuw wachtwoord kiezen. Openbaar, want wie hier komt kan niet inloggen.
+- `/herstel` — wachtwoord vergeten. Gebruikersnaam **of telefoonnummer**
+  invullen, code per sms, zelf een nieuw wachtwoord kiezen. Openbaar, want wie
+  hier komt kan niet inloggen.
 - `/ik` — je eigen gegevens. Je gebruikersnaam en je naam zijn van de baas; je
   telefoonnummer, je wachtwoord en je passkeys zet je zelf.
 
@@ -77,7 +78,7 @@ eerste dat er nu ligt.
 | `src/lib/passkey.ts` | Het enige stuk dat in de browser draait: het passkey-venster van de telefoon |
 | `src/lib/server/agenda.ts` | Het ics-bestand. De enige plek waar de tijdzone wordt uitgeschreven in plaats van uitgerekend |
 | `src/lib/server/bird.ts` | Sms versturen. De enige plek die iets naar buiten stuurt, en de enige met een rekening eraan |
-| `src/lib/server/herstel.ts` | Codes verzinnen en narekenen voor "wachtwoord vergeten" |
+| `src/lib/server/herstel.ts` | Wie je bent, codes verzinnen en narekenen voor "wachtwoord vergeten" |
 | `src/lib/server/uren.ts` | Wat de boekhouder krijgt. Het enige bestand dat je aanpast voor een ander formaat |
 | `src/lib/componenten/` | Meldkaart, tijdstappers, statusmerkjes |
 

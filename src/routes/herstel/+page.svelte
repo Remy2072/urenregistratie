@@ -1,8 +1,19 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { telefoonTekst } from '$lib/telefoon';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
+
+	/**
+	 * Wat er in stap 2 in het veld staat.
+	 *
+	 * De server draagt het kenmerk over in zijn nette vorm (`+31612345678`), en
+	 * die is voor een mens niet het nummer dat hij zelf zou opschrijven. Dus
+	 * hier weer terug naar 06 — de server maakt er bij het verzenden opnieuw de
+	 * nette vorm van.
+	 */
+	const ingevuld = $derived(data.naam.startsWith('+') ? telefoonTekst(data.naam) : data.naam);
 
 	let bezig = $state(false);
 	let toon = $state(false);
@@ -25,18 +36,18 @@
 	<div class="blok">
 		<h2>Wachtwoord vergeten</h2>
 		<p class="detail">
-			Vul je gebruikersnaam in. Staat er een telefoonnummer bij je account, dan krijg je een sms met
-			een code.
+			Vul je gebruikersnaam of je telefoonnummer in. Staat dat nummer bij je account, dan krijg je
+			een sms met een code.
 		</p>
 
 		<form method="post" action="?/aanvragen" use:enhance={wacht}>
 			<label class="veld">
-				<span>Gebruikersnaam</span>
+				<span>Gebruikersnaam of telefoonnummer</span>
 				<input
 					name="naam"
 					autocapitalize="none"
 					spellcheck="false"
-					placeholder="daanb"
+					placeholder="daanb of 06 12345678"
 					required
 					value={form?.naam ?? ''}
 				/>
@@ -49,7 +60,7 @@
 		<p class="notitie">
 			Je krijgt een sms als er een telefoonnummer bij je account staat. Zo niet, dan zet je baas een
 			nieuw wachtwoord voor je klaar — en zet je daarna zelf je nummer op "Mijn gegevens", zodat het
-			de volgende keer wel kan.
+			de volgende keer wel kan. Je gebruikersnaam kwijt? Dan is je telefoonnummer genoeg.
 		</p>
 	</div>
 {:else if data.stap === 'code'}
@@ -57,14 +68,14 @@
 	<div class="blok">
 		<h2>Vul de code in</h2>
 		<p class="detail">
-			Staat er een telefoonnummer bij deze gebruikersnaam, dan is er een sms verstuurd met zes
-			cijfers. Die code is tien minuten geldig en je hebt drie pogingen.
+			Hoort hier een telefoonnummer bij, dan is er een sms verstuurd met zes cijfers. Die code is
+			tien minuten geldig en je hebt drie pogingen.
 		</p>
 		<p class="notitie">
-			<strong>Komt er geen sms?</strong> Dan bestaat die gebruikersnaam niet, staat er geen nummer
-			bij, of zijn er vandaag al drie codes aangevraagd. Vraag in dat geval je werkgever om een
-			nieuw wachtwoord — en zet daarna je nummer op "Mijn gegevens", dan kan het de volgende keer
-			wel.
+			<strong>Komt er geen sms?</strong> Dan hoort wat je invulde bij niemand, staat er geen nummer
+			bij, gebruiken twee mensen hetzelfde nummer, of zijn er vandaag al drie codes aangevraagd.
+			Vraag in dat geval je werkgever om een nieuw wachtwoord — en zet daarna je nummer op "Mijn
+			gegevens", dan kan het de volgende keer wel.
 		</p>
 
 		{#if data.viaLog}
@@ -77,8 +88,8 @@
 
 		<form method="post" action="?/code" use:enhance={wacht}>
 			<label class="veld">
-				<span>Gebruikersnaam</span>
-				<input name="naam" autocapitalize="none" spellcheck="false" required value={data.naam} />
+				<span>Gebruikersnaam of telefoonnummer</span>
+				<input name="naam" autocapitalize="none" spellcheck="false" required value={ingevuld} />
 			</label>
 			<label class="veld">
 				<span>Code uit de sms</span>

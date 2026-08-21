@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import type { Actions, PageServerLoad } from './$types';
 import {
+	alsWie,
 	controleerCode,
 	smsTekst,
 	teVeelGeprobeerd,
@@ -10,7 +11,6 @@ import {
 	zetWachtwoord
 } from '$lib/server/herstel';
 import { smsIngesteld, stuurSms } from '$lib/server/bird';
-import { isGebruikersnaam } from '$lib/server/login';
 
 /**
  * Wachtwoord vergeten, in drie stappen.
@@ -55,79 +55,90 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 export const actions: Actions = {
 	/** Stap 1: een code aanvragen. */
 	aanvragen: async ({ request, url, getClientAddress }) => {
-		const gebruikersnaam = String((await request.formData()).get('naam') ?? '')
-			.trim()
-			.toLowerCase();
+		const ingevoerd = String((await request.formData()).get('naam') ?? '').trim();
 
-		if (!gebruikersnaam) return fail(400, { naam: '', fout: 'Vul je gebruikersnaam in.' });
+		if (!ingevoerd) {
+			return fail(400, { naam: '', fout: 'Vul je gebruikersnaam of telefoonnummer in.' });
+		}
 
 		// Elke uitkomst leidt naar hetzelfde volgende scherm, dus valt er niets af
 		// te lezen. Deze teller is er dan ook niet meer tegen het aflopen van
 		// namen maar tegen de rekening: elke poging kan een sms zijn.
 		if (teVeelGeprobeerd(getClientAddress())) {
 			return fail(429, {
-				naam: gebruikersnaam,
+				naam: ingevoerd,
 				fout: 'Te veel pogingen. Wacht een kwartier, of vraag je werkgever om een nieuw wachtwoord.'
 			});
 		}
 
-		// Dezelfde vorm als in de database: een gebruikersnaam met een apenstaartje
-		// erin bestaat niet, dus daar hoeft niets opgezocht te worden. Ook hier
-		// geen andere afloop -- door naar hetzelfde scherm.
-		if (!isGebruikersnaam(gebruikersnaam)) {
-			redirect(303, `/herstel?stap=code&naam=${encodeURIComponent(gebruikersnaam)}`);
+		// Een gebruikersnaam of een telefoonnummer, en dat nummer in één vorm --
+		// zie alsWie(). Wat er hierna in het adres en in stap 2 meegaat is die
+		// nette vorm en niet wat er getypt is, zodat stap 2 dezelfde persoon
+		// terugvindt.
+		const wie = alsWie(ingevoerd);
+
+		// Geen van beide: dan is er niets op te zoeken. Toch hetzelfde vervolg,
+		// want ook dit is een verschil dat niemand hoeft te kunnen zien.
+		if (!wie) {
+			redirect(303, `/herstel?stap=code&naam=${encodeURIComponent(ingevoerd)}`);
 		}
 
-		const uitkomst = await vraagCodeAan(gebruikersnaam);
+		const uitkomst = await vraagCodeAan(wie);
 
 		// Dit is de enige uitkomst die op het scherm mag: hij gaat niet over dit
 		// account maar over onze installatie. Zeg je hier niets, dan staat iemand
 		// te wachten op een sms die nooit verstuurd kan worden.
 		if (uitkomst.uitkomst === 'geen_sleutel') {
 			return fail(503, {
-				naam: gebruikersnaam,
+				naam: ingevoerd,
 				fout: 'Wachtwoord herstellen kan hier niet. Vraag je werkgever om een nieuw wachtwoord.'
 			});
 		}
 
 		if (uitkomst.uitkomst === 'verstuur') {
-			// De link is een snelkoppeling naar stap 2 met de naam al ingevuld, geen
-			// sleutel. Wie hem doorstuurt geeft niets weg -- de code staat in het
-			// bericht en niet in het adres.
-			const link = `${url.origin}/herstel?stap=code&naam=${encodeURIComponent(gebruikersnaam)}`;
+			// De link is een snelkoppeling naar stap 2 met het kenmerk al ingevuld,
+			// geen sleutel. Wie hem doorstuurt geeft niets weg -- de code staat in
+			// het bericht en niet in het adres.
+			const link = `${url.origin}/herstel?stap=code&naam=${encodeURIComponent(wie)}`;
 			const verstuurd = await stuurSms(uitkomst.telefoon, smsTekst(uitkomst.code, link));
 
 			// Ook een mislukte sms geeft geen ander scherm. Wat er mis is staat in de
 			// serverlog; de bezorger leest op het codescherm dat hij bij de baas moet
 			// zijn als er niets komt, en dat is precies wat hij moet doen.
 			if (!verstuurd.verstuurd) {
-				console.warn(`herstelcode voor '${gebruikersnaam}' kon niet verstuurd worden`);
+				console.warn(`herstelcode voor '${wie}' kon niet verstuurd worden`);
 			}
 		} else {
-			// Onbekende naam, geen telefoonnummer, of vandaag al drie keer gevraagd.
-			// Alle drie krijgen hetzelfde vervolg als een gelukte aanvraag: geen
-			// verschil om aan te zien welke van de drie het was.
-			console.warn(`herstel voor '${gebruikersnaam}': ${uitkomst.uitkomst}`);
+			// Onbekend, geen telefoonnummer, twee mensen met hetzelfde nummer, of
+			// vandaag al drie keer gevraagd. Alle vier krijgen hetzelfde vervolg als
+			// een gelukte aanvraag: geen verschil om aan te zien welke het was.
+			console.warn(`herstel voor '${wie}': ${uitkomst.uitkomst}`);
 		}
 
-		redirect(303, `/herstel?stap=code&naam=${encodeURIComponent(gebruikersnaam)}`);
+		redirect(303, `/herstel?stap=code&naam=${encodeURIComponent(wie)}`);
 	},
 
 	/** Stap 2: de code narekenen en de sleutel voor stap 3 klaarzetten. */
 	code: async ({ request, cookies, getClientAddress }) => {
 		const f = await request.formData();
-		const gebruikersnaam = String(f.get('naam') ?? '')
-			.trim()
-			.toLowerCase();
+		const ingevoerd = String(f.get('naam') ?? '').trim();
 		const code = String(f.get('code') ?? '').replace(/\s/g, '');
 
-		if (!gebruikersnaam || !code) return fail(400, { fout: 'Vul je gebruikersnaam en de code in.' });
+		if (!ingevoerd || !code) {
+			return fail(400, { fout: 'Vul je gebruikersnaam of telefoonnummer in, en de code.' });
+		}
 		if (teVeelGeprobeerd(getClientAddress())) {
 			return fail(429, { fout: 'Te veel pogingen. Wacht een kwartier.' });
 		}
 
+		// Hetzelfde kenmerk als in stap 1, en dus dezelfde omzetting. Het scherm
+		// stuurt de nette vorm terug, maar iemand kan het veld ook met de hand
+		// hebben aangepast -- 06 12345678 moet dan nog steeds werken.
+		const wie = alsWie(ingevoerd);
+		if (!wie) return fail(400, { fout: 'Dat lukte niet. Vraag een nieuwe code aan.' });
+
 		const sleutel = verzinSleutel();
-		const uitkomst = await controleerCode(gebruikersnaam, code, sleutel);
+		const uitkomst = await controleerCode(wie, code, sleutel);
 
 		if (uitkomst === 'ok') {
 			// Tien minuten, alleen voor dit pad, en niet te lezen door scripts.

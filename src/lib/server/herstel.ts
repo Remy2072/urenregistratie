@@ -1,4 +1,4 @@
-// Wachtwoord vergeten: de code, de limieten en het narekenen.
+// Wachtwoord vergeten: wie je bent, de code, de limieten en het narekenen.
 //
 // De echte regels staan in de database (`docs/herstel.sql`): hoe lang een code
 // geldig is, hoeveel pogingen je hebt, hoeveel aanvragen per dag. Hier staat wat
@@ -10,7 +10,39 @@
 // Daarom is dit een `.server.`-bestand en staat er geen enkele functie in die
 // een scherm rechtstreeks mag aanroepen zonder eerst zelf te controleren.
 
+import { alsTelefoon } from '$lib/telefoon';
 import { beheerClient } from './beheersleutel';
+import { isGebruikersnaam } from './login';
+
+/**
+ * Wat iemand intikt, omgezet naar het kenmerk dat de database begrijpt.
+ *
+ * Twee dingen mogen: een gebruikersnaam en een telefoonnummer. Dat tweede kwam
+ * er in fase 16 bij, omdat wie zijn wachtwoord vergeet ook zijn gebruikersnaam
+ * vergeet -- en zijn telefoon in zijn hand heeft.
+ *
+ * Een nummer wordt hier meteen E.164 (`+31612345678`), en dat is niet alleen
+ * netheid: `herstel_wie()` in de database ziet aan die plus dat het geen
+ * gebruikersnaam is. 06-12345678, 06 12345678 en +31 6 12345678 komen dus alle
+ * drie bij dezelfde persoon uit.
+ *
+ * Null betekent: dit kan geen van beide zijn. Het scherm laat dat niet zien --
+ * het gaat door naar hetzelfde codescherm als al het andere -- maar er hoeft
+ * dan niets opgezocht te worden.
+ */
+export function alsWie(ingevoerd: string): string | null {
+	const kaal = ingevoerd.trim();
+	if (!kaal) return null;
+
+	// Eerst het nummer proberen: dat is de strengere van de twee, en een
+	// gebruikersnaam kan nooit met een plus beginnen of uit tien cijfers
+	// bestaan die als nummer kloppen.
+	const nummer = alsTelefoon(kaal);
+	if (nummer) return nummer;
+
+	const naam = kaal.toLowerCase();
+	return isGebruikersnaam(naam) ? naam : null;
+}
 
 /**
  * Zes cijfers, en niet meer.
@@ -35,11 +67,12 @@ export function verzinSleutel(): string {
 }
 
 /**
- * Hoe vaak iemand namen mag intikken.
+ * Hoe vaak iemand hier iets mag intikken.
  *
- * Het scherm zegt eerlijk of een gebruikersnaam bestaat -- dat is bewust zo
- * besloten, zodat iemand die zich vertypt zelf verder kan. Zonder een limiet is
- * dat een lijstje van je collega's dat je in een middag kunt aflopen.
+ * Niet meer tegen het aflopen van namen -- elke uitkomst geeft hetzelfde scherm,
+ * dus er valt niets af te lezen. Dit is er tegen de rekening: elke poging kan
+ * een sms zijn. En sinds je ook een telefoonnummer mag invullen (fase 16) zou je
+ * zonder rem kunnen aftasten welke nummers er in de ploeg zitten.
  *
  * Dit is een teller in het geheugen van deze server, en dat is met opzet zo
  * simpel: het is een rem, geen slot. Draait de app straks op meerdere
@@ -77,13 +110,13 @@ export type Aanvraag =
 	| { uitkomst: 'verstuur'; naam: string; telefoon: string; code: string };
 
 /** Stap 1: is er iets te herstellen, en zo ja, naar welk nummer? */
-export async function vraagCodeAan(gebruikersnaam: string): Promise<Aanvraag> {
+export async function vraagCodeAan(wie: string): Promise<Aanvraag> {
 	const admin = beheerClient();
 	if (!admin) return { uitkomst: 'geen_sleutel' };
 
 	const code = verzinCode();
 	const { data, error } = await admin
-		.rpc('herstel_aanvragen', { p_gebruikersnaam: gebruikersnaam, p_code: code })
+		.rpc('herstel_aanvragen', { p_wie: wie, p_code: code })
 		.maybeSingle();
 
 	if (error || !data) {
@@ -100,7 +133,7 @@ export async function vraagCodeAan(gebruikersnaam: string): Promise<Aanvraag> {
 
 /** Stap 2: klopt de code? Zo ja, dan is de sleutel geldig voor stap 3. */
 export async function controleerCode(
-	gebruikersnaam: string,
+	wie: string,
 	code: string,
 	sleutel: string
 ): Promise<'ok' | 'fout' | 'verlopen' | 'onbekend' | 'geen_sleutel'> {
@@ -108,7 +141,7 @@ export async function controleerCode(
 	if (!admin) return 'geen_sleutel';
 
 	const { data, error } = await admin.rpc('herstel_code_controleren', {
-		p_gebruikersnaam: gebruikersnaam,
+		p_wie: wie,
 		p_code: code,
 		p_sleutel: sleutel
 	});

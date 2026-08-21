@@ -72,6 +72,7 @@ voren omdat er nu iets van afhangt.
 | 13 | Wachtwoord vergeten ✅ | Zelf weer binnen komen, met een code per sms | 1 weekend |
 | 14 | Diensten ruilen ✅ | Gericht per sms, of open in de groepsapp | 1 weekend |
 | 15 | Agenda ✅ | Je diensten in de agenda die je al open hebt | 1 avond |
+| 16 | Herstel op je nummer ✅ | Je gebruikersnaam vergeten is geen doodlopende weg | 1 avond |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
 dus reken op twee tot drie maanden doorlooptijd. Dat is prima: er is geen
@@ -1482,6 +1483,90 @@ iedereen zich opnieuw — net als bij de passkeys.
 volgende verversing in doorkomt.
 
 > **Gedaan en gezien.** In Agenda op de eigen machine, met de link van `/ik`.
+
+---
+
+## Fase 16 — Herstel op je telefoonnummer ✅
+
+**Doel:** wie zijn wachtwoord kwijt is en zijn gebruikersnaam ook, komt er nog
+steeds zelf weer in.
+
+Fase 13 vroeg om een gebruikersnaam. Dat leek redelijk tot de vraag kwam: en als
+hij die ook niet meer weet? Dan is er geen route meer, en dat raakt de baas het
+hardst — een bezorger loopt naar de baas, maar de baas loopt naar niemand.
+
+### Waarom dit een echt gat was en geen luxe
+
+De gebruikersnaam is **niet van de persoon zelf**. Dat staat zo in
+`profiel.sql`, en met een reden: de baas verzint hem, zodat er geen tweede lijst
+namen ontstaat die niemand bijhoudt. Maar daarmee vraagt de app iemand om iets
+te onthouden dat hij nooit zelf gekozen heeft — en dat één keer per jaar nodig
+heeft. Zijn telefoonnummer weet hij wél, en hij heeft het toestel in zijn hand.
+
+Dus vraagt stap 1 nu om **een gebruikersnaam of een telefoonnummer**. Eén veld,
+geen keuzeknop: je typt wat je weet.
+
+### Hoe de app de twee uit elkaar houdt
+
+In de app aan de vorm, in de database aan de plus. `alsWie()` probeert eerst
+`alsTelefoon()`: lukt dat, dan is het een nummer en staat het meteen in één vorm
+(`+31612345678`). Lukt het niet, dan moet het een gebruikersnaam zijn. In de
+database beslist daarna de plus, want `personen_gebruikersnaam_vorm` staat als
+eerste teken alleen a-z en 0-9 toe — dat onderscheid is dus geen gok maar een
+regel die er al stond.
+
+Het nummer gaat voor, en dat heeft één rare hoek: een gebruikersnaam die uit tien
+cijfers bestaat zou als telefoonnummer gelezen worden. Die bestaat niet en zou
+ook niet moeten bestaan — gebruikersnamen zijn `daanb`, geen cijferreeksen — maar
+het staat hier zodat het geen verrassing is.
+
+### Twee mensen met hetzelfde nummer krijgen niets
+
+Een huisnummer, twee broers in dezelfde ploeg. `telefoon` is niet uniek en dat
+blijft zo — het strenger maken zou het invoeren lastiger maken voor een geval dat
+zich zelden voordoet. Maar herstellen kan dan niet: bij twee treffers weet
+niemand wiens wachtwoord er gezet moet worden, en **kiezen is hier precies de
+fout die je niet wil maken.** Dus geeft `herstel_wie()` bij twee treffers niets
+terug, en die twee gebruiken hun gebruikersnaam. Op het scherm staat dat als een
+van de redenen waarom er geen sms komt.
+
+### Wat er in het adres staat, en wat er níét in staat
+
+Stap 2 heeft hetzelfde kenmerk nodig als stap 1, dus dat gaat mee in de URL:
+`?stap=code&naam=%2B31612345678`. Je eigen nummer, dat je zelf net intikte, in je
+eigen adresbalk.
+
+Wat er níét gebeurt: het nummer omrekenen naar de gebruikersnaam en die
+meegeven. Dat zou er comfortabeler uitzien en het is precies een gaatje — dan
+kan iedereen een nummer intikken en krijgt hij de gebruikersnaam van die persoon
+terug. Het kenmerk gaat dus onveranderd door de drie stappen heen.
+
+Dat verandert ook wat de teller in `teVeelGeprobeerd()` doet. Die stond er tegen
+de sms-rekening; nu houdt hij ook tegen dat iemand nummers gaat aftasten om te
+zien wie er in de ploeg zit. De harde grens (drie codes per persoon per dag)
+staat nog steeds in de database.
+
+### Niet meegebouwd: inloggen met je telefoonnummer
+
+Dat lijkt de volgende stap en het is er geen. Inloggen is het moment dat je het
+wél weet — je wachtwoordmanager vult je gebruikersnaam in, of je hebt een
+passkey en typt helemaal niets. Herstellen is het moment dat je het niet weet.
+Alleen die tweede had dit nodig.
+
+### Draaien
+
+`herstel.sql` opnieuw, in zijn geheel. Er staan twee `drop function` regels in,
+want een parameternaam wijzigen kan niet met `create or replace` alleen — en een
+drop haalt ook de rechten weg. Draai je alleen het middenstuk, dan bestaat de
+functie wel en mag `service_role` er niet meer bij; het `grant`-blok onderaan
+repareert dat. `schema.sql` is meegewijzigd, dus een verse installatie is nog
+steeds één bestand.
+
+**Klaar als:** je op `/herstel` je 06-nummer intikt, een code krijgt en een nieuw
+wachtwoord zet — zonder dat je je gebruikersnaam ergens hoefde op te zoeken.
+
+> **Gedaan en gezien.** Met een 06-nummer, de code uit de serverlog, en een nieuw
+> wachtwoord erna.
 
 ---
 
