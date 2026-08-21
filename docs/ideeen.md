@@ -68,84 +68,6 @@ server.
 
 ---
 
-## Je diensten in je eigen agenda (ics-abonnement)
-
-**Het idee.** Eén keer op een link tikken en daarna staan je diensten in de agenda
-die je toch al open hebt — met een melding een uur ervoor als je die zelf aanzet.
-Geen scherm dat je moet openen om te weten of je vrijdag werkt, en het rooster
-staat naast je college-uren en je vrije dagen in plaats van ernaast.
-
-Niet een export die je één keer downloadt maar een **abonnement**: de agenda haalt
-de lijst zelf op. Ruilt de baas een dienst, dan verandert hij daar ook.
-
-### Hoe het werkt
-
-Een agenda-app kan niet inloggen. Het abonnement is dus een adres met een geheim
-erin — `/agenda/<sleutel>.ics` — dat teruggeeft wat er in de agenda hoort en niets
-meer: dag, geplande tijden, welke bus. Geen werkelijke tijden, geen opmerkingen,
-om dezelfde reden als bij de view `rooster`.
-
-Dit is de enige plek in de app waar een link écht een sleutel moet zijn, en dat
-is bij het bouwen van fase 14 duidelijk geworden: ruilen leek er ook een nodig te
-hebben, maar daar kon het zonder. Accepteren gebeurt daar ingelogd, dus is de link
-een adres. Een agenda-app kan niet inloggen, en daarom kan het hier niet zonder.
-
-Reken er dus niet op dat er al een sleutelmechanisme ligt om op te leunen — dat
-komt met dit idee zelf. Bewaar alleen de hash, zodat een databasedump geen
-abonnementen weggeeft.
-
-En dan langs de rechten heen op dezelfde manier: een verzoek zonder login komt
-via de policies nergens, dus dit wordt een `security definer`-functie die zelf de
-sleutel controleert en alleen de diensten van díé persoon teruggeeft. Plus een
-tweede uitzondering in `openbaar` in `hooks.server.ts`.
-
-### Wat je bij het bouwen tegenkomt
-
-- **De tijdzone, en dit keer echt.** Zet er `DTSTART;TZID=Europe/Amsterdam` met
-  een `VTIMEZONE` in, dan hoef je zelf niet te rekenen. Ga je naar UTC omzetten,
-  dan doe je zomertijd met de hand en staat één weekend per jaar de hele ploeg
-  een uur verkeerd in zijn agenda. `tijd.ts` bestaat precies hiervoor.
-- **`UID` moet vast liggen per dienst** — het id van de dienst. Verzin je er elke
-  keer een nieuwe, dan komt dezelfde avond bij elke verversing opnieuw in de
-  agenda te staan.
-- **En dan mist er iets in het schema:** een agenda wil weten wanneer een gebeurtenis
-  het laatst wijzigde (`LAST-MODIFIED`, `SEQUENCE`), en `diensten` heeft alleen
-  `aangemaakt_op`. Dat is te halen uit de laatste regel in `mutaties` voor die
-  dienst — mooi bijeffect van het logboek — of het wordt een kolom.
-- **Weggehaalde diensten verdwijnen vanzelf.** De lijst ís de waarheid: staat een
-  vervallen of weggeruilde dienst er niet meer in, dan haalt de agenda hem weg.
-  Geen afmeldberichten nodig.
-- **Hoe ver terug.** Alleen wat komt, plus een paar weken geschiedenis. Anders
-  groeit het bestand elk jaar en leest niemand het oude deel ooit terug.
-
-### Waarom "meteen" niet klopt
-
-De agenda bepaalt zelf hoe vaak hij kijkt, en dat kan bij Google een paar uur tot
-een dag zijn. Je kunt een verversingstijd meegeven (`REFRESH-INTERVAL`,
-`X-PUBLISHED-TTL`) maar het is een suggestie. Een ruil van vanmiddag staat dus
-misschien pas morgen in je agenda — en daarom blijft de app de plek waar het
-rooster écht staat en is dit een gemak erbovenop. Zo moet je het ook uitleggen,
-anders vertrouwt iemand zijn agenda op een avond dat het net veranderd is.
-
-**De goedkope versie** — een knopje "zet in mijn agenda" per dienst dat één
-`.ics`-bestandje geeft — is een middag werk, heeft geen geheime link nodig en
-staat er meteen in. Maar je doet het per dienst, en een ruil volgt niet mee. Als
-opstapje is het prima; als eindpunt gaat iedereen het na twee weken vergeten.
-
-**Waar de link komt te staan.** Op `/ik`, dat sinds fase 10 een profielpagina is:
-één knop om hem te kopiëren en één om een nieuwe te maken — waarmee de
-oude vervalt, net als bij "Nieuw wachtwoord". Op een iPhone opent zo'n link
-meteen de vraag of je je wil abonneren; bij Google Agenda moet het via "agenda
-toevoegen → via url", en dat gaat op een telefoon niet. Reken erop dat je het
-voor de helft van de ploeg één keer moet voordoen.
-
-**Volgorde.** Dit is het soort feature dat een app aardig maakt in plaats van
-nodig, dus hij hoort achter de dingen die nodig zijn. En hij staat er alleen voor:
-het sleutelmechanisme dat hij nodig heeft bestaat nog niet en komt niet ergens
-anders vandaan.
-
----
-
 ## Eén antwoord voor alles wat je niet mag zien
 
 **Hoe het heet.** 404 masking, ook wel cloaking: in plaats van een eerlijke
@@ -187,19 +109,22 @@ niet:
 - **En het kost iets.** De baas die zich vertypt krijgt "bestaat niet" in plaats
   van een zin die hem verder helpt.
 
-### Waar het wél moet, en daar is het geen luxe
+### Waar het wél moet, en daar is het al gedaan
 
-Het idee met een sleutel in het adres: **een agenda-abonnement**
-(`/agenda/<sleutel>.ics`). Daar is het adres wél te raden, en daar is elk verschil
-in het antwoord een gratis hint. Eén antwoord dus voor: sleutel bestaat niet,
-sleutel is verlopen, abonnement is opgezegd.
+**Het agenda-abonnement** (`/agenda/<sleutel>.ics`, fase 15). Daar is het adres
+wél te raden en is elk verschil in het antwoord een gratis hint, dus geeft die
+route één antwoord voor alles: sleutel bestaat niet, sleutel is ingetrokken,
+persoon heeft geen diensten. Alle drie een 404 zonder uitleg — en een agenda-app
+leest toch geen foutmeldingen.
 
 *Ruilen leek hier ook bij te horen en hoort er niet bij.* `/ruil/<id>` vraagt een
 login, dus is dat id geen geheim — en wie mag accepteren wordt in de database
 bepaald en niet door het kennen van een adres. Dat is de betere oplossing van
-hetzelfde probleem: geen geheim dat je moet beschermen.
+hetzelfde probleem: geen geheim dat je hoeft te beschermen.
 
-Drie dingen om het echt gelijk te houden:
+Wat hiervan overblijft is dus geen werk maar een regel, voor de volgende keer dat
+er een adres met een sleutel erin bij komt. Drie dingen om het echt gelijk te
+houden:
 
 - **Dezelfde statuscode en dezelfde body.** Niet "verlopen" op het ene scherm en
   "onbekend" op het andere.
@@ -210,6 +135,6 @@ Drie dingen om het echt gelijk te houden:
 - **De echte reden in de serverlog**, zoals bij het inloggen. Anders is dit
   onderhoudbaar noch te debuggen.
 
-**Volgorde.** Geen los werk. Dit is een regel die meegaat op het moment dat die
-twee ideeën gebouwd worden — en tot die tijd staat hij hier zodat hij niet
-opnieuw bedacht hoeft te worden.
+**Volgorde.** Geen los werk, en niets meer te bouwen: waar het moest is het
+gedaan. Dit staat hier als regel voor de volgende keer, zodat hij niet opnieuw
+bedacht hoeft te worden — en zodat niemand hem per ongeluk overal gaat toepassen.

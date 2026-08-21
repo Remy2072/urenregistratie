@@ -15,6 +15,7 @@ Achtergrond en beslissingen staan in `docs/`:
 | `docs/profiel.sql` | Gebruikersnaam en telefoon op `personen` (fase 10). Draai hem altijd ná `rollen.sql` |
 | `docs/herstel.sql` | Herstelcodes voor "wachtwoord vergeten" (fase 13) |
 | `docs/ruilen.sql` | Ruilverzoeken: gericht of open in de groepsapp (fase 14) |
+| `docs/agenda.sql` | Agendalinks voor het ics-abonnement (fase 15) |
 
 ## Draaien
 
@@ -25,7 +26,7 @@ npm run dev
 
 ## Waar we nu staan
 
-**Fase 0 tot en met 6 af, plus 9 tot en met 14.** De hele keten draait op de database: de
+**Fase 0 tot en met 6 af, plus 9 tot en met 15.** De hele keten draait op de database: de
 bezorger meldt zijn dienst, de baas bevestigt, en er komt een bestand uit voor de
 boekhouder. Er zit geen nepdata meer in — het prototype uit fase 0 staat nog in
 de branch `fase-0-prototype`.
@@ -50,6 +51,9 @@ Wat je ziet hangt af van wie je bent — de tabbladen volgen je rol.
 - `/overzicht` — de baas. Bovenaan alleen afwijkingen, achteraf gemelde en
   niet-gemelde diensten. Bevestigen los of in bulk, en een dienst verzetten.
 - `/export` — de boekhouder. Alleen bevestigde diensten, alleen uren, als CSV.
+- `/agenda/<sleutel>.ics` — je eigen diensten als agenda-abonnement. Geen
+  scherm maar een bestand, want de bezoeker is een agenda-app en die kan niet
+  inloggen — daarom is die link wél een geheim.
 - `/ruil/<id>` — een ruilverzoek: overnemen of niet. Vraagt een login, en dáárom
   is die link geen geheim.
 - `/herstel` — wachtwoord vergeten. Gebruikersnaam invullen, code per sms, zelf
@@ -71,6 +75,7 @@ eerste dat er nu ligt.
 | `src/lib/server/login.ts` | Van een gebruikersnaam naar het adres waarmee Supabase iemand kent |
 | `src/lib/telefoon.ts` | Alles met telefoonnummers. Eén vorm in de database, een leesbare op het scherm |
 | `src/lib/passkey.ts` | Het enige stuk dat in de browser draait: het passkey-venster van de telefoon |
+| `src/lib/server/agenda.ts` | Het ics-bestand. De enige plek waar de tijdzone wordt uitgeschreven in plaats van uitgerekend |
 | `src/lib/server/bird.ts` | Sms versturen. De enige plek die iets naar buiten stuurt, en de enige met een rekening eraan |
 | `src/lib/server/herstel.ts` | Codes verzinnen en narekenen voor "wachtwoord vergeten" |
 | `src/lib/server/uren.ts` | Wat de boekhouder krijgt. Het enige bestand dat je aanpast voor een ander formaat |

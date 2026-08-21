@@ -71,6 +71,7 @@ voren omdat er nu iets van afhangt.
 | 12 | Passkey ✅ | Inloggen met gezicht of vinger, zonder token in de browser | 1 avond |
 | 13 | Wachtwoord vergeten ✅ | Zelf weer binnen komen, met een code per sms | 1 weekend |
 | 14 | Diensten ruilen ✅ | Gericht per sms, of open in de groepsapp | 1 weekend |
+| 15 | Agenda ✅ | Je diensten in de agenda die je al open hebt | 1 avond |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
 dus reken op twee tot drie maanden doorlooptijd. Dat is prima: er is geen
@@ -1408,6 +1409,79 @@ beide gevallen staat het rooster meteen goed.
 > tweede hoort *"Iemand was je net voor"* te krijgen. Dat is één update met een
 > where-clause op de dienst zoals hij was, dus het hoort te kloppen, maar het is
 > niet met twee echte vingers geprobeerd.
+
+---
+
+## Fase 15 — Je diensten in je eigen agenda ✅
+
+**Doel:** je diensten staan in de agenda die je toch al open hebt, zonder dat je
+de app hoeft te openen.
+
+Op `/ik` maak je één link en die plak je in Agenda op je telefoon of laptop.
+Daarna staat er per dienst: welke dag, hoe laat, welke bus. Ruilt iemand een
+dienst weg, dan verdwijnt hij bij de volgende verversing uit zijn agenda en
+verschijnt hij in die van de ander — de lijst ís de waarheid, dus er hoeft niets
+afgemeld te worden.
+
+### Dit is de enige plek waar een link écht een geheim is
+
+Bij ruilen (fase 14) bleek dat niet nodig: accepteren gebeurt ingelogd, dus is
+zo'n link een adres. **Een agenda-app kan niet inloggen.** Die URL is dus het
+enige bewijs, en dat heeft drie gevolgen die er alle drie zijn:
+
+- In de database staat **alleen de hash** van de sleutel. Een dump levert geen
+  werkende abonnementen op.
+- **"Nieuwe link maken"** is geen gemak maar het enige middel om een oude link
+  dood te maken — en dat is nodig, want zo'n URL belandt op plekken waar je hem
+  niet meer weghaalt. Gebruik je hem in Google Agenda, dan staat hij op hun
+  servers.
+- Het opzoeken gaat **via de beheersleutel op de server**, niet via een functie
+  die voor `anon` open staat. Anders kan iedereen met de publieke sleutel
+  sleutels afvuren op de database.
+
+En je ziet die link één keer, net als een wachtwoord.
+
+### Wat er in staat, en wat niet
+
+Dag, geplande tijden, welke post. **Geen werkelijke tijden en geen opmerkingen**
+— dezelfde reden als bij de view `rooster`: dat gaat over geld en dat blijft
+tussen hem en de baas. Vier weken terug en alles wat komt.
+
+Besloten bij het bouwen: de titel is **"Werk — Bus 3"**, en er zit **geen
+herinnering** in. Wie een melding wil zet die zelf; een opgelegde piep een uur
+vooraf is precies waarvoor mensen een abonnement opzeggen.
+
+### Drie dingen die alleen door het te doen bleken
+
+**De deur keek naar het hele pad.** `openbaar` in `hooks.server.ts` vergeleek op
+de volledige URL, dus `/agenda/<sleutel>.ics` viel er niet onder en werd naar het
+inlogscherm gestuurd — een agenda-app die moet inloggen. Nu vergelijkt hij ook op
+wat eronder hangt, met een schuine streep erachter zodat `/agenda-instellingen`
+er niet ongemerkt onder valt.
+
+**`mutaties` bleek precies het ontbrekende veld.** Een agenda wil weten wanneer
+een gebeurtenis het laatst wijzigde (`LAST-MODIFIED`, `SEQUENCE`), en `diensten`
+heeft alleen `aangemaakt_op`. Dat komt nu uit het logboek: de laatste mutatie is
+de wijzigingstijd en het aantal mutaties is het versienummer. Geen kolom erbij.
+
+**En de tijdzone is uitgeschreven in plaats van uitgerekend.** Het bestand zegt
+`DTSTART;TZID=Europe/Amsterdam` en levert een `VTIMEZONE`-blok mee met de
+zomertijdregels. Zo staat 22 augustus op +02:00 en 27 december op +01:00 zonder
+dat wij iets omrekenen — en dat is precies het soort fout dat je pas in maart
+merkt.
+
+### Lokaal te testen, en dat is niet zelfsprekend
+
+Agenda op een Mac accepteert `http://localhost:5173/agenda/<sleutel>.ics`, en een
+telefoon accepteert het IP van je laptop (`npm run dev -- --host`). Alleen Google
+Agenda kan niet: die haalt de lijst op met zijn eigen servers en heeft dus een
+publieke URL nodig. **Na de deploy verandert het adres**, dus dan abonneert
+iedereen zich opnieuw — net als bij de passkeys.
+
+**Klaar als:** je diensten in je eigen agenda staan en een ruil er bij de
+volgende verversing in doorkomt.
+
+> **Gedaan en gezien.** In Agenda op de eigen machine, met de link van `/ik`.
 
 ---
 
