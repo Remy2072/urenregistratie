@@ -23,9 +23,10 @@ zolang die aan staat. Restrictief, want dan hoeft er geen bestaande policy om �
 zelfde truc als bij het verbergen in fase 17. En op elk scherm één regel dat het
 aan staat, want anders lijkt de app stuk in plaats van op pauze.
 
-**Wat er nog beslist moet worden.** Of "leesbaar" ook de export omvat. Ik zou
-zeggen ja: iemand die zijn abonnement opzegt hoort zijn eigen uren mee te kunnen
-nemen, en dat is precies wat de export is.
+**Beslist (2026-08-24): de export blijft werken.** Wie opzegt hoort zijn eigen
+uren mee te kunnen nemen, en dat is precies wat de export is. De leesstand zet
+dus het schrijven stil en niets anders — geen enkele reden om iemand zijn eigen
+gegevens te onthouden om een rekening.
 
 **Volgorde.** Niet vóór fase 7, en zelfs niet vóór de eerste betalende klant.
 Zolang jij de enige gebruiker bent is dit een knop voor een probleem dat niet
