@@ -6,36 +6,47 @@ een fase in `bouwplan.md` wordt, gaat het gebeuren.
 
 ---
 
-## Wat de superadmin nog niet kan
+## De installatie in de leesstand
 
-De rol zelf is er (fase 17): onzichtbaar, alle rechten van de eigenaar, en als
-enige het recht om iemand echt te verwijderen. Dit zijn de vier dingen die er
-niet in zitten, elk met een eigen scherm en dus een eigen fase.
+De rol van de superadmin is er (fase 17). Dit is het enige recht dat er nog
+ontbreekt: een knop die de hele installatie op alleen-lezen zet. Abonnement niet
+betaald, of een overname die nog loopt — alles blijft leesbaar, er kan niets bij.
 
-1. **Inloggen als iemand anders.** Het krachtigste, en het enige waar ik zou
-   aarzelen: je ziet dan iemands uren, en uren zijn geld. Als het er komt, dan
-   met een regel in `mutaties` die er niet uit te halen is.
-2. **De installatie in de leesstand zetten.** Abonnement niet betaald, of een
-   overname die nog loopt: alles blijft leesbaar, er kan niets bij. Het enige
-   recht dat de eigenaar écht niet mag hebben, want anders zet hij het terug.
-3. **Retentie.** Oude weken echt opruimen. Een besluit dat niemand met de hand
-   hoort te nemen.
-4. **De technische overzichten.** Welke migraties er gedraaid zijn, hoeveel
-   sms'jes er deze maand heen gingen en wat dat kost, de foutlog, hoeveel
-   agendasleutels er actief zijn. Geen macht over mensen — het verschil tussen
-   "ik kijk ernaar" en "stuur eens een schermafdruk".
+**Waarom het niet zomaar een vinkje is.** Het moet het enige recht zijn dat de
+eigenaar níét heeft, anders zet hij het terug. Dus hangt het aan
+`is_superadmin()` en niet aan `is_eigenaar()`, en dat is de eerste keer dat die
+twee echt uit elkaar lopen.
 
-Twee die er alleen bij komen als er iets anders eerst gebeurt: **over een
-afsluiting heen corrigeren** kan pas als een geëxporteerde week vastgezet wordt
-(dat bestaat nog niet), en **alle bedrijven zien** heeft alleen betekenis als het
-ooit één database met `bedrijf_id` wordt in plaats van een installatie per
-bedrijf. Die keuze staat in fase 8.
+**Hoe het er waarschijnlijk uitziet.** Eén rij in een instellingentabel, en een
+restrictieve policy op elke tabel die zegt: geen insert, geen update, geen delete
+zolang die aan staat. Restrictief, want dan hoeft er geen bestaande policy om —
+zelfde truc als bij het verbergen in fase 17. En op elk scherm één regel dat het
+aan staat, want anders lijkt de app stuk in plaats van op pauze.
+
+**Wat er nog beslist moet worden.** Of "leesbaar" ook de export omvat. Ik zou
+zeggen ja: iemand die zijn abonnement opzegt hoort zijn eigen uren mee te kunnen
+nemen, en dat is precies wat de export is.
+
+**Volgorde.** Niet vóór fase 7, en zelfs niet vóór de eerste betalende klant.
+Zolang jij de enige gebruiker bent is dit een knop voor een probleem dat niet
+bestaat.
+
+Twee dingen die pas betekenis krijgen als er iets anders eerst gebeurt: **over
+een afsluiting heen corrigeren** kan pas als een geëxporteerde week vastgezet
+wordt (dat bestaat nog niet), en **alle bedrijven zien** alleen als het ooit één
+database met `bedrijf_id` wordt in plaats van een installatie per bedrijf — die
+keuze staat in fase 8.
 
 **En het stuk dat geen code is.** Onzichtbaar plus alle rechten betekent dat het
 logboek het laatste slot is, en dat hij dat zelf kan openen. Dat valt technisch
 niet op te lossen en staat er daarom niet als taak maar als afspraak: het hoort
 in het contract, samen met de verwerkersovereenkomst die er bij het eerste
 abonnement toch al moet zijn.
+
+_Drie rechten stonden hier ook en zijn eruit (2026-08-24)._ Inloggen als iemand
+anders: niet nodig. Retentie: kan met een delete in de SQL-editor. De technische
+overzichten: sms-verbruik en kosten staan in Bird, de foutlog in Supabase → Logs,
+en agendasleutels zijn één query.
 
 ---
 
