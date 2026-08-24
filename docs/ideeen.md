@@ -6,17 +6,11 @@ een fase in `bouwplan.md` wordt, gaat het gebeuren.
 
 ---
 
-## Superadmin — wat er nog niet in zit
+## Wat de superadmin nog niet kan
 
-**De rol is gebouwd, in fase 17.** Onzichtbaar voor iedereen, ook voor de
-eigenaar. Alle rechten van de eigenaar, want `is_beheerder()` en `is_eigenaar()`
-rekenen hem mee. Nergens in te plannen. En als enige het recht om iemand echt te
-verwijderen — al houden de foreign keys dat tegen voor wie ooit gewerkt heeft, en
-dat hoort zo. Hoe het werkt staat in `superadmin.sql`; waarom het zo werkt in
-fase 17 van het bouwplan.
-
-Wat hier blijft staan is wat er níét gebouwd is, en dat is met opzet: het zijn
-vier eigen fases met eigen schermen en geen uitbreiding van een policy.
+De rol zelf is er (fase 17): onzichtbaar, alle rechten van de eigenaar, en als
+enige het recht om iemand echt te verwijderen. Dit zijn de vier dingen die er
+niet in zitten, elk met een eigen scherm en dus een eigen fase.
 
 1. **Inloggen als iemand anders.** Het krachtigste, en het enige waar ik zou
    aarzelen: je ziet dan iemands uren, en uren zijn geld. Als het er komt, dan
@@ -39,16 +33,19 @@ bedrijf. Die keuze staat in fase 8.
 
 **En het stuk dat geen code is.** Onzichtbaar plus alle rechten betekent dat het
 logboek het laatste slot is, en dat hij dat zelf kan openen. Dat valt technisch
-niet op te lossen en het staat er daarom niet als taak maar als afspraak: het
-hoort in het contract, samen met de verwerkersovereenkomst die er bij het eerste
+niet op te lossen en staat er daarom niet als taak maar als afspraak: het hoort
+in het contract, samen met de verwerkersovereenkomst die er bij het eerste
 abonnement toch al moet zijn.
 
-### En de achterdeur blijft
+---
 
-Ook met een superadmin, want die kan zelf ook buiten staan — en in een verse
-installatie bestaat hij nog niet. Dit is één keer echt gebeurd, tijdens fase 10,
-en dan wil je niet gaan zoeken. Sluit je jezelf buiten, dan zet je in de
-SQL-editor een nieuw wachtwoord:
+## Jezelf weer binnenlaten
+
+Geen idee maar naslag, en de reden dat het hier staat: als je dit nodig hebt, wil
+je niet gaan zoeken. Ook met een superadmin, want die kan zelf ook buitenstaan —
+en in een verse installatie bestaat hij nog niet.
+
+Sluit je jezelf buiten, dan zet je in de SQL-editor een nieuw wachtwoord:
 
 ```sql
 select p.naam, p.gebruikersnaam, u.email
