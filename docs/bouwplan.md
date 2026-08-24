@@ -73,6 +73,7 @@ voren omdat er nu iets van afhangt.
 | 14 | Diensten ruilen ✅ | Gericht per sms, of open in de groepsapp | 1 weekend |
 | 15 | Agenda ✅ | Je diensten in de agenda die je al open hebt | 1 avond |
 | 16 | Herstel op je nummer ✅ | Je gebruikersnaam vergeten is geen doodlopende weg | 1 avond |
+| 17 | Superadmin ✅ | Support zonder het dashboard, en zonder in de ploeg te staan | 1 avond |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
 dus reken op twee tot drie maanden doorlooptijd. Dat is prima: er is geen
@@ -1567,6 +1568,130 @@ wachtwoord zet — zonder dat je je gebruikersnaam ergens hoefde op te zoeken.
 
 > **Gedaan en gezien.** Met een 06-nummer, de code uit de serverlog, en een nieuw
 > wachtwoord erna.
+
+---
+
+## Fase 17 — De superadmin die niemand ziet ✅
+
+**Doel:** één rol boven eigenaar, voor de bouwer. Alles wat de eigenaar kan en
+een paar dingen meer, en hij staat in geen enkele lijst — ook niet in die van de
+eigenaar.
+
+Waarom dat mag staat in `ideeen.md` en komt hierop neer: dit wordt een
+saas-abonnement en geen verkoop per installatie. De sleutels van dit
+Supabase-project blijven bij ons, permanent. Deze rol geeft dus geen macht die er
+niet al was — hij maakt een nette voordeur voor wat via de sql-editor toch al
+kan. Wat er wél verandert is dat het onzichtbaar gebeurt, en daarom hoort het in
+het contract en niet alleen in een sql-bestand.
+
+### Het gereedschap: de restrictieve policy
+
+Dit is de eerste keer dat dit project er een gebruikt, en het is precies wat hier
+nodig was.
+
+Gewone policies zijn een **of**: er één bij zetten kan alleen méér toestaan. Voor
+"niemand mag deze rij zien" had ik dus `personen_lezen` uit `schema.sql` moeten
+herschrijven — en dat is nu net de fout die in fase 10 al een keer gemaakt is,
+waar `rollen.sql` en `profiel.sql` dezelfde trigger overschrijven en de laatste
+wint.
+
+Een **restrictieve** policy is een **en**. Hij komt náást alle bestaande te
+staan en kan alleen minder toestaan. Daardoor hoeft geen enkele policy uit
+`schema.sql` of `rollen.sql` om, en overleeft `superadmin.sql` het opnieuw
+draaien van die twee. Drie stuks:
+
+- **lezen** — `rol <> 'superadmin' or is_superadmin()`. Hij verdwijnt daarmee uit
+  elke lijst, telling, keuzelijst en export in één keer, want die vragen het
+  allemaal aan dezelfde tabel.
+- **toevoegen** — niemand maakt deze rol aan.
+- **wijzigen** — `using` houdt iedereen van zijn rij af, `with check` belet dat
+  iemand zichzelf of een ander tot superadmin promoveert.
+
+Voor het "dit veld mag jij niet veranderen"-deel is er ook een trigger nodig
+(dezelfde reden als bij `rol` in fase 9), en die staat er **naast**
+`persoon_wijziging_bewaken()` in plaats van erin. Dat is met opzet: die functie
+staat al in drie bestanden en een vierde maakt de val alleen groter. Twee
+triggers op dezelfde tabel vuren allebei.
+
+De melding als je het toch probeert is `Deze rol bestaat niet`. Dat is dezelfde
+regel als in idee 6: geef geen antwoord waaruit blijkt dat er iets is om te
+vinden.
+
+### Wat hij mag
+
+`is_beheerder()` en `is_eigenaar()` rekenen hem mee. Dat is het hele
+rechtenverhaal: elke policy in dit schema hangt aan die twee, dus hij krijgt in
+één keer alles wat de eigenaar heeft zonder dat er één policy verandert.
+
+Wat hij méér heeft dan de eigenaar is voorlopig één ding: **verwijderen**. Er was
+tot nu toe nergens een delete-policy — "iemand hoort op non-actief te gaan, niet
+weg" — en daardoor kon een verkeerd ingevoerde persoon nooit meer opgeruimd
+worden. Nu kan dat, en alleen door hem.
+
+Let op wat dat niet is: de foreign keys van `diensten` en `sjabloon_regels` staan
+zonder cascade. Iemand die ooit gewerkt heeft gaat er dus niet uit, en dat is
+goed — bij zo'n verzoek is de vraag niet "mag ik verwijderen" maar "wat gebeurt
+er met die uren", en dat is een besluit en geen knop. Wat er nu kan is de
+schoonmaak van een fout van vijf minuten oud.
+
+### Niet in te plannen
+
+De restrictieve leespolicy regelt het grootste deel: wie niet in de lijst staat,
+wordt niet gekozen. Op drie plekken moest het er met de hand bij:
+
+- **`ruilkandidaten()`** is `security definer` en gaat dus langs RLS heen. Daar
+  stond al `p.rol <> 'eigenaar'`; dat is nu `not in ('eigenaar', 'superadmin')`.
+  Dit is het patroon om in de gaten te houden: elke definer-functie die mensen
+  opsomt moet hem zelf overslaan.
+- **`beschikbaarheid()`** slaat hem ook over. Die is invoker en dus al gedekt
+  voor iedereen behalve hemzelf — dit is er zodat hij zichzelf ook niet in het
+  beschikbaarheidsraster tegenkomt.
+- **`magRijden()`** in het roosterscherm gaf `true` voor iemand die het niet mag
+  zien. Dat was een echt gaatje en geen theorie: `data?.rol !== 'eigenaar'` is
+  ook waar als `data` null is, dus een nagemaakt formulier met een onzichtbaar
+  id kwam erdoor. Nu is het `wordtIngeroosterd(data?.rol)`, en die zegt nee bij
+  onbekend.
+
+### Wat er nog lekt, en waarom dat blijft
+
+- **Zijn gebruikersnaam is uniek.** Maakt de eigenaar ooit een account met
+  dezelfde naam, dan krijgt hij "al in gebruik" voor iets wat hij niet ziet. Dus:
+  een naam die niemand kiest.
+- **`mutaties` bewaart wie er iets wijzigde.** Nu nog nergens een probleem, want
+  geen enkel scherm zet die naam erbij. Komt dat er, dan hoort daar één keer
+  besloten te worden wat er staat — "systeem" is het eerlijkste dat nog
+  onzichtbaar is.
+- **Het Supabase-dashboard laat hem gewoon zien.** Dat is consequent: bij een
+  abonnement komt de eigenaar daar niet.
+
+### Wat er niet in zit
+
+Vier van de acht rechten uit `ideeen.md` zijn opzettelijk niet gebouwd, want het
+zijn eigen fases met eigen schermen: inloggen als iemand anders, de installatie
+in de leesstand zetten, retentie, en de technische overzichten (sms-verbruik,
+foutlog, migraties). De rol staat er nu; die kunnen er los bij.
+
+### Hoe hij ontstaat
+
+Niet via een scherm, en dat is het punt. In het dashboard een gebruiker
+aanmaken (Authentication → Users → Add user, auto confirm aan), het uuid
+kopiëren, en dan de insert die als commentaar onderaan `superadmin.sql` staat.
+Inloggen gaat daarna gewoon met die gebruikersnaam — het opzoeken van het
+inlogadres draait met de beheersleutel en die gaat langs RLS heen, dus
+onzichtbaar zijn belet hem niet naar binnen te komen.
+
+**Draaien:** `superadmin.sql`, en wel **als laatste** — na `rollen.sql` en
+`profiel.sql`. Het herdefinieert `is_beheerder()`, `is_eigenaar()`,
+`ruilkandidaten()` en `beschikbaarheid()`; draai je één van die bestanden later
+opnieuw, dan hoort dit bestand er direct achteraan. Gaat dat mis, dan is het
+gevolg dat hij mínder mag dan de eigenaar en weer in de ruillijst staat — geen
+stille ramp, maar wel iets wat je moet weten.
+
+**Klaar als:** de eigenaar in `/beheer` de ploeg ziet zonder hem, en hij zelf kan
+inloggen en alles ziet.
+
+> **Gedaan en gezien.** Ingelogd als de superadmin: alles zichtbaar. Ingelogd als
+> de eigenaar: hij staat er niet.
 
 ---
 

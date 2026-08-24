@@ -1,3 +1,4 @@
+import { wordtIngeroosterd } from '$lib/model';
 import { nuInNederland } from '$lib/tijd';
 import { wieBenIk } from '$lib/server/wie';
 import type { LayoutServerLoad } from './$types';
@@ -23,8 +24,9 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 	// Een manager rijdt soms mee, dus die houdt ze altijd -- anders moet hij
 	// eerst ingeroosterd worden voordat hij kan zeggen wanneer hij kan, en dat
 	// is de verkeerde volgorde. Een eigenaar wordt nergens ingeroosterd (zie de
-	// controle in het roosterscherm), dus voor hem zijn het lege schermen.
-	const bezorger = ik.rol !== 'eigenaar';
+	// controle in het roosterscherm), dus voor hem zijn het lege schermen. Voor
+	// de superadmin ook: die staat in geen enkel rooster.
+	const bezorger = wordtIngeroosterd(ik.rol);
 
 	return { ingelogd: true, ik, bezorger, nu };
 };

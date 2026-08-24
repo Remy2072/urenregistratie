@@ -6,122 +6,49 @@ een fase in `bouwplan.md` wordt, gaat het gebeuren.
 
 ---
 
-## Superadmin
+## Superadmin — wat er nog niet in zit
 
-**Het idee.** Een rol boven eigenaar, voor de bouwer. Kan overal bij, in elke
-installatie, en kan dus ook een eigenaar die zijn wachtwoord kwijt is weer
-binnenlaten.
+**De rol is gebouwd, in fase 17.** Onzichtbaar voor iedereen, ook voor de
+eigenaar. Alle rechten van de eigenaar, want `is_beheerder()` en `is_eigenaar()`
+rekenen hem mee. Nergens in te plannen. En als enige het recht om iemand echt te
+verwijderen — al houden de foreign keys dat tegen voor wie ooit gewerkt heeft, en
+dat hoort zo. Hoe het werkt staat in `superadmin.sql`; waarom het zo werkt in
+fase 17 van het bouwplan.
 
-**Waarom het aantrekkelijk is.** Nu zit die knop achter precies het account waar
-iemand buiten staat. Met twee eigenaren dekken ze elkaar af, maar bij één
-eigenaar is de enige uitweg het Supabase-dashboard — en dat is precies wat we
-aan het wegwerken zijn.
+Wat hier blijft staan is wat er níét gebouwd is, en dat is met opzet: het zijn
+vier eigen fases met eigen schermen en geen uitbreiding van een policy.
 
-**Het is geen verkooppunt.** Hier stond eerder dat de installatie per bedrijf
-wordt verkocht, en dat een rol die de eigenaar niet kan uitzetten dus permanente
-toegang van de leverancier tot de gegevens van zijn klant is. Dat klopt niet
-meer: het wordt een saas-abonnement (gezegd 2026-08-21). De installatie gaat
-nooit over. Hij blijft draaien op een Supabase-project dat wij beheren en de
-klant betaalt voor toegang -- dus liggen de sleutels toch al bij ons, permanent,
-en niet tot een overdracht die er nooit komt. Het zwaarste bezwaar tegen deze
-rol was daarmee een bezwaar tegen een model dat we niet gaan doen.
-
-**Waar het dan wél om gaat.** Niet of wij erbij kunnen, want dat kunnen we
-sowieso. Wel of de klant kan zien wanneer. Dat is een gewone saas-vraag en elke
-saas beantwoordt hem hetzelfde: er is supporttoegang, hij staat in het contract,
-en hij laat een spoor na. De verwerkersovereenkomst verhuist daarmee van
-voorwaarde-voor-deze-rol naar voorwaarde-voor-het-abonnement: die heb je vanaf
-de eerste betalende klant nodig, met of zonder superadmin.
-
-**Besloten op 2026-08-21: hij wordt onzichtbaar.** Er waren drie vormen in de
-running -- een vast account, een supportaccount dat de eigenaar aan- en uitzet,
-en toegang die na een dag vervalt. Het is de eerste geworden, en dan strenger:
-niemand ziet hem staan, ook de eigenaar niet.
-
-Dat is een keuze en geen vergissing, dus staat hier waar hij op rust: het is een
-abonnement op onze installatie, wij hebben de sleutels toch al, en een schakelaar
-die de eigenaar moet omzetten is nu juist onbereikbaar voor de eigenaar die
-buitengesloten is -- precies het geval waarvoor dit bestaat.
-
-Eén ding hoort daar hard bij: onzichtbaar plus alle rechten betekent dat het
-logboek het laatste slot is, en dat hij dat zelf kan openen. Dat valt technisch
-niet op te lossen. Het is wat er in het contract moet staan.
-
-**Wat het niet oplost.** Wie de Supabase-sleutels heeft kan sowieso alles, en
-dat zijn wij, blijvend. Een superadmin in de app is dus geen extra macht -- het
-is een nette voordeur voor iets wat via de achterdeur toch al kan, met als enige
-echte winst dat het zichtbaar is. Dat is meteen het argument om hem te loggen in
-plaats van hem stil te houden.
-
-**En als het ooit één database wordt.** In fase 8 staat de vraag: per bedrijf
-een eigen Supabase-project (model A) of één database met `bedrijf_id` (B en C).
-Bij A is superadmin niets anders dan gemak -- je hebt de sleutels van elk project
-al. Bij B en C is deze rol het échte mechanisme, en dan is hij geen gemak meer
-maar de scheiding tussen klanten zelf: een superadmin die per ongeluk over
-`bedrijf_id` heen kijkt is een datalek en niet een bug.
-
-### Wat hij moet kunnen
-
-Alles wat de eigenaar kan, en dan een paar dingen die de eigenaar met opzet niet
-kan. Op volgorde van hoe hard ze nodig zijn:
-
-1. **Iemand echt verwijderen.** Er staat nu nergens een delete-policy -- "iemand
-   hoort op non-actief te gaan, niet weg". Dat is goed voor de boekhouding en het
-   maakt twee dingen onmogelijk: een verkeerd ingevoerde persoon opruimen, en een
-   wisverzoek uitvoeren. Dat tweede is geen luxe maar avg artikel 17, en de
-   eigenaar kan er vandaag niets mee.
-2. **Een eigenaar aanstellen.** Alleen een eigenaar mag een eigenaar wijzigen
-   (`persoon_wijziging_bewaken`). Vertrekt de enige eigenaar, dan kan niemand de
-   volgende benoemen. Dit is het supportverzoek dat gegarandeerd komt.
-3. **Een wachtwoord of passkey zetten voor wie dan ook**, de eigenaar incluis.
-   Het geval waarvoor dit idee ooit begon.
-4. **De installatie in de leesstand zetten.** Abonnement niet betaald, of een
-   overname die nog niet rond is: alles blijft leesbaar, er kan niets bij. Dit is
-   het enige recht dat de eigenaar écht niet mag hebben -- anders zet hij het
-   terug.
-5. **Technische dingen die nu geen scherm hebben.** Welke migraties er gedraaid
-   zijn, hoeveel sms'jes er deze maand heen gingen en wat dat kost, de foutlog,
-   hoeveel agendasleutels er actief zijn. Geen macht over mensen, maar het
-   verschil tussen "ik kijk ernaar" en "stuur eens een schermafdruk".
-6. **Oude weken echt opruimen.** Retentie is een besluit dat niemand met de hand
-   hoort te nemen en dat de eigenaar niet zou moeten kunnen.
-7. **Inloggen als iemand anders.** Het krachtigste en het enige waar ik zou
+1. **Inloggen als iemand anders.** Het krachtigste, en het enige waar ik zou
    aarzelen: je ziet dan iemands uren, en uren zijn geld. Als het er komt, dan
    met een regel in `mutaties` die er niet uit te halen is.
-8. **Over een afsluiting heen corrigeren.** Nog niet van toepassing: weken kunnen
-   nu niet op slot. Zodra een geëxporteerde week wél vastgezet wordt, hoort de
-   uitzondering hier te liggen en niet bij de baas.
+2. **De installatie in de leesstand zetten.** Abonnement niet betaald, of een
+   overname die nog loopt: alles blijft leesbaar, er kan niets bij. Het enige
+   recht dat de eigenaar écht niet mag hebben, want anders zet hij het terug.
+3. **Retentie.** Oude weken echt opruimen. Een besluit dat niemand met de hand
+   hoort te nemen.
+4. **De technische overzichten.** Welke migraties er gedraaid zijn, hoeveel
+   sms'jes er deze maand heen gingen en wat dat kost, de foutlog, hoeveel
+   agendasleutels er actief zijn. Geen macht over mensen — het verschil tussen
+   "ik kijk ernaar" en "stuur eens een schermafdruk".
 
-### Wat "onzichtbaar" betekent in dit schema
+Twee die er alleen bij komen als er iets anders eerst gebeurt: **over een
+afsluiting heen corrigeren** kan pas als een geëxporteerde week vastgezet wordt
+(dat bestaat nog niet), en **alle bedrijven zien** heeft alleen betekenis als het
+ooit één database met `bedrijf_id` wordt in plaats van een installatie per
+bedrijf. Die keuze staat in fase 8.
 
-Het goede nieuws is dat row level security het grootste deel gratis doet. Voeg
-aan `personen_lezen` toe dat een rij met `rol = 'superadmin'` niet meegaat, en
-hij verdwijnt in één keer uit elke lijst, elke telling, elk uitklapmenu en elke
-export -- want die vragen het allemaal aan dezelfde tabel. Niet in te plannen is
-daarmee ook geregeld: wie niet in de lijst staat wordt niet gekozen, en diensten
-hoort hij helemaal niet te hebben.
+**En het stuk dat geen code is.** Onzichtbaar plus alle rechten betekent dat het
+logboek het laatste slot is, en dat hij dat zelf kan openen. Dat valt technisch
+niet op te lossen en het staat er daarom niet als taak maar als afspraak: het
+hoort in het contract, samen met de verwerkersovereenkomst die er bij het eerste
+abonnement toch al moet zijn.
 
-Wat er wél met de hand bij moet:
+### En de achterdeur blijft
 
-- **`is_beheerder()` en `is_eigenaar()` moeten hem meerekenen.** Anders heeft hij
-  minder rechten dan de eigenaar in plaats van meer.
-- **Niemand mag hem maken of wijzigen.** In `persoon_wijziging_bewaken()` erbij:
-  een rij met deze rol is voor iedereen verboden terrein, en de rol is niet uit
-  te delen. Hij ontstaat één keer via de sql-editor met de servicesleutel, en dat
-  is de enige weg.
-- **Het logboek verraadt hem.** `mutaties` bewaart wie er iets wijzigde, en de
-  bazenschermen zetten daar een naam bij. Een naam die niet gelezen mag worden
-  wordt een leeg vakje of een los id, en dát valt op. Er moet dus één keer
-  besloten worden wat er dan staat -- "systeem" is het eerlijkste dat nog
-  onzichtbaar is -- en dat moet overal hetzelfde zijn.
-- **Zijn gebruikersnaam is uniek.** Probeert de eigenaar ooit een account met
-  dezelfde naam te maken, dan krijgt hij "al in gebruik" voor iets wat hij niet
-  ziet. Neem een naam die niemand kiest.
-
-### En tot die tijd: de achterdeur zelf
-
-Dit is één keer echt gebeurd, tijdens fase 10, en dan wil je niet gaan zoeken.
-Sluit je jezelf buiten, dan zet je in de SQL-editor een nieuw wachtwoord:
+Ook met een superadmin, want die kan zelf ook buiten staan — en in een verse
+installatie bestaat hij nog niet. Dit is één keer echt gebeurd, tijdens fase 10,
+en dan wil je niet gaan zoeken. Sluit je jezelf buiten, dan zet je in de
+SQL-editor een nieuw wachtwoord:
 
 ```sql
 select p.naam, p.gebruikersnaam, u.email

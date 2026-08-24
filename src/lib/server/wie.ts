@@ -1,4 +1,4 @@
-import type { Rol } from '$lib/model';
+import { isEigenaarRol, magBeherenRol, type Rol } from '$lib/model';
 
 export type Ik = {
 	id: string;
@@ -11,11 +11,11 @@ export type Ik = {
 	telefoon: string | null;
 };
 
-/** Mag deze persoon beheren? Manager en eigenaar allebei. */
-export const magBeheren = (ik: Ik | null) => ik?.rol === 'manager' || ik?.rol === 'eigenaar';
+/** Mag deze persoon beheren? Manager, eigenaar en superadmin. */
+export const magBeheren = (ik: Ik | null) => magBeherenRol(ik?.rol);
 
 /** De boekhouding is van de eigenaar. Zie de uitleg in rollen.sql. */
-export const isEigenaar = (ik: Ik | null) => ik?.rol === 'eigenaar';
+export const isEigenaar = (ik: Ik | null) => isEigenaarRol(ik?.rol);
 
 /**
  * Wie ben ik volgens `personen`?

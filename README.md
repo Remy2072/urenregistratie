@@ -16,6 +16,7 @@ Achtergrond en beslissingen staan in `docs/`:
 | `docs/herstel.sql` | Herstelcodes voor "wachtwoord vergeten" (fase 13, uitgebreid in 16) |
 | `docs/ruilen.sql` | Ruilverzoeken: gericht of open in de groepsapp (fase 14) |
 | `docs/agenda.sql` | Agendalinks voor het ics-abonnement (fase 15) |
+| `docs/superadmin.sql` | De rol die niemand ziet (fase 17). Draai hem **als laatste** |
 
 ## Draaien
 

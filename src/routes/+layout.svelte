@@ -2,6 +2,7 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
+	import { isEigenaarRol, magBeherenRol } from '$lib/model';
 	import { datumLang, dagNaam, isoWeek } from '$lib/tijd';
 	import type { LayoutData } from './$types';
 
@@ -21,8 +22,8 @@
 
 	let pad = $derived(page.url.pathname);
 	let titel = $derived(titels[pad] ?? 'Urenregistratie');
-	let beheerder = $derived(data.ik?.rol === 'manager' || data.ik?.rol === 'eigenaar');
-	let eigenaar = $derived(data.ik?.rol === 'eigenaar');
+	let beheerder = $derived(magBeherenRol(data.ik?.rol));
+	let eigenaar = $derived(isEigenaarRol(data.ik?.rol));
 </script>
 
 <svelte:head>

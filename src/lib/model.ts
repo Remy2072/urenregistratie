@@ -19,8 +19,55 @@ export type Tijdstip = string;
 /**
  * Een rangorde, geen lijstje. De eigenaar staat boven de manager: die kan
  * alles behalve de export, en kan geen eigenaar aanraken.
+ *
+ * En daarboven staat de superadmin, voor de bouwer. Die staat hier omdat het
+ * type moet kloppen -- niet omdat de app hem ergens aanbiedt. Hij ontstaat
+ * alleen in de sql-editor en is voor iedereen behalve zichzelf onzichtbaar; zie
+ * `superadmin.sql`.
  */
-export type Rol = 'medewerker' | 'manager' | 'eigenaar';
+export type Rol = 'medewerker' | 'manager' | 'eigenaar' | 'superadmin';
+
+/**
+ * De vragen die de app over een rol stelt, op één plek.
+ *
+ * Ze staan hier en niet in `server/wie.ts`, omdat de layout ze ook in de
+ * browser nodig heeft. En ze staan naast elkaar zodat je bij een nieuwe rol
+ * één keer hoeft na te denken in plaats van vier keer te zoeken.
+ *
+ * Elk heeft een tegenhanger in de database -- is_beheerder(), is_eigenaar(),
+ * is_superadmin() en de check in ruilkandidaten(). Deze kant is opruiming; die
+ * kant is de beveiliging.
+ */
+export const magBeherenRol = (rol: Rol | undefined) =>
+	rol === 'manager' || rol === 'eigenaar' || rol === 'superadmin';
+
+/** De boekhouding is van de eigenaar, en van wie boven hem staat. */
+export const isEigenaarRol = (rol: Rol | undefined) =>
+	rol === 'eigenaar' || rol === 'superadmin';
+
+/**
+ * Wie er ingeroosterd wordt.
+ *
+ * Een eigenaar niet: hij bevestigt en exporteert, en dat verhoudt zich slecht
+ * tot zijn eigen uren goedkeuren. Een superadmin niet: die bestaat officieel
+ * niet en hoort in geen enkel rooster.
+ *
+ * Onbekend is ook nee. Dat is niet netjesheid maar een gat dat er echt zat: een
+ * rol die je niet mag lezen komt hier als `undefined` aan, en `!== 'eigenaar'`
+ * zei daar vrolijk ja tegen.
+ */
+export const wordtIngeroosterd = (rol: Rol | string | undefined) =>
+	rol === 'medewerker' || rol === 'manager';
+
+/**
+ * De onzichtbare rol.
+ *
+ * Hier hangen geen rechten aan -- die lopen via de twee hierboven, precies
+ * zoals in de database. Deze is er alleen om het op /ik één keer te kunnen
+ * zeggen, want een rol waarvan nergens iets te zien is, is ook niet na te
+ * kijken.
+ */
+export const isSuperadminRol = (rol: Rol | string | undefined) => rol === 'superadmin';
 
 export type Status =
 	| 'verwacht' // uitgerold uit het sjabloon

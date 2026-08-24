@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import type { Persoon } from '$lib/model';
+import { wordtIngeroosterd, type Persoon } from '$lib/model';
 import { magBeheren, wieBenIk } from '$lib/server/wie';
 import { korteTijd, maandagVan, nuInNederland, plusDagen } from '$lib/tijd';
 
@@ -48,11 +48,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const [personen, posten, dienstsoorten] = beheerder
 		? await Promise.all([
 				// Een eigenaar wordt niet ingeroosterd: hij bevestigt en exporteert,
-				// en dat verhoudt zich slecht tot zijn eigen uren goedkeuren.
+				// en dat verhoudt zich slecht tot zijn eigen uren goedkeuren. Een
+				// superadmin al helemaal niet -- RLS verbergt hem toch al voor
+				// iedereen, en dit is de regel voor het enige oog dat hem wél ziet:
+				// dat van hemzelf.
 				supabase
 					.from('personen')
 					.select('id, naam, rol, actief')
-					.neq('rol', 'eigenaar')
+					.not('rol', 'in', '("eigenaar","superadmin")')
 					.order('naam'),
 				supabase.from('posten').select('id, naam, volgorde').eq('actief', true).order('volgorde'),
 				supabase
@@ -117,6 +120,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
  * De keuzelijsten laten een eigenaar niet zien, maar een formulier is zo
  * nagemaakt -- en dit is precies het soort regel waar iemand omheen zou
  * kunnen werken.
+ *
+ * Hier stond `data?.rol !== 'eigenaar'`, en dat was een gat: een rij die je
+ * niet mag lezen komt als null terug, en dan was het antwoord ja. Sinds er een
+ * onzichtbare rol bestaat (fase 17) is dat geen theorie meer. wordtIngeroosterd
+ * zegt nee bij onbekend, en dat is hier de juiste kant om op te vallen.
  */
 async function magRijden(locals: App.Locals, persoon_id: string) {
 	if (!persoon_id) return true;
@@ -125,7 +133,7 @@ async function magRijden(locals: App.Locals, persoon_id: string) {
 		.select('naam, rol')
 		.eq('id', persoon_id)
 		.maybeSingle();
-	return data?.rol !== 'eigenaar';
+	return wordtIngeroosterd(data?.rol);
 }
 
 /** diensten_post_bezet en diensten_persoon_bezet, in gewone taal. */

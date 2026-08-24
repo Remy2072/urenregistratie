@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
+	import { isSuperadminRol, magBeherenRol } from '$lib/model';
 	import { telefoonTekst } from '$lib/telefoon';
 	import { kanPasskey, maakPasskey, passkeyFout } from '$lib/passkey';
 	import { datumKort } from '$lib/tijd';
@@ -10,7 +11,12 @@
 
 	// Als beheerder zie je de hele ploeg, als bezorger alleen jezelf. Dat
 	// verschil is precies wat de policies doen.
-	let beheerder = $derived(data.persoon?.rol === 'manager' || data.persoon?.rol === 'eigenaar');
+	let beheerder = $derived(magBeherenRol(data.persoon?.rol));
+
+	// En dit is de enige regel in de hele app die toegeeft dat de onzichtbare
+	// rol bestaat. Hij staat er omdat je anders niet kunt nazien of het werkt --
+	// en omdat je moet weten met welk account je ingelogd bent.
+	let superadmin = $derived(isSuperadminRol(data.persoon?.rol));
 
 	// Hetzelfde oogje als op het inlogscherm: je typt hier een wachtwoord dat je
 	// nog niet kent uit je hoofd.
@@ -374,7 +380,11 @@
 		</div>
 
 		<p class="notitie">
-			{#if beheerder}
+			{#if superadmin}
+				Je ziet alles, en niemand ziet jou: je staat in geen enkele lijst, ook niet in die van de
+				eigenaar. Je wordt nergens ingeroosterd en je bent de enige die iemand echt kan
+				verwijderen. Dit is de enige regel in de app die dat zegt.
+			{:else if beheerder}
 				Je ziet de hele ploeg en alle diensten. Dat hoort: je bent beheerder.
 			{:else if data.persoon}
 				Eén persoon — jezelf — en van het sjabloon alleen jouw eigen vaste dagen. De ploeg staat er
