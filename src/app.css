@@ -267,6 +267,45 @@ button.primair {
 	margin-top: 0.5rem;
 }
 
+/* De twee uitrolknoppen op het sjabloonscherm: per week een kaartje met
+   wat er staat, en de knop eronder. Onder elkaar, want dit scherm wordt
+   op een telefoon bediend. */
+.weken {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	margin-top: 0.75rem;
+}
+
+.weken form {
+	border: 1px solid var(--rand);
+	border-radius: var(--radius);
+	padding: 0.75rem;
+}
+
+.weken .week {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	margin-bottom: 0.6rem;
+}
+
+.weken button {
+	width: 100%;
+}
+
+/* Eén regel uit het rapport na het uitrollen. */
+.uitrolregel {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	font-size: 0.9rem;
+	padding: 0.35rem 0;
+	border-top: 1px solid var(--rand);
+}
+
 .stelrij button {
 	flex: 1;
 	font-variant-numeric: tabular-nums;

@@ -3,6 +3,16 @@ import type { Actions, PageServerLoad } from './$types';
 import { magBeheren, wieBenIk } from '$lib/server/wie';
 import { korteTijd, maandagVan, nuInNederland, plusDagen } from '$lib/tijd';
 
+/** Eén regel uit het rapport van rol_week_uit(). */
+export type UitrolRegel = {
+	datum: string;
+	post: string;
+	persoon: string;
+	begintijd: string;
+	eindtijd: string;
+	resultaat: string;
+};
+
 export type SjabloonRegel = {
 	id: string;
 	weekdag: number;
@@ -22,7 +32,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (!magBeheren(ik)) return { nu, beheerder: false };
 
 	const supabase = locals.supabase!;
-	const [regels, posten, personen, dienstsoorten] = await Promise.all([
+
+	// Wat staat er al? Zonder dit is "uitrollen" een knop waarvan je de
+	// uitkomst niet kunt zien zonder naar een ander scherm te gaan.
+	const dezeMaandag = maandagVan(nu.datum);
+	const volgende = plusDagen(dezeMaandag, 7);
+	const telWeek = (maandag: string) =>
+		supabase
+			.from('diensten')
+			.select('id', { count: 'exact', head: true })
+			.gte('datum', maandag)
+			.lte('datum', plusDagen(maandag, 6));
+
+	const [regels, posten, personen, dienstsoorten, dezeWeek, volgendeWeek] = await Promise.all([
 		supabase
 			.from('sjabloon_regels')
 			.select(
@@ -38,16 +60,21 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.eq('actief', true)
 			.neq('rol', 'eigenaar')
 			.order('naam'),
-		supabase.from('dienstsoorten').select('id, naam, begintijd, eindtijd').eq('actief', true).order('begintijd')
+		supabase.from('dienstsoorten').select('id, naam, begintijd, eindtijd').eq('actief', true).order('begintijd'),
+		telWeek(dezeMaandag),
+		telWeek(volgende)
 	]);
 
 	return {
 		nu,
 		beheerder: true,
+		dezeMaandag,
 		// Wijzigingen gaan in vanaf een maandag, want dat is wanneer de uitrol
 		// draait. Deze week staat er al, dus volgende week is de eerste die je
 		// nog kunt sturen.
-		volgendeMaandag: plusDagen(maandagVan(nu.datum), 7),
+		volgendeMaandag: volgende,
+		dienstenDezeWeek: dezeWeek.count ?? 0,
+		dienstenVolgendeWeek: volgendeWeek.count ?? 0,
 		regels: ((regels.data ?? []) as SjabloonRegel[]).map((r) => ({
 			...r,
 			dienstsoorten: r.dienstsoorten
@@ -187,5 +214,45 @@ export const actions: Actions = {
 		const { error } = await locals.supabase!.from('sjabloon_regels').delete().eq('id', id);
 		if (error) return fail(400, { fout: vertaal(error.message) });
 		return { gedaan: 'verwijderd' };
+	},
+
+	/**
+	 * De week uitrollen: van sjabloon naar diensten.
+	 *
+	 * Dit was tot nu toe het enige dat alleen in de SQL-editor kon, en dat is
+	 * precies één handeling te veel -- de eigenaar hoort geen databasedashboard
+	 * nodig te hebben om zijn eigen rooster neer te zetten.
+	 *
+	 * Er zit geen bevestiging omheen en dat is met opzet: `rol_week_uit()` doet
+	 * alleen inserts, slaat over wat er al staat, en laat gemelde of geannuleerde
+	 * diensten met rust. Twee keer drukken kan dus niets stukmaken. Wat hij deed
+	 * geeft hij terug als rapport, en dat tonen we regel voor regel -- een uitrol
+	 * die zwijgend slaagt is enger dan één die vertelt wat hij oversloeg.
+	 *
+	 * De rolcheck staat in de functie zelf (`is_beheerder()`), dus die hoeft
+	 * hier niet nog eens -- maar de vroege uitstap geeft wel een leesbaardere
+	 * fout dan de database zou doen.
+	 */
+	uitrollen: async ({ request, locals }) => {
+		if (!(await alleenBeheerder(locals))) return fail(403, { fout: 'Alleen een beheerder.' });
+
+		const maandag = tekst(await request.formData(), 'maandag');
+		if (!/^\d{4}-\d{2}-\d{2}$/.test(maandag)) return fail(400, { fout: 'Geef een maandag.' });
+
+		const { data, error } = await locals.supabase!.rpc('rol_week_uit', { week_van: maandag });
+		if (error) return fail(400, { fout: error.message });
+
+		const rapport = ((data ?? []) as UitrolRegel[]).map((r) => ({
+			...r,
+			begintijd: korteTijd(r.begintijd)!,
+			eindtijd: korteTijd(r.eindtijd)!
+		}));
+
+		return {
+			gedaan: 'uitgerold',
+			maandag,
+			nieuw: rapport.filter((r) => r.resultaat === 'nieuw').length,
+			rapport
+		};
 	}
 };

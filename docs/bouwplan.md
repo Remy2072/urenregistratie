@@ -75,6 +75,7 @@ voren omdat er nu iets van afhangt.
 | 16 | Herstel op je nummer ✅ | Je gebruikersnaam vergeten is geen doodlopende weg | 1 avond |
 | 17 | Superadmin ✅ | Support zonder het dashboard, en zonder in de ploeg te staan | 1 avond |
 | 18 | De showcase ⏳ | Live installatie om te testen, te tonen en te verkopen. Gaat vóór fase 7 | 1 weekend |
+| 19 | Week uitrollen met een knop ✅ | De laatste handeling die alleen in de SQL-editor kon | 1 avond |
 
 **De nummers zijn niet de volgorde, en ze worden ook niet hernummerd.** Ze volgen
 wanneer een fase bedacht is. Fase 0 tot en met 6 zijn ook in die volgorde
@@ -1976,6 +1977,74 @@ De demodata is het meeste werk en het minst technische; de rest is
 **Klaar als:** een vreemde de app op zijn eigen telefoon kan openen, inloggen, en
 een week aan diensten ziet die er echt uitziet — en jij hem daarna met één
 opdracht terugzet naar de begintoestand.
+
+---
+
+## Fase 19 — De week uitrollen met een knop ✅
+
+**Doel:** de eigenaar heeft het Supabase-dashboard niet meer nodig om zijn eigen
+rooster neer te zetten.
+
+Dit was het laatste dat alleen in de SQL-editor kon: elke maandag
+`select rol_week_uit();` intikken. Eén handeling te veel — bij een abonnement
+waar de bouwer na half november 2026 niet meer naast zit, is dat geen
+ongemak maar een afhankelijkheid.
+
+### De database was er al op gebouwd
+
+Vandaar dat dit een avond was en geen weekend. `weegeneratie.sql` uit fase 3 had
+alles al:
+
+- **Geen `security definer`.** De functie draait met de rechten van wie hem
+  aanroept en loopt gewoon tegen row level security aan, net als elk scherm.
+- **De rolcheck zat er al in.** `if auth.uid() is not null and not is_beheerder()`
+  — een medewerker krijgt "Alleen een beheerder rolt een week uit". Dat de check
+  `auth.uid() is not null` gebruikt is precies waarom hij zowel voor cron (geen
+  gebruiker) als voor een knop (wel een gebruiker) werkt.
+- **`grant execute … to authenticated` stond er.** Er hoefde geen recht bij.
+- **Hij geeft terug wat hij deed**, als tabel met datum, post, persoon, tijden en
+  een `resultaat` per regel.
+
+### Waarom er geen bevestiging omheen zit
+
+`rol_week_uit()` doet alleen inserts. Hij slaat over wat er al staat, laat
+gemelde diensten met rust, en zet een annulering van de baas niet stilletjes
+terug — dat laatste is expres zo gebouwd in fase 3. **Twee keer drukken kan dus
+niets stukmaken, en daarom mag dit een knop zijn.** Een knop die bij een tweede
+druk iets sloopt hoort geen knop te zijn maar een dialoog.
+
+Om diezelfde reden is de droogloop (`sjabloon_slots()`) er niet als aparte
+voorbeeldknop bij gekomen, al stond dat wel in het idee. Het rapport achteraf
+zegt hetzelfde en scheelt een schermtoestand.
+
+### Wat je ziet
+
+Op `/beheer/sjabloon`, onder de uitleg: twee kaartjes, deze week en volgende
+week, met per week hoeveel diensten er al staan. Staat er nog niets, dan is de
+knop de primaire; staat er al iets, dan is hij gewoon een knop. Dat verschil is
+het hele "moet ik nog iets doen"-antwoord.
+
+Na het drukken komt het rapport eronder, regel voor regel. Groen is wat erbij
+kwam, rood is een gat dat je moet oplossen — iemand op non-actief die nog in het
+sjabloon staat, of iemand die die dag al ergens anders rijdt. Amber stond er
+gewoon al. **Een uitrol die zwijgend slaagt is enger dan één die vertelt wat hij
+oversloeg.**
+
+### De knop is niet genoeg, en dat blijft staan
+
+`projectoverzicht.md` zegt: *"nu moet je iets doen om betaald te worden. Straks
+hoef je alleen iets te doen als de werkelijkheid afweek van het rooster."* Een
+knop die iemand elke maandag moet indrukken zet dat terug — vergeet hij het, dan
+staat de ploeg maandag voor een leeg scherm.
+
+**`pg_cron` blijft dus het plan.** De knop is voor het moment dat je het sjabloon
+wijzigt en het nú wil zien, en voor als de cron een keer niet liep. De telling
+per week is wat je laat zien dát het gebeurd is, zonder ergens anders te kijken.
+
+Eén handeling blijft in de SQL-editor: die cron één keer aanzetten. Dat is
+installatiewerk en staat in `installatie.md`, niet in het wekelijkse ritme.
+
+**Klaar als:** je op je telefoon een week kunt uitrollen en ziet wat hij deed.
 
 ---
 

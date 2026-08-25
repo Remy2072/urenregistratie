@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import Merk from '$lib/componenten/Merk.svelte';
-	import { datumKort, weekdagNaam } from '$lib/tijd';
+	import { dagKort, datumKort, weekdagNaam } from '$lib/tijd';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -18,6 +18,17 @@
 	const afgelopen = $derived((data.regels ?? []).filter((r) => !loopt(r)));
 
 	let toont = $state<number | null>(null);
+
+	/**
+	 * De kleur bij een regel uit het uitrolrapport.
+	 *
+	 * Groen is wat er bij kwam, rood is een gat dat je moet oplossen — iemand
+	 * op non-actief die nog in het sjabloon staat, of iemand die die dag al
+	 * ergens anders rijdt. De rest stond er gewoon al en is dus amber: geen
+	 * fout, maar ook geen werk dat gedaan is.
+	 */
+	const kleurBij = (resultaat: string) =>
+		resultaat === 'nieuw' ? 'bevestigd' : resultaat.startsWith('overgeslagen') ? 'vervallen' : 'gemeld';
 </script>
 
 {#if form?.fout}
@@ -41,6 +52,75 @@
 			{datumKort(data.volgendeMaandag!)}.
 		</p>
 		<p><a href="/beheer">← Terug naar beheer</a></p>
+	</div>
+
+	<div class="blok">
+		<h2>De week neerzetten</h2>
+		<p class="detail">
+			Het sjabloon hierboven zijn regels; diensten zijn wat er die week écht staat. Deze knop
+			maakt van het eerste het tweede.
+		</p>
+
+		<div class="weken">
+			<form method="post" action="?/uitrollen" use:enhance>
+				<input type="hidden" name="maandag" value={data.dezeMaandag} />
+				<div class="week">
+					<span class="dag">Deze week</span>
+					<span class="detail">
+						maandag {datumKort(data.dezeMaandag!)} ·
+						{#if data.dienstenDezeWeek}
+							{data.dienstenDezeWeek} diensten
+						{:else}
+							nog niets
+						{/if}
+					</span>
+				</div>
+				<button class:primair={!data.dienstenDezeWeek}>Uitrollen</button>
+			</form>
+
+			<form method="post" action="?/uitrollen" use:enhance>
+				<input type="hidden" name="maandag" value={data.volgendeMaandag} />
+				<div class="week">
+					<span class="dag">Volgende week</span>
+					<span class="detail">
+						maandag {datumKort(data.volgendeMaandag!)} ·
+						{#if data.dienstenVolgendeWeek}
+							{data.dienstenVolgendeWeek} diensten
+						{:else}
+							nog niets
+						{/if}
+					</span>
+				</div>
+				<button class:primair={!data.dienstenVolgendeWeek}>Uitrollen</button>
+			</form>
+		</div>
+
+		<p class="notitie">
+			Twee keer drukken kan geen kwaad: wat er al staat blijft staan, en een dienst die gemeld
+			of geannuleerd is wordt niet teruggezet. Straks doet de app dit elke maandagnacht vanzelf.
+		</p>
+
+		{#if form?.gedaan === 'uitgerold'}
+			<div class="kaart">
+				<div class="regel">
+					<span class="dag">
+						{#if form.nieuw}
+							{form.nieuw} {form.nieuw === 1 ? 'dienst' : 'diensten'} erbij
+						{:else}
+							Niets nieuws — stond er al
+						{/if}
+					</span>
+					<span class="detail">week van {datumKort(form.maandag!)}</span>
+				</div>
+
+				{#each form.rapport ?? [] as r (r.datum + r.post + r.begintijd)}
+					<div class="uitrolregel">
+						<span>{dagKort(r.datum)} · {r.post} · {r.persoon}</span>
+						<Merk soort={kleurBij(r.resultaat)} tekst={r.resultaat} />
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</div>
 
 	{#each dagen as d (d)}

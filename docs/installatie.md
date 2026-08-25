@@ -127,9 +127,13 @@ bijna gebeurd.
 
 ### 8. De weekuitrol
 
-Draai `rol_week_uit()` de eerste weken met de hand. Is dat een paar weken saai
-geweest, dan mag cron het overnemen — de regel staat klaar onderaan
-`weekgeneratie.sql`.
+Dit doe je **in de app**: `/beheer/sjabloon` → "De week neerzetten" → Uitrollen.
+Twee knoppen, deze week en volgende week, met per week hoeveel diensten er al
+staan. Zie fase 19.
+
+Draai het de eerste weken met de hand. Is dat een paar weken saai geweest, dan
+mag cron het overnemen — de regel staat klaar onderaan `weekgeneratie.sql`, en
+dát is de enige keer dat je hiervoor nog in de SQL-editor komt.
 
 **Let op het tijdstip: `pg_cron` rekent in de tijdzone van de database.** Maandag
 00:00 Nederlandse tijd is `0 1 * * 1` in de zomer. Staat de cron verkeerd, dan
