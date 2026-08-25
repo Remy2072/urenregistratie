@@ -9,6 +9,7 @@ Achtergrond en beslissingen staan in `docs/`:
 |---|---|
 | `docs/projectoverzicht.md` | Wat het wordt en waarom, en wat we bewust niet bouwen |
 | `docs/bouwplan.md` | De fases, met per fase een "klaar als" |
+| `docs/installatie.md` | Een nieuwe klant opzetten: accounts, de volgorde van de sql, en het papierwerk |
 | `docs/schema.sql` | Het datamodel, inclusief rechten. Voor elk bedrijf hetzelfde |
 | `docs/startdata.sql` | Posten, diensten en het weekrooster. Het enige dat per bedrijf verschilt |
 | `docs/weekgeneratie.sql` | De wekelijkse uitrol van het sjabloon naar diensten |

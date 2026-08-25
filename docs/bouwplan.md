@@ -606,14 +606,17 @@ per zaak ook eerlijker.
 De afstand is klein, want het schema was al generiek: er staat `post` en geen
 `bus`, en niets bedrijfsspecifieks in de structuur. Wat er nog moet gebeuren:
 
-- **De naam uit de code.** Nu staat "Urenregistratie" hard in `+layout.svelte`.
-  Bedrijfsnaam, kleur en favicon horen in één configuratiebestand.
+- **De naam uit de code.** Nu staat "Bon" hard in `+layout.svelte`.
+  Hier stond dat bedrijfsnaam, kleur en favicon in één configuratiebestand horen.
+  **Dat is achterhaald (2026-08-25):** zie "De bedrijfspagina" in `ideeen.md`. Ze
+  gaan naar de database, want een omgevingsvariabele betekent dat de eigenaar ons
+  moet bellen om zijn eigen bedrijfsnaam te wijzigen.
 - **`schema-test.sql` losmaken van de data.** Die zoekt nu `'Bus 2'` en
   `'vroeg'` op naam op. Bij een bedrijf met andere posten faalt hij op iets wat
   niet stuk is. Laat hem pakken wat er is in plaats van wat hij verwacht.
-- **Een installatiehandleiding.** Zes stappen: schema, startdata,
-  weekgeneratie, logins koppelen, `.env`, deploy. Als jij het over een half jaar
-  opnieuw doet ben je die volgorde kwijt.
+- ~~**Een installatiehandleiding.**~~ **Gedaan (2026-08-25): `installatie.md`.**
+  Van niets naar een draaiende installatie, met de volgorde van de sql-bestanden
+  en de twee plekken waar die volgorde niet vrij is.
 - **De afrondregel als keuze.** Halve uren zitten in `is_half_uur()` en de
   richting staat als afspraak op het scherm. Een ander bedrijf werkt misschien
   met kwartieren. Dat is één functie en één regel tekst — maar wel op twee
@@ -622,19 +625,27 @@ De afstand is klein, want het schema was al generiek: er staat `post` en geen
 ### Wat je per bedrijf nodig hebt
 
 *Opgeschreven toen de vraag kwam wat er eigenlijk aan diensten onder deze app
-hangt. Drie dingen, en een vierde alleen als de sms-ideeën er komen.*
+hangt. De stappen zelf staan in `installatie.md`; hier staat alleen wat het is en
+wat het kost.*
 
 | Wat | Per bedrijf? | Kost | Op wiens account |
 |---|---|---|---|
-| **Deze repo** | Nee, één voor allemaal | — | Jij, en na de verkoop de baas |
-| **Vercel** | Ja, één project | Hobby is niet voor commercieel gebruik; reken op het betaalde plan | De baas |
-| **Supabase** | Ja, één project | Gratis werkt; betaald geeft backups | De baas |
-| **Bird** | Alleen mét de sms-ideeën | Per bericht | De baas |
+| **Deze repo** | Nee, één voor allemaal | — | Jij |
+| **Vercel** | Ja, één project | Hobby is niet voor commercieel gebruik; reken op het betaalde plan | Jij |
+| **Supabase** | Ja, één project | Betaald, want backups | Jij |
+| **Bird** | Nee, één voor allemaal | Per bericht, gedeeld tegoed | Jij |
 
-**Alles op zijn account, niet op jouw.** Voor Supabase stond dat er al; het geldt
-net zo voor Vercel en Bird. Anders ben je na je vertrek nog steeds de beheerder
-van de loongegevens van een bedrijf waar je niet meer werkt — precies het bezwaar
-dat bij het superadmin-idee in `ideeen.md` staat.
+**Alles op jouw account, en de klant maakt nergens iets aan.** Hier stond het
+omgekeerde: alles op de account van de baas, want de bouwer vertrekt. **Dat is
+achterhaald (2026-08-25).** Fase 17 heeft die keuze al gemaakt — dit wordt een
+saas-abonnement en geen verkoop per installatie, dus de sleutels van elk
+Supabase-project blijven permanent bij ons. Dat is model A hieronder, maar dan op
+jouw account in plaats van dat van de klant.
+
+Wat het oude bezwaar waard was blijft staan en verhuist alleen: je bent na je
+vertrek de beheerder van andermans loongegevens. Bij een verkoop was dat een fout;
+bij een abonnement is het het product, en dan hoort er een verwerkersovereenkomst
+tegenover te staan. Zie "Wat het met de overdracht doet" verderop.
 
 **Backups zijn de reden om voor Supabase te betalen.** Hier staan de uren waarop
 mensen worden uitbetaald. Dat is een ander soort verlies dan een website die een
@@ -729,15 +740,15 @@ is jouw naam en niet die van de klant.
 
 ### Wat het met de overdracht doet
 
-Dit staat hier omdat het de rest van dit plan omdraait. Overal elders geldt:
-alles op de account van de baas, want de bouwer vertrekt. Bij een SaaS ben jíj de
-eigenaar van de database met hun uren — en daarmee de verwerker van hun
-personeelsgegevens. Dan hoort er per klant een verwerkersovereenkomst te liggen,
-en dan kun je niet meer weglopen zonder overdracht.
+Dit stond hier als waarschuwing vooraf en is inmiddels de gekozen weg. Bij een
+SaaS ben jíj de eigenaar van de database met hun uren — en daarmee de verwerker
+van hun personeelsgegevens. Dan hoort er per klant een verwerkersovereenkomst te
+liggen, en dan kun je niet meer weglopen zonder overdracht.
 
 Dat is geen technisch punt en het staat hier ook niet om je tegen te houden. Het
-is een ander product dan "geïnstalleerd en verkocht", en dat wil je weten voordat
-de eerste klant belt.
+is een ander product dan "geïnstalleerd en verkocht", en dat is precies wat het
+geworden is — zie fase 17. Het papierwerk dat erbij hoort staat als losse stap in
+`installatie.md`, want het is geen code en wordt daarom vergeten.
 
 **Klaar als:** je een tweede bedrijf hebt opgezet en de enige bestanden die je
 hebt aangeraakt `startdata.sql` en het configuratiebestand zijn.
