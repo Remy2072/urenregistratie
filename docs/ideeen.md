@@ -141,3 +141,122 @@ instellingentabel die de helft van de instellingen kent, en een fase 8 die er
 alsnog omheen moet.
 
 ---
+
+## De showcase
+
+Eén live installatie op een verzonnen bedrijf, die drie dingen tegelijk doet:
+jij test het product in het echt, een prospect ziet werkende software in plaats
+van een verhaal, en vrienden hebben een account waarmee ze het als gewone
+gebruiker gebruiken.
+
+**Hij komt vóór fase 7, en dat is het hele argument.** Dit is de eerste echte
+doorloop van `installatie.md`: de hele checklist één keer voor een bedrijf dat
+niet boos kan worden. Klopt de volgorde van de sql? Werkt de deploy? Doen
+passkeys het op een echt domein? Dat wil je weten vóórdat de eerste klant
+meekijkt, niet tijdens.
+
+### Niet de ontwikkeldatabase leegmaken
+
+De verleiding is om dit Supabase-project leeg te gooien en er de showcase van te
+maken. Doe dat niet: dan vraag je één omgeving om drie dingen die elkaar bijten.
+
+| | Wil | Botst met |
+|---|---|---|
+| **Testomgeving** | Kapot mogen zijn | Een prospect die dinsdagochtend meekijkt |
+| **Showcase** | Altijd staan en er goed uitzien | Jij die aan fase 8 bouwt, en dus aan het schema |
+| **Vrienden als echte user** | Data die blijft staan | Een demo die je wil kunnen resetten |
+
+**Twee Supabase-projecten dus, allebei gratis.** Backups zijn er voor de
+loongegevens van echte klanten, niet voor een demo — daar valt de kostenreden
+weg. Dit project blijft de breekbare ontwikkeldatabase; de showcase wordt een
+nieuw project, en daarmee gewoon klant nul in het model van fase 8.
+
+**Bijvangst.** Een gratis Supabase-project gaat na zeven dagen stilte in de
+pauzestand, en een demo die slaapt als er iemand kijkt is dood. Vrienden die hem
+echt gebruiken houden hem wakker. Dat is een argument vóór het vriendenplan en
+geen bijzaak.
+
+### De demodata is het werk
+
+Dit is het stuk dat bepaalt of de demo verkoopt, en het is meer dan
+`startdata.sql` met andere namen. **Een lege demo is een slechte demo:**
+`/overzicht` zonder afwijkingen is een leeg scherm en `/export` zonder
+bevestigde diensten levert een leeg bestand — precies de twee schermen waar de
+baas op let.
+
+Dus een `demodata.sql` met een week of zes geschiedenis. Niet willekeurig
+gevuld, maar **rond het verhaal dat verkoopt**: iemand die langer doorwerkte,
+een ruil die via de groepsapp rondging, een late melding, en vooral iemand die
+zijn dienst vergat en hem de dag erna alsnog invulde. Dat laatste is het hele
+product — eindigt de demo daarop, dan heb je het uitgelegd zonder een woord.
+
+**Resetbaar, en zeg dat tegen je vrienden.** Na drie demo's en vier vrienden is
+het een rommeltje, dus `demodata.sql` moet leeggooien en opnieuw vullen. Weten
+je vrienden dat niet, dan is het geen demo meer maar een applicatie met
+gebruikers, en dan kun je niet meer resetten.
+
+### Wat er omheen moet
+
+- **Een demo-strook op elk scherm.** "Dit is een demo, deze mensen bestaan
+  niet." Voorkomt dat een prospect denkt dat hij echte loongegevens ziet, en
+  voorkomt dat jij ooit de verkeerde installatie openhebt.
+- **De reset als superadminknop.** Die rol bestaat al en is onzichtbaar (fase
+  17). Dit past er precies in, en het is meteen de eerste keer dat hij iets
+  nuttigs doet.
+- **De leesstand hergebruiken.** Het idee bovenaan dit bestand is bedoeld voor
+  wanbetalers, maar het is exact wat je wil als een prospect na het gesprek zelf
+  mag rondklikken: alles zien, niets stuk kunnen maken.
+- **Niet Tjon.** Verzonnen bedrijf, verzonnen namen. Een prospect de data van je
+  eerste klant laten zien is het verkeerde signaal, ook als het maar bussen zijn.
+- **Telefoonnummers alleen als iemand het wil.** Sms-herstel wil een echt
+  nummer, en dat is meteen het enige echte persoonsgegeven in de hele demo.
+- **Het domein ligt vast zodra de eerste vriend zich aanmeldt.** Passkeys hangen
+  aan het domein; verhuizen betekent dat iedereen zich opnieuw aanmeldt.
+
+### De verkooproute
+
+1. Showcase live — de eerste doorloop van `installatie.md`
+2. Demo aan Tjon
+3. Ja → Tjon is klant 1, en dan draai je de installatie voor de tweede keer, met
+   stappen die al bewezen zijn
+4. Dubbel bijhouden blijft, maar het is nu onboarding en geen bouwfase
+
+**Voor Tjon doet de demo iets anders dan voor de rest.** Tjon hoeft niet
+overtuigd te worden dát het bonnetje een probleem is — dat weten ze. Voor hen
+bewijst de demo dat het wérkt. Bij een vreemde prospect moet hetzelfde scherm
+ook nog het probleem verkopen. Twee gesprekken, één demo.
+
+### Wat verkopen nodig heeft en er nog niet is
+
+- **Een prijs.** De bodem is bekend: een betaald Supabase-project per klant
+  (reken op ongeveer $25 per maand), plus je Vercel-team, plus sms. Onder de €50
+  per maand houd je niets over.
+- **Een verwerkersovereenkomst.** Staat al in `installatie.md`. Zonder dat kun je
+  niet verkopen — niet omdat het niet mag, maar omdat je het bij de eerste vraag
+  erover niet hebt.
+- **Wat er wel en niet bij zit.** Fase 7 zegt dat al.
+- **Wat er gebeurt als jij stopt.** Dit is de enige die echt spannend is.
+
+**Die laatste is urgent geworden in plaats van theoretisch.** Verkoop je Tjon een
+gehost abonnement, dan zeg je toe dat je hun loonadministratie blijft draaien
+nadat je daar weg bent. Dat is niet fout — het is precies de saas-keuze uit fase
+17 — maar het contract moet zeggen wat er gebeurt als je ermee ophoudt.
+
+Het goede nieuws: het antwoord is half af. De export werkt, en bij de leesstand
+staat al besloten dat wie opzegt zijn eigen uren mee mag nemen. Dat is de
+exit-clausule, en hij zit al in de app. Wat er nog omheen moet is een regel of
+drie: opzegtermijn, hoe ze hun data krijgen, en wat er met de installatie gebeurt
+als jij ermee stopt.
+
+### Volgorde
+
+Na de Vercel-deploy, want zonder deploy is er niets om te showen. Vóór fase 7.
+De demodata is het meeste werk en het minst technische; de rest is
+`installatie.md` volgen.
+
+**Dit is fase 18 geworden (2026-08-25).** Bovenaan dit bestand staat dat iets
+pas gebeurt als het een fase in `bouwplan.md` wordt, en fase 7 verwees hier al
+naar als iets dat eraan voorafgaat — dan is het een belofte en geen idee meer.
+Wat hier staat blijft de uitwerking; de fase zegt wat er af moet zijn.
+
+---

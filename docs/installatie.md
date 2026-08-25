@@ -150,6 +150,12 @@ als code.
   contract — zie `ideeen.md`.
 - **Wat er wel en niet bij zit.** Fase 7 zegt dat al voor de eerste klant; vanaf
   klant twee is het een abonnementsvoorwaarde.
+- **Wat er gebeurt als jij stopt.** Een gehost abonnement is een toezegging dat
+  je hun loonadministratie blijft draaien, ook nadat je bij die klant weg bent.
+  Het antwoord is half af: de export werkt, en bij de leesstand in `ideeen.md`
+  staat al besloten dat wie opzegt zijn eigen uren mee mag nemen. Wat er nog
+  omheen moet is een regel of drie — opzegtermijn, hoe ze hun data krijgen, en
+  wat er met de installatie gebeurt als jij ermee ophoudt.
 
 ---
 

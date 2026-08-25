@@ -74,6 +74,19 @@ voren omdat er nu iets van afhangt.
 | 15 | Agenda ✅ | Je diensten in de agenda die je al open hebt | 1 avond |
 | 16 | Herstel op je nummer ✅ | Je gebruikersnaam vergeten is geen doodlopende weg | 1 avond |
 | 17 | Superadmin ✅ | Support zonder het dashboard, en zonder in de ploeg te staan | 1 avond |
+| 18 | De showcase | Live installatie om te testen, te tonen en te verkopen. Gaat vóór fase 7 | 1 weekend |
+
+**De nummers zijn niet de volgorde.** Ze volgen wanneer een fase bedacht is, en
+0 tot en met 6 zijn ook zo gedaan. Daarna niet meer: fase 8 is bewust
+uitgesteld tot het bij één bedrijf echt werkt, en fase 18 moet er juist vóór.
+Wat er nog ligt, in de volgorde waarin je het doet:
+
+| | Wat | Waarom die plek |
+|---|---|---|
+| 1 | **Vercel-deploy** (zie Opruimen) | Zonder deploy is er niets om te tonen en kan niemand dubbel bijhouden |
+| 2 | **Fase 18** — de showcase | De generale repetitie van `installatie.md`, op een bedrijf dat niet boos kan worden |
+| 3 | **Fase 7** — installatie en overgang | Nu pas draait het bij een echte klant, met stappen die al bewezen zijn |
+| 4 | **Fase 8** — boilerplate | Een boilerplate van iets dat nog nooit een maand heeft gedraaid is een boilerplate van je aannames |
 
 Die schattingen zijn bouwtijd, geen kalendertijd. De website blijft prioriteit,
 dus reken op twee tot drie maanden doorlooptijd. Dat is prima: er is geen
@@ -582,6 +595,26 @@ Zet vóór deze fase op papier wat je oplevert en wat er ná oplevering wel en n
 bij zit. Je bent bezorger én bouwer van het systeem dat jouw uren registreert;
 dat wordt ongemakkelijk op het moment dat er discussie is over een dienst, en
 dat moment is precies het verkeerde om er dan pas over te beginnen.
+
+### Er komt iets vóór deze fase (2026-08-25)
+
+**Fase 18, de showcase**, uitgewerkt in `ideeen.md`. Eén live installatie op een
+verzonnen bedrijf: jij test er in het echt, een prospect ziet werkende software, en
+vrienden gebruiken hem als gewone gebruiker.
+
+Wat dat met deze fase doet is dat het de generale repetitie wordt. De hele
+`installatie.md` gaat één keer door voor een bedrijf dat niet boos kan worden —
+klopt de volgorde van de sql, werkt de deploy, doen passkeys het op een echt
+domein. Als je dat bij Tjon voor het eerst uitzoekt, is hij je testomgeving, en
+dat is precies wat drie alinea's hierboven staat als de fout die je niet wil
+maken.
+
+**En het verandert je rol, ten gunste.** De waarschuwing hierboven — bezorger én
+bouwer — wordt kleiner als je het verkoopt in plaats van oplevert. Met een demo,
+een prijs en een contract ben je een leverancier en geen collega die iets in
+elkaar zette. Dat is beter voor de discussie over die ene dienst, en het is de
+route die in `ideeen.md` staat: showcase, demo aan Tjon, ja, en dan pas deze
+fase. Het dubbel bijhouden blijft staan, maar het heet dan onboarding.
 
 **Klaar als:** de baas zegt dat de bonnetjes weg kunnen.
 
@@ -1728,6 +1761,43 @@ inloggen en alles ziet.
 
 > **Gedaan en gezien.** Ingelogd als de superadmin: alles zichtbaar. Ingelogd als
 > de eigenaar: hij staat er niet.
+
+---
+
+## Fase 18 — De showcase
+
+**Doel:** één live installatie op een verzonnen bedrijf, die tegelijk je
+testomgeving, je verkoopdemo en het speelveld voor je vrienden is.
+
+**Deze fase wordt vóór fase 7 uitgevoerd.** Het nummer volgt wanneer het idee
+landde, niet wanneer het aan de beurt is — net zoals fase 8 als laatste komt. De
+uitwerking staat in `ideeen.md` onder "De showcase"; hier staat wat er af moet
+zijn.
+
+**Waarom hij eerst komt.** Dit is de eerste echte doorloop van `installatie.md`,
+op een bedrijf dat niet boos kan worden. Klopt de volgorde van de sql, werkt de
+deploy, doen passkeys het op een echt domein? Zoek je dat bij Tjon uit, dan is hij
+je testomgeving — precies de fout waar fase 7 tegen waarschuwt.
+
+**De drie dingen die het moet worden**, en ze bijten elkaar, dus lees de tabel in
+`ideeen.md` voordat je begint: een testomgeving mag kapot, een demo nooit, en
+vrienden verwachten dat hun data blijft staan. De uitkomst daar is twee
+Supabase-projecten in plaats van één, allebei gratis — dit project blijft de
+breekbare ontwikkeldatabase.
+
+**Het meeste werk is `demodata.sql` en niet de installatie.** Een lege demo
+verkoopt niets: `/overzicht` zonder afwijkingen en `/export` zonder bevestigde
+diensten zijn twee lege schermen, en dat zijn nou net de twee waar de baas naar
+kijkt. Zes weken geschiedenis, opgebouwd rond het verhaal dat verkoopt, en
+opnieuw te draaien zodat je kunt resetten.
+
+**Wat er niet in zit:** de prijs, de verwerkersovereenkomst en de exit-clausule.
+Dat is geen bouwwerk maar papierwerk, en het staat als losse stap in
+`installatie.md`. Wel nodig voordat je fase 7 aan een betalende klant verkoopt.
+
+**Klaar als:** een vreemde de app op zijn eigen telefoon kan openen, inloggen, en
+een week aan diensten ziet die er echt uitziet — en jij hem daarna met één
+opdracht terugzet naar de begintoestand.
 
 ---
 
