@@ -71,7 +71,7 @@
 	// alleen maar mis.
 	//
 	// Een ochtendploeg of een nachtdienst zet ze anders. Ze horen daarom op de
-	// bedrijfspagina uit `ideeen.md`; zolang die er niet is, verander je ze hier.
+	// bedrijfspagina van fase 8; zolang die er niet is, verander je ze hier.
 	const VROEGSTE = '15:00';
 	const LAATSTE = '22:00';
 
