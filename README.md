@@ -30,6 +30,7 @@ die staan hier vet.
 | `sql/weekgeneratie-test.sql` | Controle op die uitrol: wat als je hem twee keer draait? |
 | `sql/startdata.sql` | Posten, diensten en het weekrooster. Het enige dat per bedrijf verschilt |
 | `sql/superadmin.sql` | De rol die niemand ziet (fase 17). **Draai hem als laatste** |
+| `sql/wipe.sql` | Alles leeg, structuur intact. Voor het dev-project en de showcase — **niet** voor een echte installatie |
 
 ## Draaien
 
