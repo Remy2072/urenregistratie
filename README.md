@@ -3,21 +3,33 @@
 Mobiele webapp die het papieren bonnetje na je dienst vervangt. Het rooster is
 de invoer, het urenoverzicht voor de boekhouder is de uitvoer.
 
-Achtergrond en beslissingen staan in `docs/`:
+Twee mappen: `docs/` is om te lezen, `sql/` is om te draaien.
 
-| Bestand | Waarvoor |
+| Om te lezen | Waarvoor |
 |---|---|
 | `docs/projectoverzicht.md` | Wat het wordt en waarom, en wat we bewust niet bouwen |
 | `docs/bouwplan.md` | De fases, met per fase een "klaar als" |
 | `docs/installatie.md` | Een nieuwe klant opzetten: accounts, de volgorde van de sql, en het papierwerk |
-| `docs/schema.sql` | Het datamodel, inclusief rechten. Voor elk bedrijf hetzelfde |
-| `docs/startdata.sql` | Posten, diensten en het weekrooster. Het enige dat per bedrijf verschilt |
-| `docs/weekgeneratie.sql` | De wekelijkse uitrol van het sjabloon naar diensten |
-| `docs/profiel.sql` | Gebruikersnaam en telefoon op `personen` (fase 10). Draai hem altijd ná `rollen.sql` |
-| `docs/herstel.sql` | Herstelcodes voor "wachtwoord vergeten" (fase 13, uitgebreid in 16) |
-| `docs/ruilen.sql` | Ruilverzoeken: gericht of open in de groepsapp (fase 14) |
-| `docs/agenda.sql` | Agendalinks voor het ics-abonnement (fase 15) |
-| `docs/superadmin.sql` | De rol die niemand ziet (fase 17). Draai hem **als laatste** |
+| `docs/ideeen.md` | Wat we bewust níét nu bouwen, maar te goed is om kwijt te raken |
+
+De inhoud van `sql/` staat hieronder in de volgorde waarin je hem draait. Die
+volgorde staat met uitleg in `docs/installatie.md`; twee stappen liggen vast en
+die staan hier vet.
+
+| Om te draaien | Waarvoor |
+|---|---|
+| `sql/schema.sql` | Het datamodel, inclusief rechten. Voor elk bedrijf hetzelfde |
+| `sql/schema-test.sql` | Probeert expres wat niet mag. Elke regel hoort 'goed' te zeggen |
+| `sql/rollen.sql` | Drie rollen: eigenaar, manager, medewerker |
+| `sql/profiel.sql` | Gebruikersnaam en telefoon op `personen` (fase 10). **Altijd ná `rollen.sql`** |
+| `sql/beschikbaarheid.sql` | Wanneer iemand kan, vast en per week (fase 9) |
+| `sql/herstel.sql` | Herstelcodes voor "wachtwoord vergeten" (fase 13, uitgebreid in 16) |
+| `sql/ruilen.sql` | Ruilverzoeken: gericht of open in de groepsapp (fase 14) |
+| `sql/agenda.sql` | Agendalinks voor het ics-abonnement (fase 15) |
+| `sql/weekgeneratie.sql` | De wekelijkse uitrol van het sjabloon naar diensten |
+| `sql/weekgeneratie-test.sql` | Controle op die uitrol: wat als je hem twee keer draait? |
+| `sql/startdata.sql` | Posten, diensten en het weekrooster. Het enige dat per bedrijf verschilt |
+| `sql/superadmin.sql` | De rol die niemand ziet (fase 17). **Draai hem als laatste** |
 
 ## Draaien
 
@@ -72,7 +84,7 @@ eerste dat er nu ligt.
 
 | Bestand | Waarvoor |
 |---|---|
-| `src/lib/model.ts` | De vorm van de gegevens, één op één met `docs/schema.sql` |
+| `src/lib/model.ts` | De vorm van de gegevens, één op één met `sql/schema.sql` |
 | `src/lib/tijd.ts` | Alles met datums en tijden. De enige plek waar de tijdzone uitmaakt |
 | `src/lib/server/wie.ts` | Wie ben ik volgens `personen` — de rol komt hier vandaan, niet uit Auth |
 | `src/lib/server/login.ts` | Van een gebruikersnaam naar het adres waarmee Supabase iemand kent |

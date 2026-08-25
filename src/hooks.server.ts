@@ -174,7 +174,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		// niet gedraaid.
 		if (error) {
 			console.error(
-				`personen ophalen mislukte: ${error.message} — staan docs/rollen.sql en docs/profiel.sql al op deze database?`
+				`personen ophalen mislukte: ${error.message} — staan sql/rollen.sql en sql/profiel.sql al op deze database?`
 			);
 		}
 

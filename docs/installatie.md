@@ -64,6 +64,9 @@ in Supabase Auth het echte domein bij RP ID en `https://…` bij origins.
 
 ### 4. De SQL, in deze volgorde
 
+Alles hieronder staat in `sql/`, en die volgorde is de map niet uit af te lezen —
+daarom staat hij hier.
+
 ```
 schema.sql
 schema-test.sql          ← draai hem echt
@@ -153,7 +156,7 @@ als code.
 ## Bij de tweede klant en verder
 
 - **Elke migratie draai je zo vaak als er klanten zijn.** Dat is de prijs van dit
-  model. Houd de `.sql`-bestanden op één plek en in volgorde, en zet per klant af
+  model. `sql/` is die ene plek; houd hem in volgorde en zet per klant af
   wat je gedraaid hebt. Bij meer dan twee installaties is de Supabase CLI
   (`supabase db push`) het uitzoeken waard.
 - **Laat de versies niet uit elkaar lopen.** Eén repo betekent dat alle

@@ -39,7 +39,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	};
 };
 
-/** De codes uit ruil_accepteren() in gewone taal. Zie docs/ruilen.sql. */
+/** De codes uit ruil_accepteren() in gewone taal. Zie sql/ruilen.sql. */
 function vertaal(code: string): string {
 	if (code === 'te_laat') return 'Iemand was je net voor — deze dienst is al overgenomen.';
 	if (code === 'bezet') return 'Je staat die dag al ergens ingeroosterd.';

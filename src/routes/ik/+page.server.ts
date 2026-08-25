@@ -92,7 +92,7 @@ export const actions: Actions = {
 		// dan is dit precies wat je ziet.
 		if (!data?.length) {
 			return fail(409, {
-				fout: 'Je nummer kon niet worden opgeslagen — de database laat je (nog) niet aan je eigen rij. Staat docs/profiel.sql er al op?'
+				fout: 'Je nummer kon niet worden opgeslagen — de database laat je (nog) niet aan je eigen rij. Staat sql/profiel.sql er al op?'
 			});
 		}
 		return { gedaan: nummer === null ? 'Je nummer staat er niet meer in.' : 'Je nummer is opgeslagen.' };

@@ -1,6 +1,6 @@
 // Wachtwoord vergeten: wie je bent, de code, de limieten en het narekenen.
 //
-// De echte regels staan in de database (`docs/herstel.sql`): hoe lang een code
+// De echte regels staan in de database (`sql/herstel.sql`): hoe lang een code
 // geldig is, hoeveel pogingen je hebt, hoeveel aanvragen per dag. Hier staat wat
 // daar niet kan: een code verzinnen, en de vraag wie er te vaak namen aan het
 // intikken is.

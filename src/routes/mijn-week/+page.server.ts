@@ -15,7 +15,7 @@ import {
 import { wieBenIk } from '$lib/server/wie';
 import { stuurSms } from '$lib/server/bird';
 
-/** Eén regel uit mijn_ruilverzoeken(). Zie docs/ruilen.sql. */
+/** Eén regel uit mijn_ruilverzoeken(). Zie sql/ruilen.sql. */
 export type Ruilverzoek = {
 	id: string;
 	dienst_id: string;
