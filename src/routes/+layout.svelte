@@ -21,7 +21,7 @@
 	};
 
 	let pad = $derived(page.url.pathname);
-	let titel = $derived(titels[pad] ?? 'Urenregistratie');
+	let titel = $derived(titels[pad] ?? 'Bon');
 	let beheerder = $derived(magBeherenRol(data.ik?.rol));
 	let eigenaar = $derived(isEigenaarRol(data.ik?.rol));
 </script>

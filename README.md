@@ -1,4 +1,4 @@
-# Urenregistratie
+# Bon
 
 Mobiele webapp die het papieren bonnetje na je dienst vervangt. Het rooster is
 de invoer, het urenoverzicht voor de boekhouder is de uitvoer.

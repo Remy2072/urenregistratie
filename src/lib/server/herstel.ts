@@ -187,5 +187,5 @@ export async function zetWachtwoord(
 
 /** De tekst van het bericht. Kort, want een sms is 160 tekens. */
 export function smsTekst(code: string, link: string): string {
-	return `Je code voor Urenregistratie is ${code}. Tien minuten geldig. ${link}`;
+	return `Je code voor Bon is ${code}. Tien minuten geldig. ${link}`;
 }

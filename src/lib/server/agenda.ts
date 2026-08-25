@@ -81,7 +81,7 @@ export function maakAgenda(diensten: AgendaDienst[], nu: Date): string {
 	const regels = [
 		'BEGIN:VCALENDAR',
 		'VERSION:2.0',
-		'PRODID:-//Urenregistratie//Diensten//NL',
+		'PRODID:-//Bon//Diensten//NL',
 		'CALSCALE:GREGORIAN',
 		'METHOD:PUBLISH',
 		'X-WR-CALNAME:Werk',
@@ -100,7 +100,7 @@ export function maakAgenda(diensten: AgendaDienst[], nu: Date): string {
 			// Het id van de dienst, en dus vast. Ruilt de dienst van persoon, dan
 			// verdwijnt hij uit de ene agenda en verschijnt hij in de andere -- met
 			// hetzelfde UID, wat precies goed is: het is dezelfde avond.
-			`UID:${d.dienst_id}@urenregistratie`,
+			`UID:${d.dienst_id}@bon`,
 			`DTSTAMP:${utcStempel(nu.toISOString())}`,
 			`LAST-MODIFIED:${utcStempel(d.laatst_gewijzigd)}`,
 			// Sommige agenda's werken een gebeurtenis alleen bij als dit getal

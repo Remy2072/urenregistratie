@@ -1,7 +1,11 @@
-# Urenregistratie Tjon Express
+# Bon — urenregistratie voor werk op rooster
 
 Werkdocument. Bedoeld om mee te starten en om de AI mee aan te sturen tijdens
 het bouwen.
+
+Tjon Express staat hieronder als het bedrijf waar dit is ontstaan en waar het
+als eerste gaat draaien, niet als het bedrijf waar het van is. Waar "Bij Tjon"
+staat, is dat een voorbeeld — de app zelf kent geen bussen en geen Tjon.
 
 ---
 

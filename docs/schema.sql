@@ -1,5 +1,5 @@
 -- =====================================================================
--- Urenregistratie bezorgers / horeca
+-- Bon -- urenregistratie voor werk op rooster
 -- PostgreSQL (Supabase). Generiek opgezet: niets bedrijfsspecifiek
 -- in de structuur, alleen in de data.
 -- =====================================================================
@@ -94,8 +94,9 @@ create unique index personen_gebruikersnaam_uniek
 
 -- ---------------------------------------------------------------------
 -- posten
--- De plek waar iemand staat. Bij Tjon: Bus 2, Bus 3, Bus 4.
--- Later gewoon 'Keuken' of 'Balie' toevoegen, geen codewijziging.
+-- De plek waar iemand staat. Bij een bezorgdienst Bus 2 en Bus 3, in een
+-- restaurant keuken en bediening, in een salon stoel 1 en stoel 2. Eentje
+-- toevoegen is een rij erbij en geen codewijziging.
 -- ---------------------------------------------------------------------
 create table posten (
   id        uuid    primary key default gen_random_uuid(),
@@ -107,7 +108,9 @@ create table posten (
 
 -- ---------------------------------------------------------------------
 -- dienstsoorten
--- De standaarddiensten. Bij Tjon: vroeg 15:00-20:00, laat 16:00-21:00.
+-- De standaarddiensten. Bij een bezorgdienst vroeg 15:00-20:00 en laat
+-- 16:00-21:00; elders net zo goed ochtend, middag en nacht. Een soort
+-- erbij kan zonder codewijziging.
 -- ---------------------------------------------------------------------
 create table dienstsoorten (
   id          uuid    primary key default gen_random_uuid(),

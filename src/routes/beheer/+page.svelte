@@ -248,7 +248,7 @@
 							<label class="veld">
 								<span>Rol</span>
 								<select name="rol">
-									<option value="medewerker" selected={p.rol === 'medewerker'}>Bezorger</option>
+									<option value="medewerker" selected={p.rol === 'medewerker'}>Medewerker</option>
 									<option value="manager" selected={p.rol === 'manager'}>Manager</option>
 									<option value="eigenaar" selected={p.rol === 'eigenaar'}>Eigenaar</option>
 								</select>
@@ -365,7 +365,7 @@
 				<input name="telefoon" type="tel" placeholder="06 12345678" />
 				{#if data.ik?.rol === 'eigenaar'}
 					<select name="rol">
-						<option value="medewerker">Bezorger</option>
+						<option value="medewerker">Medewerker</option>
 						<option value="manager">Manager</option>
 						<option value="eigenaar">Eigenaar</option>
 					</select>
@@ -425,7 +425,7 @@
 
 		<p class="notitie">
 			<strong>Eigenaar</strong> kan alles, inclusief de export naar de boekhouder.
-			<strong>Manager</strong> kan alles behalve die export en behalve rollen: hij neemt bezorgers
+			<strong>Manager</strong> kan alles behalve die export en behalve rollen: hij neemt medewerkers
 			aan, corrigeert namen en zet mensen op non-actief, maar wie er manager wordt beslist de
 			eigenaar. Aan een eigenaar komt hij helemaal niet. Dat staat ook in de database en niet
 			alleen in dit scherm.

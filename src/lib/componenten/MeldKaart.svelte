@@ -64,13 +64,14 @@
 		}
 	});
 
-	// De grenzen van een avonddienst. Bij Tjon begint er niets voor 15:00 en is
-	// alles voor middernacht klaar, dus buiten dit venster hoeft de stapper niet
-	// te kunnen komen -- dan tik je alleen maar mis.
+	// Het venster waarbinnen de tijdstapper mag komen. Deze twee getallen zijn
+	// de enige plek in de app waar een aanname over openingstijden staat: hier
+	// is dat een avonddienst, want bij de eerste klant begint er niets voor
+	// 15:00 en is alles voor middernacht klaar. Buiten het venster tik je toch
+	// alleen maar mis.
 	//
-	// Dit zijn twee getallen op één plek. Bij een bedrijf dat 's ochtends open
-	// gaat horen ze in het instellingenbestand van fase 8; zolang dat er niet is,
-	// verander je ze hier.
+	// Een ochtendploeg of een nachtdienst zet ze anders. Ze horen daarom op de
+	// bedrijfspagina uit `ideeen.md`; zolang die er niet is, verander je ze hier.
 	const VROEGSTE = '15:00';
 	const LAATSTE = '22:00';
 
