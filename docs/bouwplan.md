@@ -56,16 +56,16 @@ voren omdat er nu iets van afhangt.
 
 | # | Fase | Waarvoor | Grofweg |
 |---|---|---|---|
-| 0 | Prototype | Kunnen laten zien | 1 weekend |
-| 1 | Schema live | Fundament dat aantoonbaar klopt | 1 avond |
-| 2 | Login | Rechten kloppen vanaf hier | 1 avond |
-| 3 | Weekgeneratie | Diensten ontstaan vanzelf | 1 avond |
-| 4 | Bezorgerscherm | Jij hebt geen bonnetje meer nodig | 2 weekenden |
-| 5 | Bazenscherm | De baas hoeft niet meer over te typen | 1 weekend |
-| 6 | Export | De boekhouder krijgt wat hij wil | 1 avond |
-| 7 | Installatie en overgang | Eerste echte draai, dan mag het bonnetje weg | 3 weken doorlooptijd |
-| 8 | Boilerplate | Een tweede bedrijf zonder codewijziging | 1 weekend |
-| 9 | Rooster en beheer | Beschikbaarheid, het rooster in de app, en de baas die zelf kan instellen | 2 weekenden |
+| 0 | Prototype ✅ | Kunnen laten zien | 1 weekend |
+| 1 | Schema live ✅ | Fundament dat aantoonbaar klopt | 1 avond |
+| 2 | Login ✅ | Rechten kloppen vanaf hier | 1 avond |
+| 3 | Weekgeneratie ✅ | Diensten ontstaan vanzelf | 1 avond |
+| 4 | Bezorgerscherm ✅ | Jij hebt geen bonnetje meer nodig | 2 weekenden |
+| 5 | Bazenscherm ✅ | De baas hoeft niet meer over te typen | 1 weekend |
+| 6 | Export ✅ | De boekhouder krijgt wat hij wil | 1 avond |
+| 7 | Installatie en overgang ⏳ | Eerste echte draai, dan mag het bonnetje weg | 3 weken doorlooptijd |
+| 8 | Boilerplate ⏳ | Een tweede bedrijf zonder codewijziging | 1 weekend |
+| 9 | Rooster en beheer ✅ | Beschikbaarheid, het rooster in de app, en de baas die zelf kan instellen | 2 weekenden |
 | 10 | Gebruikersnaam en profiel ✅ | Inloggen zonder e-mailadres, en iedereen beheert wat van hem is | 1 avond |
 | 11 | Ingelogd blijven ✅ | Een storing is geen uitlog, en de app hoort op je beginscherm | 1 avond |
 | 12 | Passkey ✅ | Inloggen met gezicht of vinger, zonder token in de browser | 1 avond |
@@ -74,12 +74,19 @@ voren omdat er nu iets van afhangt.
 | 15 | Agenda ✅ | Je diensten in de agenda die je al open hebt | 1 avond |
 | 16 | Herstel op je nummer ✅ | Je gebruikersnaam vergeten is geen doodlopende weg | 1 avond |
 | 17 | Superadmin ✅ | Support zonder het dashboard, en zonder in de ploeg te staan | 1 avond |
-| 18 | De showcase | Live installatie om te testen, te tonen en te verkopen. Gaat vóór fase 7 | 1 weekend |
+| 18 | De showcase ⏳ | Live installatie om te testen, te tonen en te verkopen. Gaat vóór fase 7 | 1 weekend |
 
-**De nummers zijn niet de volgorde.** Ze volgen wanneer een fase bedacht is, en
-0 tot en met 6 zijn ook zo gedaan. Daarna niet meer: fase 8 is bewust
-uitgesteld tot het bij één bedrijf echt werkt, en fase 18 moet er juist vóór.
-Wat er nog ligt, in de volgorde waarin je het doet:
+**De nummers zijn niet de volgorde, en ze worden ook niet hernummerd.** Ze volgen
+wanneer een fase bedacht is. Fase 0 tot en met 6 zijn ook in die volgorde
+gedaan; daarna niet meer — fase 8 is bewust uitgesteld tot het bij één bedrijf
+echt werkt, en fase 18 moet er juist vóór.
+
+Zo'n nummer is inmiddels een naam. Er staat 163 keer "fase zoveel" in dit
+project: in de sql-bestanden, in de code, in de README en in de
+commit-geschiedenis. Op volgorde zetten zou die allemaal naar het verkeerde
+laten wijzen, en de geschiedenis kun je sowieso niet meer bijwerken. **Wat er
+nog open staat lees je daarom aan ⏳ en niet aan het nummer.** Dat zijn er drie,
+en met de deploy die eraan voorafgaat is dit de volgorde:
 
 | | Wat | Waarom die plek |
 |---|---|---|
@@ -572,7 +579,7 @@ erin ziet staan wat er bevestigd is — en niets meer dan dat.
 
 ---
 
-## Fase 7 — Eerste installatie en overgang
+## Fase 7 — Eerste installatie en overgang ⏳
 
 **Doel:** het bonnetje mag weg — en hij besluit dat, niet jij.
 
@@ -620,7 +627,7 @@ fase. Het dubbel bijhouden blijft staan, maar het heet dan onboarding.
 
 ---
 
-## Fase 8 — Boilerplate
+## Fase 8 — Boilerplate ⏳
 
 **Doel:** een tweede bedrijf staat er binnen een avond op, zonder dat je één
 `.svelte`-bestand aanraakt.
@@ -1764,7 +1771,7 @@ inloggen en alles ziet.
 
 ---
 
-## Fase 18 — De showcase
+## Fase 18 — De showcase ⏳
 
 **Doel:** één live installatie op een verzonnen bedrijf, die tegelijk je
 testomgeving, je verkoopdemo en het speelveld voor je vrienden is.
