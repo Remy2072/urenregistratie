@@ -604,23 +604,47 @@ bestaan niet kennen — een stuk goedkoper dan het alternatief, en bij tien man
 per zaak ook eerlijker.
 
 De afstand is klein, want het schema was al generiek: er staat `post` en geen
-`bus`, en niets bedrijfsspecifieks in de structuur. Wat er nog moet gebeuren:
+`bus`, en niets bedrijfsspecifieks in de structuur.
 
-- **De naam uit de code.** Nu staat "Bon" hard in `+layout.svelte`.
-  Hier stond dat bedrijfsnaam, kleur en favicon in één configuratiebestand horen.
-  **Dat is achterhaald (2026-08-25):** zie "De bedrijfspagina" in `ideeen.md`. Ze
-  gaan naar de database, want een omgevingsvariabele betekent dat de eigenaar ons
-  moet bellen om zijn eigen bedrijfsnaam te wijzigen.
+**Wat er nog moet gebeuren:**
+
+- **De bedrijfspagina.** Het grootste stuk van deze fase, en het staat apart
+  uitgewerkt in `ideeen.md`. Eén pagina voor de eigenaar met naam, kleur, logo en
+  de handvol regels die per bedrijf verschillen. **Beslist (2026-08-25): dit
+  hoort bij fase 8 en niet ervoor** — het is precies wat "een tweede bedrijf
+  zonder een `.svelte` aan te raken" betekent, en apart bouwen levert twee halve
+  oplossingen op.
 - **`schema-test.sql` losmaken van de data.** Die zoekt nu `'Bus 2'` en
   `'vroeg'` op naam op. Bij een bedrijf met andere posten faalt hij op iets wat
   niet stuk is. Laat hem pakken wat er is in plaats van wat hij verwacht.
-- ~~**Een installatiehandleiding.**~~ **Gedaan (2026-08-25): `installatie.md`.**
-  Van niets naar een draaiende installatie, met de volgorde van de sql-bestanden
-  en de twee plekken waar die volgorde niet vrij is.
 - **De afrondregel als keuze.** Halve uren zitten in `is_half_uur()` en de
   richting staat als afspraak op het scherm. Een ander bedrijf werkt misschien
   met kwartieren. Dat is één functie en één regel tekst — maar wel op twee
-  plekken, dus schrijf op dat ze bij elkaar horen.
+  plekken, dus schrijf op dat ze bij elkaar horen. Hoort op de bedrijfspagina.
+- **De openingstijden van de tijdstapper.** `VROEGSTE` en `LAATSTE` in
+  `MeldKaart.svelte` staan op 15:00 en 22:00 omdat de eerste klant 's avonds
+  rijdt. Een ochtendploeg tikt daar tegen een muur. Twee getallen, en de enige
+  aanname over openingstijden die er in de app nog staat. Hoort op de
+  bedrijfspagina.
+
+**Gedaan (2026-08-25):**
+
+- ~~**Een installatiehandleiding.**~~ Het is `installatie.md` geworden: van niets
+  naar een draaiende installatie, met de volgorde van de sql-bestanden en de twee
+  plekken waar die volgorde niet vrij is.
+- ~~**De naam uit de code.**~~ Half. "Urenregistratie" is overal "Bon" geworden
+  en de taal van één klant is eruit — de rol `medewerker` heette op het
+  beheerscherm "Bezorger", en de voorbeelden bij `posten` en `dienstsoorten`
+  noemden alleen bussen. Wat er nog staat is dat "Bon" nu hard in
+  `+layout.svelte` staat waar straks de bedrijfsnaam hoort. Dat is de eerste
+  regel van de bedrijfspagina hierboven.
+
+Hier stond dat bedrijfsnaam, kleur en favicon in één configuratiebestand horen —
+een omgevingsvariabele in Vercel, want een bestand per bedrijf betekent een tak
+per bedrijf. Dat argument klopt nog steeds, maar de oplossing is achterhaald: een
+env-var betekent dat de eigenaar ons moet bellen om zijn eigen bedrijfsnaam te
+wijzigen, en half november 2026 is er niemand om te bellen. Eén repo blijft één
+repo; wat per bedrijf verschilt staat in de database van dat bedrijf.
 
 ### Wat je per bedrijf nodig hebt
 
@@ -750,8 +774,9 @@ is een ander product dan "geïnstalleerd en verkocht", en dat is precies wat het
 geworden is — zie fase 17. Het papierwerk dat erbij hoort staat als losse stap in
 `installatie.md`, want het is geen code en wordt daarom vergeten.
 
-**Klaar als:** je een tweede bedrijf hebt opgezet en de enige bestanden die je
-hebt aangeraakt `startdata.sql` en het configuratiebestand zijn.
+**Klaar als:** je een tweede bedrijf hebt opgezet en het enige bestand dat je
+hebt aangeraakt `startdata.sql` is. De rest zet de eigenaar zelf, op zijn
+bedrijfspagina.
 
 **Niet nu doen.** Dit staat hier zodat het niet in fase 4 tot en met 7 sluipt.
 Eerst moet het bij één bedrijf echt werken; een boilerplate van iets dat nog

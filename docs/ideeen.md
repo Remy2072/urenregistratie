@@ -132,9 +132,12 @@ Logo daarna, want dat is Storage plus manifest plus favicon. De rest van de
 tabel zijn losse velden die je erbij zet op het moment dat het ding dat ze
 opeet bestaat.
 
-Dit kan vóór fase 8 in plaats van erbinnen: het maakt de app niet
-overdraagbaarder in de zin van "tweede bedrijf erbij", maar wel in de zin van
-"de eigenaar kan het zelf" — en dat is de helft van fase 8 die er toch al moest
-komen.
+**Beslist (2026-08-25): dit is fase 8 en niet iets ervoor.** Hier stond dat het
+er los voor kon, omdat het de app wel "de eigenaar kan het zelf"-baar maakt maar
+niet "tweede bedrijf erbij"-baar. Dat onderscheid houdt geen stand: fase 8 is
+letterlijk "een tweede bedrijf zonder een `.svelte` aan te raken", en dat is
+precies wat deze pagina doet. Los bouwen levert twee halve oplossingen op — een
+instellingentabel die de helft van de instellingen kent, en een fase 8 die er
+alsnog omheen moet.
 
 ---
