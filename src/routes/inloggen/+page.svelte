@@ -3,6 +3,7 @@
 	import { enhance, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { gebruikPasskey, kanPasskey, passkeyFout } from '$lib/passkey';
+	import Kaart from '$lib/componenten/Kaart.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -78,12 +79,12 @@
 
 {#if page.url.searchParams.has('nieuw')}
 	<div class="blok">
-		<div class="kaart nu">
+		<Kaart soort="nu">
 			<div class="regel"><span class="dag">Je wachtwoord is gewijzigd</span></div>
-			<p class="detail" style="margin:0.4rem 0 0">
+			<p class="detail na-klein">
 				Log opnieuw in, met je nieuwe wachtwoord. Op je andere telefoons ook.
 			</p>
-		</div>
+		</Kaart>
 	</div>
 {/if}
 
@@ -96,13 +97,13 @@
 
 {#if !data.ingesteld}
 	<div class="blok">
-		<div class="kaart aandacht">
+		<Kaart soort="aandacht">
 			<div class="regel"><span class="dag">Database nog niet ingesteld</span></div>
-			<p class="detail" style="margin:0.4rem 0 0">
+			<p class="detail na-klein">
 				Maak een bestand <code>.env</code> naast <code>package.json</code> en zet daar de twee
 				waarden in die in <code>.env.example</code> staan. Daarna de dev server opnieuw starten.
 			</p>
-		</div>
+		</Kaart>
 	</div>
 {/if}
 
@@ -177,7 +178,7 @@
 			Onder het wachtwoord en niet erboven: wie hier voor het eerst komt heeft
 			nog geen passkey, en dan is een knop die niets doet het verkeerde begin.
 		-->
-		<div class="knoppen" style="margin-top:0.8rem">
+		<div class="knoppen na-ruim">
 			<button type="button" class="groot" onclick={metPasskey} disabled={passkeyBezig}>
 				{passkeyBezig ? 'Bezig…' : 'Inloggen met gezicht of vinger'}
 			</button>

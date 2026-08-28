@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { dagNaam, datumLang, duurInUren, urenTekst } from '$lib/tijd';
+	import Kaart from '$lib/componenten/Kaart.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -23,29 +24,29 @@
 {/if}
 
 <div class="blok">
-	<div class="kaart nu">
+	<Kaart soort="nu">
 		<div class="regel">
 			<span class="dag">{dagNaam(v.datum)} {datumLang(v.datum)}</span>
 			<span class="detail tijden">{v.gepland_begin} – {v.gepland_eind}</span>
 		</div>
-		<p class="detail" style="margin:0.3rem 0 0">
+		<p class="detail na-klein">
 			{v.post} · {urenTekst(duurInUren(v.gepland_begin, v.gepland_eind))} uur
 		</p>
-		<p class="detail" style="margin:0.4rem 0 0">
+		<p class="detail na-klein">
 			{#if v.open_verzoek}
 				<strong>{v.van_naam}</strong> zoekt iemand die deze dienst overneemt.
 			{:else}
 				<strong>{v.van_naam}</strong> vraagt of jij deze dienst overneemt.
 			{/if}
 		</p>
-	</div>
+	</Kaart>
 </div>
 
 {#if !open}
 	<!-- Al afgehandeld. Dat kan gewoon gebeuren bij een open verzoek: de link
 	     blijft in de groepsapp staan nadat iemand hem heeft gepakt. -->
 	<div class="blok">
-		<div class="kaart">
+		<Kaart>
 			<div class="regel">
 				<span class="dag">
 					{#if v.status === 'geaccepteerd'}
@@ -57,7 +58,7 @@
 					{/if}
 				</span>
 			</div>
-			<p class="detail" style="margin:0.4rem 0 0">
+			<p class="detail na-klein">
 				{#if v.status === 'geaccepteerd'}
 					Iemand was er eerder bij. Deze dienst staat al op naam van een ander.
 				{:else if v.status === 'geweigerd'}
@@ -67,7 +68,7 @@
 				{/if}
 			</p>
 			<div class="knoppen"><a href="/mijn-week">Naar mijn week</a></div>
-		</div>
+		</Kaart>
 	</div>
 {:else if v.van_mij}
 	<div class="blok">

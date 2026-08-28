@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Merk from '$lib/componenten/Merk.svelte';
 	import { dagKort, datumKort, weekdagNaam } from '$lib/tijd';
+	import Kaart from '$lib/componenten/Kaart.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -101,7 +102,7 @@
 		</p>
 
 		{#if form?.gedaan === 'uitgerold'}
-			<div class="kaart">
+			<Kaart>
 				<div class="regel">
 					<span class="dag">
 						{#if form.nieuw}
@@ -119,7 +120,7 @@
 						<Merk soort={kleurBij(r.resultaat)} tekst={r.resultaat} />
 					</div>
 				{/each}
-			</div>
+			</Kaart>
 		{/if}
 	</div>
 
@@ -133,12 +134,12 @@
 			{/if}
 
 			{#each regels as r (r.id)}
-				<div class="kaart">
+				<Kaart>
 					<div class="regel">
 						<span class="dag">{r.personen?.naam ?? 'onbekend'}</span>
 						<span class="detail">{r.posten?.naam ?? 'onbekende post'}</span>
 					</div>
-					<div class="regel" style="margin-top:0.2rem">
+					<div class="regel na-krap">
 						<span class="detail tijden">
 							{r.dienstsoorten?.naam}
 							{r.dienstsoorten?.begintijd} – {r.dienstsoorten?.eindtijd}
@@ -161,7 +162,7 @@
 					{:else}
 						<form method="post" action="?/stoppen" use:enhance>
 							<input type="hidden" name="id" value={r.id} />
-							<p class="regel" style="gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0 0">
+							<p class="regel invulrij na-mid">
 								<label class="veld">
 									<span>Stopt vanaf</span>
 									<input type="date" name="vanaf" value={data.volgendeMaandag} />
@@ -177,7 +178,7 @@
 							<div class="knoppen"><button>Weghalen</button></div>
 						</form>
 					{/if}
-				</div>
+				</Kaart>
 			{/each}
 
 			{#if toont === d}
@@ -190,7 +191,7 @@
 					}}
 				>
 					<input type="hidden" name="weekdag" value={d} />
-					<p class="regel" style="gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem">
+					<p class="regel invulrij na-ruim">
 						<select name="persoon_id">
 							{#each data.personen! as p (p.id)}
 								<option value={p.id}>{p.naam}</option>
@@ -229,15 +230,15 @@
 			<details>
 				<summary>Afgelopen regels ({afgelopen.length})</summary>
 				{#each afgelopen as r (r.id)}
-					<div class="kaart">
+					<Kaart>
 						<div class="regel">
 							<span class="dag">{weekdagNaam(r.weekdag)} · {r.personen?.naam}</span>
 							<span class="detail">{r.posten?.naam}</span>
 						</div>
-						<p class="detail" style="margin:0.2rem 0 0">
+						<p class="detail na-krap">
 							{datumKort(r.geldig_vanaf)} tot en met {datumKort(r.geldig_tot!)}
 						</p>
-					</div>
+					</Kaart>
 				{/each}
 				<p class="notitie">
 					Deze staan er nog zodat je kunt terugzien hoe het rooster er toen uitzag. Ze rollen

@@ -400,6 +400,52 @@ select {
 	min-height: 44px;
 }
 
+/* ── Ritme ─────────────────────────────────────────────────────────── */
+
+/* Vijf afstanden, en niets ertussen. Dit stond eerst in 63 losse
+   style="margin:…"-attributen verspreid over elf schermen, in twintig
+   varianten van hetzelfde -- en dan verzet je de ritmiek van de app niet meer
+   op één plek. Wil je alles luchtiger, dan is dat hier vijf getallen. */
+
+.na-krap {
+	margin: 0.2rem 0 0;
+}
+.na-klein {
+	margin: 0.35rem 0 0;
+}
+.na-mid {
+	margin: 0.5rem 0 0;
+}
+.na-ruim {
+	margin: 0.75rem 0 0;
+}
+.na-blok {
+	margin: 1.6rem 0 0;
+}
+
+/* Een rij velden met een knop erachter. Vouwt om als het niet past, want dit
+   wordt op een telefoon bediend. Erft de rest van .regel. */
+.regel.invulrij {
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+/* Een vinkje met zijn tekst ernaast. Geen .regel: die duwt de twee naar de
+   randen van de kaart, en een label hoort tegen zijn vinkje aan. */
+.vinkrij {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.breed {
+	width: 100%;
+}
+
+.smal {
+	max-width: 8rem;
+}
+
 /* ── Formulier ─────────────────────────────────────────────────────── */
 
 .veld {

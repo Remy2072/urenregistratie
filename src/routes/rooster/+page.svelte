@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Merk from '$lib/componenten/Merk.svelte';
 	import { dagNaam, datumKort, datumLang, isoWeek, plusDagen, weekdagNaam } from '$lib/tijd';
+	import Kaart from '$lib/componenten/Kaart.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -89,7 +90,7 @@
 		<span class="dag">Week {isoWeek(data.week)}</span>
 		<span class="detail">{datumLang(data.week)} – {datumLang(data.zondag)}</span>
 	</div>
-	<p class="regel" style="margin:0.6rem 0 0">
+	<p class="regel na-ruim">
 		<a href="?week={data.vorige}">← Vorige week</a>
 		{#if data.week !== data.dezeWeek}
 			<a href="?week={data.dezeWeek}">Deze week</a>
@@ -108,12 +109,12 @@
 		{/if}
 
 		{#each diensten as r (r.id)}
-			<div class="kaart">
+			<Kaart>
 				<div class="regel">
 					<span class="dag">{r.persoon ?? 'nog niemand'}</span>
 					<span class="detail">{r.post}</span>
 				</div>
-				<div class="regel" style="margin-top:0.2rem">
+				<div class="regel na-krap">
 					<span class="detail tijden">{r.gepland_begin} – {r.gepland_eind}</span>
 					<span>
 						{#if data.aangeboden?.[r.id]}
@@ -148,7 +149,7 @@
 							}}
 						>
 							<input type="hidden" name="id" value={r.id} />
-							<p class="regel" style="gap:0.5rem;flex-wrap:wrap;margin:0.6rem 0 0">
+							<p class="regel invulrij na-ruim">
 								<select name="persoon_id">
 									{#each data.personen.filter((p) => p.actief) as p (p.id)}
 										<option value={p.id} selected={p.id === r.persoon_id}>
@@ -193,7 +194,7 @@
 						</div>
 					{/if}
 				{/if}
-			</div>
+			</Kaart>
 		{/each}
 
 		{#if data.beheerder}
@@ -214,7 +215,7 @@
 					<summary>Dienst erbij</summary>
 					<form method="post" action="?/toevoegen" use:enhance>
 						<input type="hidden" name="datum" value={datum} />
-						<p class="regel" style="gap:0.5rem;flex-wrap:wrap;margin:0.6rem 0 0">
+						<p class="regel invulrij na-ruim">
 							<select name="post_id">
 								{#each posten as po (po.id)}
 									<option value={po.id}>{po.naam}</option>
@@ -255,10 +256,10 @@
 		</button>
 	</div>
 	{#if uitwijken}
-		<p class="detail" style="margin-top:0.6rem">
+		<p class="detail na-ruim">
 			Kopiëren mocht niet van de browser. Selecteer het hier zelf:
 		</p>
-		<textarea readonly rows="12" style="width:100%">{bericht()}</textarea>
+		<textarea readonly rows="12" class="breed">{bericht()}</textarea>
 	{/if}
 	<p class="notitie">
 		Het rooster staat hier, maar wordt gelezen waar het altijd gelezen werd. Deze knop maakt het

@@ -8,6 +8,7 @@
 	import MeldKaart from '$lib/componenten/MeldKaart.svelte';
 	import Merk from '$lib/componenten/Merk.svelte';
 	import { afwijkingInMinuten, afwijkingTekst, dagNaam, datumKort, duurInUren, minuten, urenTekst } from '$lib/tijd';
+	import Kaart from '$lib/componenten/Kaart.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -140,16 +141,16 @@
 	<div class="blok">
 		<h2>{voorMij.length === 1 ? 'Een collega vraagt je iets' : 'Collega\'s vragen je iets'}</h2>
 		{#each voorMij as r (r.id)}
-			<div class="kaart aandacht">
+			<Kaart soort="aandacht">
 				<div class="regel">
 					<span class="dag">{dagNaam(r.datum)} {datumKort(r.datum)}</span>
 					<span class="detail tijden">{r.gepland_begin} – {r.gepland_eind}</span>
 				</div>
-				<p class="detail" style="margin:0.3rem 0 0">
+				<p class="detail na-klein">
 					{r.van_naam} vraagt of jij {r.post} overneemt.
 				</p>
 				<div class="knoppen"><a href="/ruil/{r.id}">Bekijken →</a></div>
-			</div>
+			</Kaart>
 		{/each}
 	</div>
 {/if}
@@ -190,7 +191,7 @@
 			<h2>Komt nog</h2>
 			{#each komtNog as d (d.id)}
 				{@const verzoek = verzoekVan(d.id)}
-				<div class="kaart">
+				<Kaart>
 					<DienstRegel dienst={d} post={post(d)} />
 					<div class="regel">
 						<span class="detail tijden">{d.gepland_begin} – {d.gepland_eind}</span>
@@ -201,7 +202,7 @@
 						<!-- Er staat een verzoek open voor deze dienst. Dat moet hier staan:
 						     anders denkt iemand dat hij ervan af is. -->
 						{#if verzoek.open_verzoek}
-							<p class="detail" style="margin:0.4rem 0 0">
+							<p class="detail na-klein">
 								Open verzoek — zet deze link in de groepsapp. Wie het eerst ja zegt, krijgt de
 								dienst.
 							</p>
@@ -211,7 +212,7 @@
 								</button>
 							</div>
 						{:else}
-							<p class="detail" style="margin:0.4rem 0 0">
+							<p class="detail na-klein">
 								Gevraagd aan {verzoek.naar_naam} — nog geen antwoord.
 							</p>
 						{/if}
@@ -221,12 +222,12 @@
 							<div class="knoppen"><button>Verzoek sluiten</button></div>
 						</form>
 					{:else if ruilt === d.id}
-						<p class="detail" style="margin:0.5rem 0 0">Wie vraag je?</p>
+						<p class="detail na-mid">Wie vraag je?</p>
 						{#if ruilBezig && kandidaten.length === 0}
 							<p class="detail">Bezig…</p>
 						{/if}
 						{#each kandidaten as k (k.persoon_id)}
-							<div class="regel" style="margin-top:0.3rem">
+							<div class="regel na-klein">
 								<span>
 									{k.naam}
 									{#if k.bezet}<Merk soort="afgemeld" tekst="werkt die dag" />
@@ -257,7 +258,7 @@
 							<button type="button" onclick={() => beginRuil(d.id)}>Ruilen</button>
 						</div>
 					{/if}
-				</div>
+				</Kaart>
 			{/each}
 			<p class="notitie">
 				Kun je niet? Vraag het een collega, of zet een open verzoek in de groepsapp. Zegt iemand
@@ -271,14 +272,14 @@
 		<div class="blok">
 			<h2>Open in de groep</h2>
 			{#each openVanAnderen as r (r.id)}
-				<div class="kaart">
+				<Kaart>
 					<div class="regel">
 						<span class="dag">{dagNaam(r.datum)} {datumKort(r.datum)}</span>
 						<span class="detail tijden">{r.gepland_begin} – {r.gepland_eind}</span>
 					</div>
-					<p class="detail" style="margin:0.3rem 0 0">{r.van_naam} zoekt iemand voor {r.post}.</p>
+					<p class="detail na-klein">{r.van_naam} zoekt iemand voor {r.post}.</p>
 					<div class="knoppen"><a href="/ruil/{r.id}">Bekijken →</a></div>
-				</div>
+				</Kaart>
 			{/each}
 			<p class="notitie">
 				Deze diensten zoeken nog iemand. Wie het eerst ja zegt, krijgt hem — en wie die dag al
@@ -300,7 +301,7 @@
 						sluit={() => (corrigeert = null)}
 					/>
 				{:else}
-					<div class="kaart">
+					<Kaart>
 						<DienstRegel dienst={d} post={post(d)} />
 						<div class="regel">
 							<span class="detail tijden">
@@ -323,7 +324,7 @@
 								<button type="button" onclick={() => (corrigeert = d.id)}>Aanpassen</button>
 							</div>
 						{/if}
-					</div>
+					</Kaart>
 				{/if}
 			{/each}
 			<p class="notitie">

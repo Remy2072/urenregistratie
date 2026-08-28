@@ -19,6 +19,7 @@
 	import type { Dienst } from '$lib/model';
 	import { afwijkingTekst, minuten, verschuif } from '$lib/tijd';
 	import DienstRegel from './DienstRegel.svelte';
+	import Kaart from './Kaart.svelte';
 	import Merk from './Merk.svelte';
 	import TijdStapper from './TijdStapper.svelte';
 
@@ -115,10 +116,10 @@
 	}
 </script>
 
-<div class="kaart nu">
+<Kaart soort="nu">
 	<DienstRegel {dienst} {post} />
 
-	<p class="detail" style="margin:0.2rem 0 0">
+	<p class="detail na-krap">
 		Gepland <span class="tijden">{dienst.gepland_begin} – {dienst.gepland_eind}</span>
 		{#if achteraf}
 			· <Merk soort="achteraf" />
@@ -135,7 +136,7 @@
 	<TijdStapper label="Begin" stappen={[-30, 30]} stap={(d) => stap('begin', d)} />
 	<TijdStapper label="Einde" stappen={[-30, 30, 60]} stap={(d) => stap('eind', d)} />
 
-	<p class="detail" style="margin:0.5rem 0 0">
+	<p class="detail na-mid">
 		Vroegste begintijd {VROEGSTE}, laatste eindtijd {LAATSTE}.
 	</p>
 
@@ -161,7 +162,7 @@
 			bellen -- en dat is precies het telefoontje dat deze app moet uitsparen.
 		-->
 		{#if afwijkt}
-			<label class="veld" style="margin-top:0.6rem">
+			<label class="veld na-ruim">
 				<span>Wat was er anders?</span>
 				<input name="opmerking" bind:value={opmerking} placeholder={hint} required />
 			</label>
@@ -183,4 +184,4 @@
 			</button>
 		</div>
 	</form>
-</div>
+</Kaart>

@@ -9,6 +9,8 @@
 -->
 <script lang="ts">
 	import { page } from '$app/state';
+	import Kaart from '$lib/componenten/Kaart.svelte';
+	import Merk from '$lib/componenten/Merk.svelte';
 
 	// 503 is de storing hierboven. 404 is een verkeerd adres. De rest is een
 	// echte fout, en dan is de enige eerlijke zin dat je het opnieuw probeert.
@@ -17,7 +19,7 @@
 </script>
 
 <div class="blok">
-	<div class="kaart aandacht">
+	<Kaart soort="aandacht">
 		<div class="regel">
 			<span class="dag">
 				{#if storing}
@@ -28,10 +30,10 @@
 					Er ging iets mis
 				{/if}
 			</span>
-			<span class="merk afwijking">{page.status}</span>
+			<Merk soort="afwijking" tekst={String(page.status)} />
 		</div>
 
-		<p class="detail" style="margin:0.4rem 0 0">
+		<p class="detail na-klein">
 			{#if storing}
 				De app kon even niet nagaan wie je bent. <strong>Je bent niet uitgelogd</strong> — je
 				wachtwoord hoef je dus niet op te zoeken. Ververs de pagina, en als het aanhoudt is het aan
@@ -46,5 +48,5 @@
 		<div class="knoppen">
 			<a href="/mijn-week">Naar mijn week</a>
 		</div>
-	</div>
+	</Kaart>
 </div>

@@ -5,6 +5,8 @@
 	import { telefoonTekst } from '$lib/telefoon';
 	import { kanPasskey, maakPasskey, passkeyFout } from '$lib/passkey';
 	import { datumKort } from '$lib/tijd';
+	import Kaart from '$lib/componenten/Kaart.svelte';
+	import Merk from '$lib/componenten/Merk.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -119,19 +121,19 @@
 
 <div class="blok">
 	{#if data.persoon}
-		<div class="kaart nu">
+		<Kaart soort="nu">
 			<div class="regel">
 				<span class="dag">{data.persoon.naam}</span>
-				<span class="merk {beheerder ? 'bevestigd' : 'gemeld'}">{data.persoon.rol}</span>
+				<Merk soort={beheerder ? 'bevestigd' : 'gemeld'} tekst={data.persoon.rol} />
 			</div>
 			{#if data.persoon.gebruikersnaam}
-				<p class="detail" style="margin:0.4rem 0 0">
+				<p class="detail na-klein">
 					Je logt in als <span class="tijden">{data.persoon.gebruikersnaam}</span>
 				</p>
 			{:else}
-				<p class="detail" style="margin:0.4rem 0 0">Je logt in met {data.email}</p>
+				<p class="detail na-klein">Je logt in met {data.email}</p>
 			{/if}
-		</div>
+		</Kaart>
 
 		<p class="notitie">
 			Je naam en je gebruikersnaam zijn van de baas. Dat is geen wantrouwen: staat er in het
@@ -139,14 +141,14 @@
 			iets niet, vraag of hij het omzet.
 		</p>
 	{:else}
-		<div class="kaart aandacht">
+		<Kaart soort="aandacht">
 			<div class="regel"><span class="dag">Nog niet gekoppeld</span></div>
-			<p class="detail" style="margin:0.4rem 0 0">
+			<p class="detail na-klein">
 				Je bent ingelogd als {data.email}, maar dit account hangt nog aan geen enkele persoon. Zolang
 				<code>personen.auth_user_id</code> leeg is, laat de database je nergens bij — vandaar dat alle
 				tellingen hieronder op nul staan.
 			</p>
-		</div>
+		</Kaart>
 	{/if}
 </div>
 
@@ -201,7 +203,7 @@
 		<h2>Je diensten in je agenda</h2>
 
 		{#if form?.agenda}
-			<div class="kaart nu">
+			<Kaart soort="nu">
 				<div class="regel"><span class="dag">Je agendalink</span></div>
 				<div class="knoppen">
 					<button type="button" class="primair" onclick={() => kopieerAgenda(form.agenda!)}>
@@ -212,7 +214,7 @@
 					Kopieer hem nu — je ziet hem één keer, want in de database staat alleen een versleutelde
 					versie. Kwijt? Maak een nieuwe; de oude werkt dan niet meer.
 				</p>
-			</div>
+			</Kaart>
 
 			<p class="notitie">
 				<strong>Op je iPhone:</strong> Instellingen → Apps → Agenda → Accounts → Account toevoegen
@@ -264,13 +266,13 @@
 			</p>
 		{:else}
 			{#each data.passkeys as pk (pk.id)}
-				<div class="kaart">
+				<Kaart>
 					<div class="regel">
 						<span class="dag">{pk.friendly_name || 'Naamloos toestel'}</span>
 						<span class="detail">sinds {datumKort(pk.created_at.slice(0, 10))}</span>
 					</div>
 					{#if pk.last_used_at}
-						<p class="detail" style="margin:0.2rem 0 0">
+						<p class="detail na-krap">
 							Laatst gebruikt op {datumKort(pk.last_used_at.slice(0, 10))}
 						</p>
 					{/if}
@@ -278,7 +280,7 @@
 						<input type="hidden" name="id" value={pk.id} />
 						<div class="knoppen"><button>Weghalen</button></div>
 					</form>
-				</div>
+				</Kaart>
 			{/each}
 
 			{#if passkeyKan}
@@ -368,7 +370,7 @@
 <div class="blok">
 	<details>
 		<summary>Wat de database jou laat zien</summary>
-		<div class="tabelrand" style="margin-top:0.6rem">
+		<div class="tabelrand na-ruim">
 			<table>
 				<tbody>
 					<tr><td>Personen</td><td class="getal">{data.zichtbaar.personen}</td></tr>

@@ -14,6 +14,7 @@
 		isoWeek,
 		urenTekst
 	} from '$lib/tijd';
+	import Kaart from '$lib/componenten/Kaart.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -92,12 +93,12 @@
 		>
 			<input type="hidden" name="id" value={d.id} />
 			{#if d.status === 'gemeld' || d.status === 'bevestigd'}
-				<p class="notitie" style="margin:0.5rem 0 0">
+				<p class="notitie na-mid">
 					Deze is al ingevuld door {naam(d.persoon_id)}. Verzetten betekent dat de verkeerde
 					persoon hem gemeld heeft, dus gaan de uren eraf en meldt de nieuwe hem zelf.
 				</p>
 			{/if}
-			<p class="regel" style="gap:0.5rem;margin:0.5rem 0 0">
+			<p class="regel invulrij na-mid">
 				<select name="persoon_id">
 					{#each (data.personen ?? []).filter((p) => p.actief) as p (p.id)}
 						<option value={p.id} selected={p.id === d.persoon_id}>{p.naam}</option>
@@ -130,16 +131,16 @@
 		<div class="blok">
 			<h2>Ruilverzoeken die openstaan</h2>
 			{#each data.verzoeken as r (r.id)}
-				<div class="kaart">
+				<Kaart>
 					<div class="regel">
 						<span class="dag">{dagKort(r.datum)} {datumKort(r.datum)}</span>
 						<span class="detail tijden">{r.gepland_begin} – {r.gepland_eind}</span>
 					</div>
-					<p class="detail" style="margin:0.3rem 0 0">
+					<p class="detail na-klein">
 						{r.van_naam} · {r.post} ·
 						{#if r.open_verzoek}open in de groep{:else}gevraagd aan {r.naar_naam}{/if}
 					</p>
-				</div>
+				</Kaart>
 			{/each}
 			<p class="notitie">
 				Je hoeft hier niets te doen: wie ja zegt, krijgt de dienst en het rooster gaat mee. Zodra
@@ -156,7 +157,7 @@
 			<span class="dag">Week {isoWeek(data.maandag)}</span>
 			<span class="detail">{datumLang(data.maandag)} – {datumLang(data.zondag!)}</span>
 		</div>
-		<p class="regel" style="margin:0.6rem 0 0">
+		<p class="regel na-ruim">
 			<a href="?week={data.vorige}">← Vorige week</a>
 			<a href="?week={data.volgende}">Volgende week →</a>
 		</p>
@@ -166,14 +167,14 @@
 		<div class="blok">
 			<h2>Blijft openstaan ({data.ouder!.length})</h2>
 			{#each data.ouder! as d (d.id)}
-				<div class="kaart aandacht">
+				<Kaart soort="aandacht">
 					{@render regel(d)}
-					<div class="regel" style="margin-top:0.35rem">
+					<div class="regel na-klein">
 						<span class="detail tijden">gepland {d.gepland_begin} – {d.gepland_eind}</span>
 						<Merk soort="achteraf" tekst="niet gemeld" />
 					</div>
 					{@render ruilknop(d)}
-				</div>
+				</Kaart>
 			{/each}
 			<p class="notitie">
 				Van vóór deze week en nog steeds niet ingevuld. Niemand vult dit namens hem in — dat is de
@@ -192,10 +193,10 @@
 
 		{#each aandacht as d (d.id)}
 			{@const verschil = afwijkingInMinuten(d)}
-			<div class="kaart aandacht">
+			<Kaart soort="aandacht">
 				{@render regel(d)}
 
-				<div class="regel" style="margin-top:0.35rem">
+				<div class="regel na-klein">
 					<span class="tijden">
 						{#if nietGemeld(d)}
 							<span class="detail">gepland {d.gepland_begin} – {d.gepland_eind}</span>
@@ -215,15 +216,15 @@
 				</div>
 
 				{#if verschil !== 0}
-					<p class="detail" style="margin:0.3rem 0 0">{afwijkingTekst(verschil)}</p>
+					<p class="detail na-klein">{afwijkingTekst(verschil)}</p>
 				{:else if afwijkend(d)}
 					<!-- Later begonnen én later gestopt: andere tijden, zelfde uren.
 					     Wel een afwijking, maar niet één die geld kost. -->
-					<p class="detail" style="margin:0.3rem 0 0">andere tijden, even lang</p>
+					<p class="detail na-klein">andere tijden, even lang</p>
 				{/if}
 
 				{#if d.opmerking}
-					<p class="detail" style="margin:0.3rem 0 0">“{d.opmerking}”</p>
+					<p class="detail na-klein">“{d.opmerking}”</p>
 				{/if}
 
 				{#if d.status === 'gemeld'}
@@ -235,12 +236,12 @@
 					</form>
 					{@render ruilknop(d)}
 				{:else}
-					<p class="detail" style="margin:0.5rem 0 0">
+					<p class="detail na-mid">
 						Niemand heeft deze avond ingevuld. Appen als dat zin heeft — invullen doet hij zelf.
 					</p>
 					{@render ruilknop(d)}
 				{/if}
-			</div>
+			</Kaart>
 		{/each}
 	</div>
 
@@ -251,14 +252,14 @@
 			<p class="leeg">Niets meer open.</p>
 		{:else}
 			{#each rechttoe as d (d.id)}
-				<div class="kaart">
+				<Kaart>
 					{@render regel(d)}
-					<div class="regel" style="margin-top:0.35rem">
+					<div class="regel na-klein">
 						<span class="detail tijden">{d.werkelijk_begin} – {d.werkelijk_eind}</span>
 						<Merk soort="gemeld" />
 					</div>
 					{@render ruilknop(d)}
-				</div>
+				</Kaart>
 			{/each}
 
 			<form method="post" action="?/bevestigAlle" use:enhance>
@@ -279,21 +280,21 @@
 		<details>
 			<summary>De rest van de week ({rest.length})</summary>
 			{#each rest as d (d.id)}
-				<div class="kaart">
+				<Kaart>
 					{@render regel(d)}
-					<div class="regel" style="margin-top:0.35rem">
+					<div class="regel na-klein">
 						<span class="detail tijden">
 							{d.werkelijk_begin ?? d.gepland_begin} – {d.werkelijk_eind ?? d.gepland_eind}
 						</span>
 						<Merk soort={d.status} />
 					</div>
 					{#if d.opmerking}
-						<p class="detail" style="margin:0.3rem 0 0">“{d.opmerking}”</p>
+						<p class="detail na-klein">“{d.opmerking}”</p>
 					{/if}
 					{#if d.status === 'verwacht' || d.status === 'bevestigd'}
 						{@render ruilknop(d)}
 					{/if}
-				</div>
+				</Kaart>
 			{/each}
 		</details>
 	</div>

@@ -76,6 +76,7 @@ voren omdat er nu iets van afhangt.
 | 17 | Superadmin ✅ | Support zonder het dashboard, en zonder in de ploeg te staan | 1 avond |
 | 18 | De showcase ⏳ | Live installatie om te testen, te tonen en te verkopen. Gaat vóór fase 7 | 1 weekend |
 | 19 | Week uitrollen met een knop ✅ | De laatste handeling die alleen in de SQL-editor kon | 1 avond |
+| 20 | Herbruikbare bouwstenen ✅ | Herstylen op één plek in plaats van in elf schermen | 1 avond |
 
 **De nummers zijn niet de volgorde, en ze worden ook niet hernummerd.** Ze volgen
 wanneer een fase bedacht is. Fase 0 tot en met 6 zijn ook in die volgorde
@@ -2045,6 +2046,75 @@ Eén handeling blijft in de SQL-editor: die cron één keer aanzetten. Dat is
 installatiewerk en staat in `installatie.md`, niet in het wekelijkse ritme.
 
 **Klaar als:** je op je telefoon een week kunt uitrollen en ziet wat hij deed.
+
+---
+
+## Fase 20 — Herbruikbare bouwstenen ✅
+
+**Doel:** de app op één plek kunnen herstylen, en niet in elf schermen tegelijk.
+
+Geen enkele gebruiker ziet hier iets van. Dit is onderhoud, en het staat er om
+dezelfde reden als fase 19: na half november 2026 zit de bouwer er niet meer
+naast, en dan moet iemand anders dit kunnen wijzigen zonder eerst elf bestanden
+te lezen.
+
+### Wat er al goed zat
+
+Alle styling stond al in één `app.css`, met kleurvariabelen bovenaan en een
+complete donkere variant eronder. Er staat geen enkel `<style>`-blok in een
+component of scherm. Een andere kleurstelling was dus altijd al één blokje
+CSS — dat is niet aangeraakt en hoefde niet.
+
+### Wat er niet goed zat
+
+Drie dingen, alle drie hetzelfde probleem: iets stond op tien tot dertig
+plekken uitgeschreven in plaats van op één.
+
+**63 losse `style="margin:…"`-attributen**, in twintig varianten van hetzelfde:
+`0.2rem`, `0.3rem`, `0.35rem`, `0.4rem`, `0.5rem`, `0.6rem`, `0.7rem`, `0.8rem`.
+Kleur zat netjes in variabelen, maar het ritme van de app zat verstopt in de
+markup. Nu zijn het vijf klassen — `.na-krap` tot `.na-blok` — en één rij
+getallen in `app.css`. De twintig varianten zijn onderweg naar vijf gesnapt, dus
+een paar marges zijn 0,05rem verschoven.
+
+**`<div class="kaart">` stond dertig keer uitgeschreven** over elf schermen. Dat
+werkt zolang een kaart een div met een randje is. Zodra hij iets anders moet
+worden — een `<article>`, een schaduw, een vlak dat openklapt — zoek je dertig
+plekken af. Nu is er `Kaart.svelte` met `soort="gewoon|aandacht|nu"`.
+
+**Het beheerscherm had zijn eigen regelpatroon vier keer gekopieerd**: bussen,
+diensttijden, wie er werkt en wie er niet meer werkt. Vier keer dezelfde
+`use:enhance` die na opslaan de regel dichtklapt, vier keer hetzelfde verborgen
+id-veld, vier keer hetzelfde vinkje. `BeheerRij.svelte` doet dat skelet nu; wat
+per soort verschilt zijn twee snippets, `velden` en `toon`.
+
+### Twee dingen die onderweg zijn rechtgezet
+
+Een vinkje met zijn label stond in een `.regel`, en die duwt zijn twee kinderen
+naar de randen van de kaart — het vinkje links, "In gebruik" rechts. Dat was
+niemands bedoeling; er is nu een `.vinkrij` die ze tegen elkaar aan zet.
+
+Twee schermen schreven het gekleurde labeltje met de hand (`<span class="merk
+afwijking">`) in plaats van via `Merk.svelte`: de foutpagina en "Mijn gegevens".
+Precies het soort plek waar een kleurwijziging straks niet aankomt. Ze gaan nu
+allebei door de component.
+
+### Wat het opleverde
+
+| | Voor | Na |
+|---|---|---|
+| Componenten in `lib/componenten/` | 4 | 6 |
+| Inline `style`-attributen | 63 | 0 |
+| Handgeschreven `class="kaart"` | 30 | 0 |
+| Handgeschreven `class="merk"` | 2 | 0 |
+| `beheer/+page.svelte` | 464 regels | 427 regels |
+
+De 37 regels op het beheerscherm zijn niet de winst. De winst is dat het
+vinkje, de Opslaan-knop en het dichtklappen na opslaan nog op één plek staan —
+en dat je er niet meer drie van kunt bijwerken en de vierde vergeten.
+
+**Klaar als:** `npm run check` geeft nul fouten, de build loopt door, en het
+scherm ziet er hetzelfde uit als ervoor.
 
 ---
 

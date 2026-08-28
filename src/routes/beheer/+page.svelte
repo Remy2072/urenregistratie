@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import BeheerRij from '$lib/componenten/BeheerRij.svelte';
+	import Kaart from '$lib/componenten/Kaart.svelte';
 	import Merk from '$lib/componenten/Merk.svelte';
 	import { telefoonTekst } from '$lib/telefoon';
 	import type { ActionData, PageData } from './$types';
@@ -42,14 +44,14 @@
 		instellen is dan het enige dat rest.
 	-->
 	<div class="blok">
-		<div class="kaart nu">
+		<Kaart soort="nu">
 			<div class="regel">
 				<span class="dag">
 					{form.login.opnieuw ? 'Nieuw wachtwoord voor' : 'Login voor'}
 					{form.login.naam}
 				</span>
 			</div>
-			<p class="detail" style="margin:0.4rem 0 0">
+			<p class="detail na-klein">
 				Inloggen met <span class="tijden">{form.login.waarmee}</span>
 				{#if form.login.waarmee !== form.login.email}
 					<br />(adres in Supabase: {form.login.email})
@@ -60,7 +62,7 @@
 				Schrijf dit over of geef het meteen door. Zodra je deze pagina ververst is het weg — ook
 				voor mij, want Supabase bewaart alleen een versleutelde versie.
 			</p>
-		</div>
+		</Kaart>
 	</div>
 {/if}
 
@@ -86,52 +88,37 @@
 		<h2>Bussen en scooters</h2>
 
 		{#each data.posten as po (po.id)}
-			<div class="kaart">
-				{#if bewerkt === po.id}
-					<form
-						method="post"
-						action="?/postWijzig"
-						use:enhance={() => async ({ update }) => {
-							await update();
-							bewerkt = null;
-						}}
-					>
-						<input type="hidden" name="id" value={po.id} />
-						<label class="veld"><span>Naam</span><input name="naam" value={po.naam} /></label>
-						<label class="veld">
-							<span>Volgorde</span>
-							<input name="volgorde" type="number" value={po.volgorde} />
-						</label>
-						<label class="regel" style="gap:0.5rem;margin-top:0.5rem">
-							<input type="checkbox" name="actief" checked={po.actief} />
-							<span class="detail">In gebruik</span>
-						</label>
-						<div class="knoppen">
-							<button type="button" onclick={() => (bewerkt = null)}>Laat maar</button>
-							<button class="primair">Opslaan</button>
-						</div>
-					</form>
+			<BeheerRij
+				id={po.id}
+				open={bewerkt === po.id}
+				openen={() => (bewerkt = po.id)}
+				sluiten={() => (bewerkt = null)}
+				wijzigActie="?/postWijzig"
+				wegActie="?/postWeg"
+				actief={po.actief}
+				actiefLabel="In gebruik"
+			>
+				{#snippet velden()}
+					<label class="veld"><span>Naam</span><input name="naam" value={po.naam} /></label>
+					<label class="veld">
+						<span>Volgorde</span>
+						<input name="volgorde" type="number" value={po.volgorde} />
+					</label>
+				{/snippet}
 
-					<form method="post" action="?/postWeg" use:enhance>
-						<input type="hidden" name="id" value={po.id} />
-						<div class="knoppen"><button>Verwijderen</button></div>
-					</form>
-				{:else}
+				{#snippet toon()}
 					<div class="regel">
 						<span class="dag">{po.naam}</span>
 						{#if !po.actief}<Merk soort="afgemeld" tekst="niet in gebruik" />{/if}
 					</div>
-					<div class="knoppen">
-						<button type="button" onclick={() => (bewerkt = po.id)}>Wijzigen</button>
-					</div>
-				{/if}
-			</div>
+				{/snippet}
+			</BeheerRij>
 		{/each}
 
 		<form method="post" action="?/postToevoegen" use:enhance>
-			<p class="regel" style="gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem">
+			<p class="regel invulrij na-ruim">
 				<input name="naam" placeholder="Bus 5, Scooter 1…" />
-				<input name="volgorde" type="number" placeholder="volgorde" style="max-width:8rem" />
+				<input name="volgorde" type="number" placeholder="volgorde" class="smal" />
 				<button class="primair">Toevoegen</button>
 			</p>
 		</form>
@@ -148,57 +135,42 @@
 		<h2>Diensttijden</h2>
 
 		{#each data.dienstsoorten as ds (ds.id)}
-			<div class="kaart">
-				{#if bewerkt === ds.id}
-					<form
-						method="post"
-						action="?/soortWijzig"
-						use:enhance={() => async ({ update }) => {
-							await update();
-							bewerkt = null;
-						}}
-					>
-						<input type="hidden" name="id" value={ds.id} />
-						<label class="veld"><span>Naam</span><input name="naam" value={ds.naam} /></label>
-						<label class="veld">
-							<span>Begint</span>
-							<input name="begintijd" type="time" step="1800" value={ds.begintijd} />
-						</label>
-						<label class="veld">
-							<span>Eindigt</span>
-							<input name="eindtijd" type="time" step="1800" value={ds.eindtijd} />
-						</label>
-						<label class="regel" style="gap:0.5rem;margin-top:0.5rem">
-							<input type="checkbox" name="actief" checked={ds.actief} />
-							<span class="detail">In gebruik</span>
-						</label>
-						<div class="knoppen">
-							<button type="button" onclick={() => (bewerkt = null)}>Laat maar</button>
-							<button class="primair">Opslaan</button>
-						</div>
-					</form>
+			<BeheerRij
+				id={ds.id}
+				open={bewerkt === ds.id}
+				openen={() => (bewerkt = ds.id)}
+				sluiten={() => (bewerkt = null)}
+				wijzigActie="?/soortWijzig"
+				wegActie="?/soortWeg"
+				actief={ds.actief}
+				actiefLabel="In gebruik"
+			>
+				{#snippet velden()}
+					<label class="veld"><span>Naam</span><input name="naam" value={ds.naam} /></label>
+					<label class="veld">
+						<span>Begint</span>
+						<input name="begintijd" type="time" step="1800" value={ds.begintijd} />
+					</label>
+					<label class="veld">
+						<span>Eindigt</span>
+						<input name="eindtijd" type="time" step="1800" value={ds.eindtijd} />
+					</label>
+				{/snippet}
 
-					<form method="post" action="?/soortWeg" use:enhance>
-						<input type="hidden" name="id" value={ds.id} />
-						<div class="knoppen"><button>Verwijderen</button></div>
-					</form>
-				{:else}
+				{#snippet toon()}
 					<div class="regel">
 						<span class="dag">{ds.naam}</span>
 						<span class="detail tijden">{ds.begintijd} – {ds.eindtijd}</span>
 					</div>
-					<div class="regel" style="margin-top:0.2rem">
+					<div class="regel na-krap">
 						{#if !ds.actief}<Merk soort="afgemeld" tekst="niet in gebruik" />{/if}
 					</div>
-					<div class="knoppen">
-						<button type="button" onclick={() => (bewerkt = ds.id)}>Wijzigen</button>
-					</div>
-				{/if}
-			</div>
+				{/snippet}
+			</BeheerRij>
 		{/each}
 
 		<form method="post" action="?/soortToevoegen" use:enhance>
-			<p class="regel" style="gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem">
+			<p class="regel invulrij na-ruim">
 				<input name="naam" placeholder="vroeg, laat, weekend…" />
 				<input name="begintijd" type="time" step="1800" value="15:00" />
 				<input name="eindtijd" type="time" step="1800" value="20:00" />
@@ -218,52 +190,49 @@
 		<h2>Wie er werkt</h2>
 
 		{#each werkend as p (p.id)}
-			<div class="kaart">
-				{#if bewerkt === p.id}
-					<form
-						method="post"
-						action="?/persoonWijzig"
-						use:enhance={() => async ({ update }) => {
-							await update();
-							bewerkt = null;
-						}}
-					>
-						<input type="hidden" name="id" value={p.id} />
-						<label class="veld"><span>Naam</span><input name="naam" value={p.naam} /></label>
+			<BeheerRij
+				id={p.id}
+				open={bewerkt === p.id}
+				openen={() => (bewerkt = p.id)}
+				sluiten={() => (bewerkt = null)}
+				wijzigActie="?/persoonWijzig"
+				actief={p.actief}
+				actiefLabel="Werkt hier"
+			>
+				{#snippet velden()}
+					<label class="veld"><span>Naam</span><input name="naam" value={p.naam} /></label>
+					<label class="veld">
+						<span>Gebruikersnaam</span>
+						<input
+							name="gebruikersnaam"
+							value={p.gebruikersnaam ?? ''}
+							placeholder="daanb"
+							autocapitalize="none"
+							spellcheck="false"
+						/>
+					</label>
+					<label class="veld">
+						<span>Telefoon</span>
+						<input
+							name="telefoon"
+							type="tel"
+							value={telefoonTekst(p.telefoon)}
+							placeholder="06 12345678"
+						/>
+					</label>
+					{#if data.ik?.rol === 'eigenaar'}
 						<label class="veld">
-							<span>Gebruikersnaam</span>
-							<input
-								name="gebruikersnaam"
-								value={p.gebruikersnaam ?? ''}
-								placeholder="daanb"
-								autocapitalize="none"
-								spellcheck="false"
-							/>
+							<span>Rol</span>
+							<select name="rol">
+								<option value="medewerker" selected={p.rol === 'medewerker'}>Medewerker</option>
+								<option value="manager" selected={p.rol === 'manager'}>Manager</option>
+								<option value="eigenaar" selected={p.rol === 'eigenaar'}>Eigenaar</option>
+							</select>
 						</label>
-						<label class="veld">
-							<span>Telefoon</span>
-							<input name="telefoon" type="tel" value={telefoonTekst(p.telefoon)} placeholder="06 12345678" />
-						</label>
-						{#if data.ik?.rol === 'eigenaar'}
-							<label class="veld">
-								<span>Rol</span>
-								<select name="rol">
-									<option value="medewerker" selected={p.rol === 'medewerker'}>Medewerker</option>
-									<option value="manager" selected={p.rol === 'manager'}>Manager</option>
-									<option value="eigenaar" selected={p.rol === 'eigenaar'}>Eigenaar</option>
-								</select>
-							</label>
-						{/if}
-						<label class="regel" style="gap:0.5rem;margin-top:0.5rem">
-							<input type="checkbox" name="actief" checked={p.actief} />
-							<span class="detail">Werkt hier</span>
-						</label>
-						<div class="knoppen">
-							<button type="button" onclick={() => (bewerkt = null)}>Laat maar</button>
-							<button class="primair">Opslaan</button>
-						</div>
-					</form>
-				{:else}
+					{/if}
+				{/snippet}
+
+				{#snippet toon()}
 					<div class="regel">
 						<span class="dag">{p.naam}</span>
 						<span>
@@ -276,14 +245,13 @@
 							{/if}
 						</span>
 					</div>
-					<p class="detail" style="margin:0.2rem 0 0">
+					<p class="detail na-krap">
 						{p.gebruikersnaam ?? 'nog geen gebruikersnaam'}
 						{#if p.telefoon}· {telefoonTekst(p.telefoon)}{/if}
 					</p>
-					<div class="knoppen">
-						<button type="button" onclick={() => (bewerkt = p.id)}>Wijzigen</button>
-					</div>
+				{/snippet}
 
+				{#snippet extra()}
 					{#if !p.auth_user_id && p.actief}
 						{#if p.gebruikersnaam}
 							<form method="post" action="?/loginAanmaken" use:enhance={naarDeMelding}>
@@ -291,7 +259,7 @@
 								<div class="knoppen"><button>Login aanmaken</button></div>
 							</form>
 						{:else}
-							<p class="detail" style="margin:0.5rem 0 0">
+							<p class="detail na-mid">
 								Zet eerst een gebruikersnaam — daar maakt de app het adres van.
 							</p>
 						{/if}
@@ -306,7 +274,7 @@
 							<summary>Ander adres gebruiken</summary>
 							<form method="post" action="?/loginAanmaken" use:enhance={naarDeMelding}>
 								<input type="hidden" name="id" value={p.id} />
-								<p class="regel" style="gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0 0">
+								<p class="regel invulrij na-mid">
 									<input
 										name="email"
 										type="email"
@@ -324,7 +292,7 @@
 								uitgelogd terwijl het nieuwe wachtwoord op een scherm staat dat je
 								dan niet meer mag zien. De server weigert het ook.
 							-->
-							<p class="detail" style="margin:0.5rem 0 0">
+							<p class="detail na-mid">
 								Je eigen wachtwoord wijzig je op <a href="/ik">Mijn gegevens</a>.
 							</p>
 						{:else}
@@ -338,7 +306,7 @@
 							<summary>Adres in Supabase</summary>
 							<form method="post" action="?/adresWijzig" use:enhance={naarDeMelding}>
 								<input type="hidden" name="id" value={p.id} />
-								<p class="regel" style="gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0 0">
+								<p class="regel invulrij na-mid">
 									<input name="email" type="email" value={data.adressen?.[p.auth_user_id] ?? ''} />
 									<button>Adres opslaan</button>
 								</p>
@@ -349,12 +317,12 @@
 							</p>
 						</details>
 					{/if}
-				{/if}
-			</div>
+				{/snippet}
+			</BeheerRij>
 		{/each}
 
 		<form method="post" action="?/persoonToevoegen" use:enhance={naarDeMelding}>
-			<p class="regel" style="gap:0.5rem;flex-wrap:wrap;margin-top:0.6rem">
+			<p class="regel invulrij na-ruim">
 				<input name="naam" placeholder="Naam" />
 				<input
 					name="gebruikersnaam"
@@ -375,33 +343,31 @@
 		</form>
 
 		{#if vertrokken.length > 0}
-			<h2 style="margin-top:1.6rem">Wie er niet meer werkt</h2>
+			<h2 class="na-blok">Wie er niet meer werkt</h2>
 			{#each vertrokken as p (p.id)}
-				<div class="kaart">
-					{#if bewerkt === p.id}
-						<form
-							method="post"
-							action="?/persoonWijzig"
-							use:enhance={() => async ({ update }) => {
-								await update();
-								bewerkt = null;
-							}}
-						>
-							<input type="hidden" name="id" value={p.id} />
-							<input type="hidden" name="rol" value={p.rol} />
-							<label class="veld"><span>Naam</span><input name="naam" value={p.naam} /></label>
-							<input type="hidden" name="gebruikersnaam" value={p.gebruikersnaam ?? ''} />
-							<input type="hidden" name="telefoon" value={p.telefoon ?? ''} />
-							<label class="regel" style="gap:0.5rem;margin-top:0.5rem">
-								<input type="checkbox" name="actief" checked={p.actief} />
-								<span class="detail">Werkt hier</span>
-							</label>
-							<div class="knoppen">
-								<button type="button" onclick={() => (bewerkt = null)}>Laat maar</button>
-								<button class="primair">Opslaan</button>
-							</div>
-						</form>
-					{:else}
+				<BeheerRij
+					id={p.id}
+					open={bewerkt === p.id}
+					openen={() => (bewerkt = p.id)}
+					sluiten={() => (bewerkt = null)}
+					wijzigActie="?/persoonWijzig"
+					actief={p.actief}
+					actiefLabel="Werkt hier"
+					openLabel="Weer aannemen"
+				>
+					{#snippet velden()}
+						<!--
+							Alleen de naam is te wijzigen; de rest gaat verborgen mee zodat de
+							serveractie een compleet formulier krijgt. Wie hier staat neem je
+							weer aan of niet -- zijn gebruikersnaam verzin je pas als hij er is.
+						-->
+						<input type="hidden" name="rol" value={p.rol} />
+						<label class="veld"><span>Naam</span><input name="naam" value={p.naam} /></label>
+						<input type="hidden" name="gebruikersnaam" value={p.gebruikersnaam ?? ''} />
+						<input type="hidden" name="telefoon" value={p.telefoon ?? ''} />
+					{/snippet}
+
+					{#snippet toon()}
 						<div class="regel">
 							<span class="dag">{p.naam}</span>
 							<span>
@@ -410,11 +376,8 @@
 								<Merk soort="afgemeld" tekst="kan niet inloggen" />
 							</span>
 						</div>
-						<div class="knoppen">
-							<button type="button" onclick={() => (bewerkt = p.id)}>Weer aannemen</button>
-						</div>
-					{/if}
-				</div>
+					{/snippet}
+				</BeheerRij>
 			{/each}
 			<p class="notitie">
 				Deze mensen kunnen niet inloggen, staan in geen enkele keuzelijst en rollen nergens meer

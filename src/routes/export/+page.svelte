@@ -27,12 +27,12 @@
 	</div>
 {:else}
 	<div class="blok">
-		<form method="get" class="regel" style="gap:0.6rem;flex-wrap:wrap">
+		<form method="get" class="regel invulrij">
 			<label class="veld"><span>Van</span><input type="date" name="van" value={data.van} /></label>
 			<label class="veld"><span>Tot en met</span><input type="date" name="tot" value={data.tot} /></label>
 			<button>Tonen</button>
 		</form>
-		<p class="regel" style="gap:0.8rem;flex-wrap:wrap;margin:0.7rem 0 0">
+		<p class="regel invulrij na-ruim">
 			{#each data.snelkeuzes! as k (k.naam)}
 				<a href="?van={k.van}&tot={k.tot}">{k.naam}</a>
 			{/each}

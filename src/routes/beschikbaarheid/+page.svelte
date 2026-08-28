@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Merk from '$lib/componenten/Merk.svelte';
 	import { datumKort, datumLang, isoWeek, plusDagen, weekdagNaam } from '$lib/tijd';
+	import Kaart from '$lib/componenten/Kaart.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -34,7 +35,7 @@
 		<p class="detail">
 			{datumLang(data.week!)} – {datumLang(plusDagen(data.week!, 6))}
 		</p>
-		<p class="regel" style="margin:0.6rem 0 0">
+		<p class="regel na-ruim">
 			<a href="?week={data.dezeWeek}">Deze week</a>
 			<a href="?week={data.volgendeWeek}">Volgende week</a>
 			<a href="?week={data.weekErna}">De week erna</a>
@@ -51,7 +52,7 @@
 		{#each dagen as d (d)}
 			{@const kan = kanDezeWeek(d)}
 			{@const anders = afwijking(d) !== undefined}
-			<div class="kaart">
+			<Kaart>
 				<div class="regel">
 					<span class="dag">
 						{weekdagNaam(d)}
@@ -90,7 +91,7 @@
 						{/if}
 					</div>
 				{/if}
-			</div>
+			</Kaart>
 		{/each}
 
 		{#if !data.vergrendeld}
@@ -116,7 +117,7 @@
 
 		{#each dagen as d (d)}
 			{@const kan = normaal(d)}
-			<div class="kaart">
+			<Kaart>
 				<div class="regel">
 					<span class="dag">{weekdagNaam(d)}</span>
 					<span>
@@ -130,7 +131,7 @@
 						<button>{kan ? 'Kan normaal niet' : 'Kan normaal wel'}</button>
 					</div>
 				</form>
-			</div>
+			</Kaart>
 		{/each}
 	</div>
 
