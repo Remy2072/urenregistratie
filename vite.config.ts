@@ -2,7 +2,13 @@ import adapter from '@sveltejs/adapter-auto';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+	server: {
+		// Sta previews via het eigen tailnet toe (tailscale serve).
+		allowedHosts: ['.ts.net'],
+		// Alleen bij `--mode tailnet` loopt HMR over poort 443; lokaal niet.
+		...(mode === 'tailnet' ? { hmr: { clientPort: 443 } } : {})
+	},
 	plugins: [
 		sveltekit({
 			compilerOptions: {
@@ -17,4 +23,4 @@ export default defineConfig({
 			adapter: adapter()
 		})
 	]
-});
+}));
